@@ -1,5 +1,7 @@
 package org.libraryexpress.application.loan.usecase;
 
+import org.libraryexpress.domain.core.logging.CustomLogger;
+import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.domain.loan.exception.LoanNotFoundException;
 import org.libraryexpress.domain.loan.exception.OverdueLoanException;
 import org.libraryexpress.domain.loan.entity.Loan;
@@ -14,6 +16,8 @@ import org.libraryexpress.domain.loan.repository.LoanRepository;
  */
 public class CloseOverdueLoan {
 
+    private static final CustomLogger logger =  CustomLoggerFactory.getLogger(CloseOverdueLoan.class);
+
     private final LoanRepository loanRepository;
 
     public CloseOverdueLoan(LoanRepository loanRepository) {
@@ -21,15 +25,22 @@ public class CloseOverdueLoan {
     }
 
     public void execute(String loanId) {
+        logger.info("Initiating overdue loan settlement...");
 
         Loan loan = this.loanRepository.findById(loanId)
-                .orElseThrow(LoanNotFoundException::new);
+                .orElseThrow(() -> {
+                    logger.error("CRITICAL: No loan was found for the ID: [{}]", loanId);
+                    return new LoanNotFoundException();
+                });
 
         if (!loan.getStatus().equals(LoanStatus.OVERDUE)) {
+            logger.warn("ABORTED: The loan was already overdue");
             throw new OverdueLoanException();
         }
 
         loan.changeStatus(LoanStatus.FINISHED);
         this.loanRepository.update(loan);
+
+        logger.info("Loan successfully completed! Loan ID: [{}]", loanId);
     }
 }

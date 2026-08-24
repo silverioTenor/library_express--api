@@ -16,22 +16,22 @@ import javax.sql.DataSource;
  */
 public class Application {
 
-    private static CustomLogger log;
+    private static CustomLogger logger;
 
     public static void main(String[] args) {
         // Step 1: Immediate wire injection of the logging Anti-Corruption Layer
         CustomLoggerFactory.initialize(Slf4jLoggerAdapter::new);
 
         // Step 2: Safe initialization of the component log reference right after the wire injection
-        log = CustomLoggerFactory.getLogger(Application.class);
+        logger = CustomLoggerFactory.getLogger(Application.class);
 
-        log.info("Starting LibraryExpress infrastructure pipeline...");
+        logger.info("Starting LibraryExpress infrastructure pipeline...");
 
         ConnectionProvider connectionProvider = prepareDatabaseConnection();
 
         AppContext context = new AppContext(connectionProvider);
 
-        log.info("Application booted successfully! Ready for executions.");
+        logger.info("Application booted successfully! Ready for executions.");
 
         initCLI(context, connectionProvider);
     }
@@ -49,19 +49,19 @@ public class Application {
             DataSource dataSource = connectionProvider.getDataSource();
 
             // 2. Execute Flyway database schema migrations
-            log.info("Executing schema migrations...");
+            logger.info("Executing schema migrations...");
             MigrationRunner.run(dataSource);
-            log.info("Database schema is fully synchronized!");
+            logger.info("Database schema is fully synchronized!");
 
             // 3. Register a graceful shutdown hook to release database resources on JVM exit
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                log.info("Shutting down connection pool gracefully...");
+                logger.info("Shutting down connection pool gracefully...");
                 connectionProvider.close();
-                log.info("Database resources released safely.");
+                logger.info("Database resources released safely.");
             }));
 
         } catch (Exception e) {
-            log.error("FATAL: Application startup failed dynamically: " + e.getMessage(), e);
+            logger.error("FATAL: Application startup failed dynamically: " + e.getMessage(), e);
             connectionProvider.close();
             System.exit(1);
         }
