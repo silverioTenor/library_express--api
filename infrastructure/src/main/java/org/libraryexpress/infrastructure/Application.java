@@ -1,9 +1,12 @@
 package org.libraryexpress.infrastructure;
 
+import org.libraryexpress.domain.core.logging.CustomLogger;
+import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.infrastructure.cli.ManagementCli;
 import org.libraryexpress.infrastructure.config.AppContext;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.config.database.MigrationRunner;
+import org.libraryexpress.infrastructure.config.logging.Slf4jLoggerAdapter;
 
 import javax.sql.DataSource;
 
@@ -12,15 +15,23 @@ import javax.sql.DataSource;
  * Responsible for orchestration, dependency injection initialization, and resource lifecycle management.
  */
 public class Application {
-    public static void main(String[] args) {
 
-        System.out.println("Starting LibraryExpress infrastructure pipeline...");
+    private static CustomLogger log;
+
+    public static void main(String[] args) {
+        // Step 1: Immediate wire injection of the logging Anti-Corruption Layer
+        CustomLoggerFactory.initialize(Slf4jLoggerAdapter::new);
+
+        // Step 2: Safe initialization of the component log reference right after the wire injection
+        log = CustomLoggerFactory.getLogger(Application.class);
+
+        log.info("Starting LibraryExpress infrastructure pipeline...");
 
         ConnectionProvider connectionProvider = prepareDatabaseConnection();
 
         AppContext context = new AppContext(connectionProvider);
 
-        System.out.println("Application booted successfully! Ready for executions.");
+        log.info("Application booted successfully! Ready for executions.");
 
         initCLI(context, connectionProvider);
     }
@@ -38,19 +49,19 @@ public class Application {
             DataSource dataSource = connectionProvider.getDataSource();
 
             // 2. Execute Flyway database schema migrations
-            System.out.println("Executing schema migrations...");
+            log.info("Executing schema migrations...");
             MigrationRunner.run(dataSource);
-            System.out.println("Database schema is fully synchronized!");
+            log.info("Database schema is fully synchronized!");
 
             // 3. Register a graceful shutdown hook to release database resources on JVM exit
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("Shutting down connection pool gracefully...");
+                log.info("Shutting down connection pool gracefully...");
                 connectionProvider.close();
-                System.out.println("Database resources released safely.");
+                log.info("Database resources released safely.");
             }));
 
         } catch (Exception e) {
-            System.err.println("FATAL: Application startup failed dynamically: " + e.getMessage());
+            log.error("FATAL: Application startup failed dynamically: " + e.getMessage(), e);
             connectionProvider.close();
             System.exit(1);
         }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================================ -->
+<!-- Logback Profile: Local Development (High Contrast Colorful Console)          -->
+<!-- ============================================================================ -->
+<included>
+    <appender name="HUMAN_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <withJansi>true</withJansi> <!-- Enhances command prompt compatibility -->
+        <encoder>
+            <!-- Task Solution: Binding dynamic ANSI color brackets across tokens -->
+            <pattern>%cyan(%d{yyyy-MM-dd HH:mm:ss.SSS}) %magenta([%thread]) %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="HUMAN_CONSOLE" />
+    </root>
+</included>

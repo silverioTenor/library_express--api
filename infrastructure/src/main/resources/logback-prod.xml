@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================================ -->
+<!-- Logback Profile: Production / Containerized cloud runtime                    -->
+<!-- Layout: Machine-parseable, single-line structured JSON logs                  -->
+<!-- ============================================================================ -->
+<included>
+    <appender name="STRUCTURED_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <timeZone>UTC</timeZone>
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <level>level</level>
+                <logger>logger_name</logger>
+                <message>message</message>
+            </fieldNames>
+        </encoder>
+    </appender>
+
+    <!-- Conservative, high-performance operational metrics level -->
+    <root level="INFO">
+        <appender-ref ref="STRUCTURED_JSON" />
+    </root>
+</included>

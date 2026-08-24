@@ -34,6 +34,9 @@
         <testcontainers.version>2.0.5</testcontainers.version>
         <surefire.version>3.2.5</surefire.version>
         <failsafe.version>3.2.5</failsafe.version>
+        <slf4j.version>2.0.13</slf4j.version>
+        <logback.version>1.6.1</logback.version>
+        <logstash-encoder.version>7.4</logstash-encoder.version>
 
         <exec.skip>true</exec.skip>
     </properties>
@@ -130,6 +133,25 @@
                 <version>${testcontainers.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!-- SLF4J API Layer -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <!-- Logback Classic Implementation -->
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <!-- Logstash Structured JSON Encoder -->
+            <dependency>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${logstash-encoder.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
