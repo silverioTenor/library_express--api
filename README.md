@@ -87,6 +87,7 @@ Architectural decisions (like the module split above, and the framework-free sco
 - MapStruct (DTO ↔ entity mapping)
 - JaCoCo (test coverage, enforced per module as a CI quality gate)
 - GitHub Actions (Continuous Integration)
+- SLF4J + Logback (structured JSON logging, MDC-based correlation — Epic E8)
 
 ## Getting Started
 

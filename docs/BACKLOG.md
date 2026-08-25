@@ -22,10 +22,13 @@ PO/Scrum Master: Claude · Dev: Silvério
 | E4 | Automated test foundation — JUnit 5 + Mockito | ✅ Done (Sprint 4), with a note — see TD06 |
 | E5 | Containerization (Docker) | ⛔ Discontinued — scope absorbed by E6 |
 | E6 | Real Persistence (JDBC/PostgreSQL) + Docker Containerization | ✅ Done (Sprint 5) |
-| E7 | Real CI — automated tests running as a pipeline gate | 🔵 Refined, ready for execution (Sprint 6) — resolves TD06 |
-| E8 | Customer Reputation + automatic loan-status Job | ⏳ Backlog |
-| E9 | CD — delivery pipeline + minimal API (Marco 2 — Go Live, on AWS, with E6 already in place) | ⏳ Backlog |
-| E10 | Notifications (loan created / completed / overdue) | ⏳ Backlog (post-Marco 2, exercises the full CI/CD cycle) |
+| E7 | Real CI — automated tests running as a pipeline gate | ✅ Done (Sprint 6) — resolved TD06 |
+| E8 | Structured Logging Foundation (SLF4J + Logback, system-wide) | 🔵 Refined, ready for execution (Sprint 7) — resolves TD07 |
+| E9 | REST API + Documentation (Swagger/OpenAPI) | ⏳ Backlog (title only) |
+| E10 | CD — Go Live (Marco 2, on AWS) | ⏳ Backlog (title only) |
+| E11 | Log Evolution & Full Observability (Prometheus/Grafana) | ⏳ Backlog (post Go-Live — scope note captured, not refined) |
+| E12 | Overdue Enforcement Evolution — Job, Loan Restriction & Settlement | ⏳ Backlog (post Go-Live — scope note captured, not refined) |
+| E13 | Notifications (loan created / completed / overdue) | ⏳ Backlog (post Go-Live, title only) |
 
 E7 and E9 are not the same thing. E9 delivers the automated build + deploy — we call it "CD," not "CI/CD," because without tests running as a gate there is no verified integration, only automated delivery. E7 is when that becomes real CI: tests (E4) start running on every push, as a pipeline gate, before E9 exists. E7 is also where technical debt TD06 (infrastructure tests via Testcontainers) gets resolved, building on the JDBC layer already delivered in E6.
 
@@ -64,10 +67,13 @@ Theme sequence:
 
 1. Automated test foundation — JUnit 5 + Mockito (E4) ✅ done
 2. Real persistence (JDBC/PostgreSQL) + Docker containerization (E6) ✅ done
-3. Real CI — tests as a pipeline gate, including infrastructure tests via Testcontainers/TD06 (E7) 🔵 current
-4. Customer Reputation + automatic status Job (E8)
-5. Marco 2 — Go Live (E9, packaging CD + a minimal API, with Docker and JDBC already in place)
-6. Notifications (E10), exercising the full CI/CD cycle against an already-deployed system
+3. Real CI — tests as a pipeline gate, including infrastructure tests via Testcontainers/TD06 (E7) ✅ done
+4. Structured logging foundation, system-wide (E8) 🔵 current — resolves TD07
+5. REST API + documentation (Swagger/OpenAPI) (E9)
+6. Marco 2 — Go Live (E10, packaging CD on top of persistence, Docker, and the documented API already in place)
+7. Log evolution — full observability with Prometheus/Grafana (E11), post Go-Live
+8. Overdue enforcement evolution — scheduler Job, loan restriction, and settlement/late fees (E12), post Go-Live
+9. Notifications (E13), exercising the full CI/CD cycle against an already-deployed system
 
 **E5 + E6 merge (decision on record):** Epic E5 (standalone Docker) was discontinued as its own block. Rationale: containerization only generates real business value once it's wired to real persistence — "containerize a CLI with an in-memory repository" is a weak portfolio narrative compared to "containerize an application with real PostgreSQL, HikariCP, and versioned migrations." E5 remains visible in the Epics table (not removed from the map), marked as discontinued, to preserve historical traceability. All containerization scope was absorbed by E6, which took on the name Real Persistence (JDBC/PostgreSQL) + Docker Containerization.
 
@@ -103,278 +109,217 @@ Scope: not yet formalized into epics (future backlog). Given the project's termi
 
 ## Technical Debt
 
-| ID | Description | Points | Status |
-|---|---|---|---|
-| TD01 | `equals`/`hashCode` contract for Book, Customer, and Loan | 3 | ✅ Resolved (US-304, E3) |
-| TD05 | Fat JAR packaging (`maven-shade-plugin`, manifest with `Main-Class`) — frozen since E3, originally scheduled to resolve only in the (old) Go Live epic. Decision revised: the need for Docker moves the production justification for a single executable artifact earlier — freezing until Go Live no longer made sense. | 3 | ✅ Resolved (US-503, E6) |
-| TD06 | Infrastructure layer (in-memory repositories) with no automated test coverage since E4 closed. Intentional deferral: contract and concurrency tests (originally US-404) rewritten with Testcontainers against a real database (Postgres), after E6 (JDBC) delivered the definitive implementation — avoids duplicated effort on an in-memory implementation that would be replaced. | 8 | 🔵 Refined — allocated to US-701 (E7) |
-| TD07 | Structured logging (SLF4J + Logback). No component in the system has run unattended before the E8 Job; ad hoc console output is no longer sufficient. Full observability/tracing stays out of scope — see ADR 0004. | — (to be estimated during E8 refinement) | 🟡 Accepted, absorbed into E8 |
+| ID | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Points | Status |
+|---|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---|---|
+| TD01 | `equals`/`hashCode` contract for Book, Customer, and Loan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | 3 | ✅ Resolved (US-304, E3) |
+| TD05 | Fat JAR packaging (`maven-shade-plugin`, manifest with `Main-Class`) — frozen since E3, originally scheduled to resolve only in the (old) Go Live epic. Decision revised: the need for Docker moves the production justification for a single executable artifact earlier — freezing until Go Live no longer made sense.                                                                                                                                                                                                                                | 3 | ✅ Resolved (US-503, E6) |
+| TD06 | Infrastructure layer (in-memory repositories) with no automated test coverage since E4 closed. Intentional deferral: contract and concurrency tests (originally US-404) rewritten with Testcontainers against a real database (Postgres), after E6 (JDBC) delivered the definitive implementation.                                                                                                                                                                                                                                                      | 8 | ✅ Resolved (US-701, E7) |
+| TD07 | Structured logging (SLF4J + Logback). Originally scoped to only the E8 (old) scheduler Job; re-scoped during the second roadmap revision to cover the entire system from the start, ahead of the API and any scheduler — establishing observability as a convention every subsequent epic inherits, rather than retrofitting it under time pressure later. Full observability/tracing (metrics, dashboards) stays explicitly out of scope for this epic — see ADR [0004](./adr/0004-slf4j-logback-without-full-observability.md) and E11. | 10 | 🔵 Refined — allocated to US-801/US-802/US-803 (E8) |
+| TD08 | Coverage thresholds (Instruction/Branch, per module) were reduced during US-703 to reflect the current testable surface — notably `infrastructure` at 70%/50%. Revisit and raise thresholds once the API layer (E9) expands what's testable, and ideally once E2E tests against the live system (post E10) exist.                                                                                                                                                                                                                                       | — (to be estimated when revisited) | 🟡 Accepted, tracked for E9/E10 |
 
 ---
 
 ## 🔵 Epic E7 — Real CI (Continuous Integration Gate)
 
-**Sprint:** 6
-**Total points:** 18 (8 + 5 + 3 + 2)
+- **Business-level audit trail (DB-backed).** Distinct from technical logging (SLF4J + Logback, ADR [0004](./adr/0004-slf4j-logback-without-full-observability.md), delivered via E8). A "who did what" table for business events was proposed during E8/E12 refinement and intentionally deferred — revisit only after all currently planned epics (through E13) are closed. Not a replacement for structured logging; a separate concern if ever pursued.
+
+---
+
+## 🔵 Epic E8 — Structured Logging Foundation (SLF4J + Logback, System-Wide)
+
+**Sprint:** 7 (proposed)
+**Total points:** 10 (3 + 5 + 2)
 **Status:** 🔵 Refined, ready for execution
 
 ### Decisions on record for this epic
 
-- TD06 (infrastructure tests, formerly US-404) is resolved in this epic via US-701, using Testcontainers against a real PostgreSQL container — validating JDBC repositories and Flyway migrations together, not mocks. This was intentionally deferred until E6 delivered real persistence.
-- Coverage quality gate is enforced **per module** (domain / application / infrastructure) rather than as a single global threshold, reflecting that each layer has a different testability profile — domain (pure business logic) is held to the strictest bar.
-- CI build matrix kept simple: single JDK version (21). No multi-version matrix at this stage.
-- Branch protection on `main` (US-704) is only enabled once the CI workflow (US-702) exists and is verified stable — protecting a non-existent or flaky check would block the team, not help it.
+- Logback uses a **JSON structured encoder** (via `logstash-logback-encoder` or equivalent) — not plain text — from the first line of configuration.
+- Output target is **stdout/stderr**, not a file and not a database table. This is the universal container contract: once E10 (Go-Live, AWS ECS) exists, stdout is captured automatically via the `awslogs` driver into CloudWatch Logs, with no additional infrastructure.
+- Correlation across log lines within the same operation is handled via **SLF4J's MDC** (`operationId`/`correlationId`), not a custom database schema.
+- This epic retrofits logging into the **existing** use cases (book, customer, loan). The future API (E9) and scheduler (E12) will follow the same established convention, avoiding rework later.
+- Full observability (metrics, dashboards, distributed tracing) remains explicitly out of scope for this epic — see ADR [0004](./adr/0004-slf4j-logback-without-full-observability.md). That boundary is revisited in E11, not here.
 
 ### Epic goal
 
-Establish an automated Continuous Integration pipeline that blocks any merge into `main` on build failure, test failure, or insufficient coverage — turning quality into an enforced gate rather than manual discipline.
+Establish a structured, machine-parseable logging foundation across the entire system before any new component (API, scheduler, observability stack) is built on top of it, so operational visibility is a built-in convention rather than an afterthought retrofitted later under time pressure.
 
 ### Business value
 
-A CI pipeline with an enforced coverage gate is table-stakes in international senior backend hiring processes — it signals engineering maturity beyond "tests exist" to "tests are enforced." This is also the epic that formally resolves TD06, closing the last piece of test-coverage debt carried since E4, before the system takes on new business scope (E8) and goes to production (E9).
+Structured logging (SLF4J + Logback, JSON-encoded, correlation-aware via MDC) is table-stakes in professional Java backend roles — interviewers expect to see this as a baseline, not an advanced topic. Establishing it now, ahead of the API and CD epics, means every subsequent epic inherits observability by convention instead of bolting it on afterward.
 
-### Definition of Done — Epic E7
+### Definition of Done — Epic E8
 
-- [ ] Testcontainers-based integration tests validate `BookRepository` and Flyway migrations against a real PostgreSQL container (US-701), resolving TD06
-- [ ] GitHub Actions workflow builds, runs unit tests, and runs integration tests on every push/PR (US-702)
-- [ ] JaCoCo `check` goal enforces per-module coverage thresholds and fails the build below them (US-703)
-- [ ] `main` requires a passing CI check before merge, with direct pushes blocked (US-704)
-- [ ] All 4 User Stories in Done status
-- [ ] TD06 formally resolved
-
----
-
-### US-701 — Infrastructure Tests with Testcontainers (resolves TD06)
-
-**Points:** 8
-**Depends on:** — (unblocked by E6's JDBC delivery)
-
-**Story:** As a developer, I need integration tests running against a real PostgreSQL container, so the JDBC repositories and Flyway migrations delivered in E6 are validated against real database behavior instead of mocks.
-
-**Scenarios (BDD):**
-
-```gherkin
-Feature: Infrastructure layer integration testing with real PostgreSQL
-
-  Scenario: BookRepository persists and retrieves a book against a real database
-    Given a PostgreSQL 17-alpine container is running via Testcontainers
-    And Flyway migrations have been applied successfully to the container
-    When a Book entity is persisted through BookDbRepository
-    Then the retrieved Book must match the original entity by identity and attributes
-
-  Scenario: Flyway migrations run cleanly on a fresh database
-    Given an empty PostgreSQL 17-alpine container
-    When the application starts against this container
-    Then all Flyway migration scripts execute without error
-    And the schema_version table reflects the latest migration as applied
-
-  Scenario: BookRepository enforces unique constraint at database level
-    Given a book already persisted with a given ISBN
-    When a second book with the same ISBN is persisted
-    Then a data integrity violation exception is thrown by the repository
-
-  Scenario: HikariCP connection pool recovers from a dropped connection
-    Given an active HikariCP connection pool against the Testcontainers instance
-    When the underlying connection is forcibly closed
-    Then a subsequent repository call successfully acquires a new connection
-    And completes the operation without manual intervention
-```
-
-**Tasks:**
-
-- Add Testcontainers dependencies (`testcontainers`, `testcontainers-postgresql`, `testcontainers-junit-jupiter`) to the `infrastructure` module
-- Extend the `@IntegrationTest` annotation convention (from E4) to this package
-- Implement `PostgresTestContainerConfig` — a reusable base class with a singleton container shared across test classes (avoids per-test container startup overhead)
-- Write `BookDbRepositoryIntegrationTest` covering the four Gherkin scenarios above
-- Validate Flyway migrations run within the Testcontainers setup itself (not mocked)
-- Cover the unique-constraint violation scenario (ISBN), asserting the translated domain exception
-- Cover HikariCP recovery from a dropped connection
-- Update the TD06 record: status "Refined, allocated to US-701" → "Resolved — US-701 (E7)"
-- Document the infrastructure testing strategy in the README (why Testcontainers instead of mocks at this layer)
-
-**Commits:**
-
-```
-test(book-repository): US-701 add testcontainers postgres for integration tests
-feat(test-config): US-701 create reusable postgres testcontainer base config
-test(book-repository): US-701 cover persistence and retrieval via real jdbc
-test(flyway): US-701 validate clean migration run on empty database
-test(book-repository): US-701 cover unique isbn constraint violation
-test(hikaricp): US-701 cover pool recovery after dropped connection
-docs(td06): US-701 resolve td06, recording the updated decision in the backlog
-docs(readme): US-701 document infrastructure testing strategy
-```
+- [ ] SLF4J + Logback configured with a structured JSON encoder (US-801)
+- [ ] Existing book/customer/loan use cases emit INFO/WARN/ERROR logs consistently (US-802)
+- [ ] Correlation ID convention via MDC implemented and validated (US-803)
+- [ ] Logging conventions documented in the README
+- [ ] All 3 User Stories in Done status
+- [ ] TD07 formally resolved
 
 ---
 
-### US-702 — CI Pipeline Base (GitHub Actions)
-
-**Points:** 5
-**Depends on:** US-701
-
-**Story:** As a developer, I need every push and pull request to `main` to automatically build the project and run its full test suite, so integration issues are caught before merge instead of after.
-
-**Scenarios (BDD):**
-
-```gherkin
-Feature: Continuous Integration pipeline
-
-  Scenario: Pipeline triggers on pull request to main
-    Given a pull request is opened targeting the main branch
-    When the CI workflow is triggered
-    Then the workflow executes build, unit tests, and integration tests in sequence
-
-  Scenario: Pipeline fails fast on compilation error
-    Given a pull request contains a compilation error
-    When the CI workflow runs
-    Then the build step fails
-    And subsequent test steps are skipped
-
-  Scenario: Pipeline reports test results as a PR check
-    Given a pull request has completed the CI workflow
-    When the workflow finishes
-    Then a check status (success or failure) is visible directly on the pull request
-
-  Scenario: Pipeline caches Maven dependencies between runs
-    Given a previous successful pipeline run
-    When a new pipeline run starts on the same branch
-    Then Maven dependencies are restored from cache
-    And overall pipeline duration is reduced compared to a cold run
-```
-
-**Tasks:**
-
-- Create workflow `.github/workflows/ci.yml`
-- Configure trigger on `pull_request` to `main` and `push` to feature branches
-- Configure the build step (`mvn -B compile`)
-- Configure the unit test step, isolated via the `@UnitTest` group (from E4)
-- Configure the integration test step, isolated via the `@IntegrationTest` group, running Testcontainers on the runner (`mvn -B verify`)
-- Configure Maven dependency caching (`actions/setup-java` built-in cache)
-- Validate that a failure in any step halts the workflow (fail-fast)
-- Validate the full pipeline by opening a draft PR
-
-**Commits:**
-
-```
-ci(github-actions): US-702 create base continuous integration workflow
-ci(github-actions): US-702 configure triggers for pull request and push
-ci(github-actions): US-702 separate unit and integration test execution
-ci(github-actions): US-702 add maven dependency caching
-```
-
----
-
-### US-703 — Per-Module JaCoCo Coverage Quality Gate
+### US-801 — SLF4J + Logback Setup with Structured JSON Encoder
 
 **Points:** 3
-**Depends on:** US-702
+**Depends on:** — (unblocked, first US of the epic)
 
-**Story:** As a Product Owner, I need the build to fail automatically when a module's test coverage drops below its defined threshold, so coverage regressions are caught by the pipeline instead of by manual review.
-
-**Confirmed thresholds:**
-
-| Module | Line | Branch |
-|---|---|---|
-| domain | 95% | 90% |
-| application | 90% | 85% |
-| infrastructure | 75% | 65% |
+**Story:** As a developer, I need a structured logging foundation in place, so every component built from this point forward (existing use cases, the future API, the future scheduler) emits machine-parseable logs instead of ad hoc console output.
 
 **Scenarios (BDD):**
 
 ```gherkin
-Feature: Per-module coverage quality gate
+Feature: Structured logging foundation
 
-  Scenario: Build fails when domain module coverage drops below threshold
-    Given the domain module has line coverage below 95% or branch coverage below 90%
-    When the JaCoCo check goal runs during the build
-    Then the build fails with a coverage violation report
+  Scenario: Application emits logs in structured JSON format
+    Given the SLF4J + Logback dependencies are configured
+    When any log statement is executed
+    Then the output is a single-line JSON object containing timestamp, level, logger name, and message
 
-  Scenario: Build fails when application module coverage drops below threshold
-    Given the application module has line coverage below 90% or branch coverage below 85%
-    When the JaCoCo check goal runs during the build
-    Then the build fails with a coverage violation report
-
-  Scenario: Build fails when infrastructure module coverage drops below threshold
-    Given the infrastructure module has line coverage below 75% or branch coverage below 65%
-    When the JaCoCo check goal runs during the build
-    Then the build fails with a coverage violation report
-
-  Scenario: Build succeeds when all modules meet their individual thresholds
-    Given each module meets or exceeds its configured coverage threshold
-    When the JaCoCo check goal runs during the build
-    Then the build proceeds without a coverage-related failure
-
-  Scenario: Aggregate report reflects a per-module breakdown
-    Given all module test suites have executed
-    When the report-aggregate module generates the consolidated report
-    Then the report displays coverage figures separated by module
+  Scenario: Log level is configurable per environment
+    Given a Logback configuration profile for local development
+    And a separate profile for containerized/production execution
+    When the application starts under each profile
+    Then the effective log level matches the profile's configuration
 ```
 
 **Tasks:**
 
-- Configure the `jacoco-maven-plugin` `check` goal individually in each module's `pom.xml` (domain, application, infrastructure)
-- Define `limit` rules (COVEREDRATIO LINE/BRANCH) per module, using the thresholds table above
-- Bind the `check` goal to the `verify` phase, so it runs in the same CI step as US-702
-- Adjust `coverage-report`'s `report-aggregate` output to display coverage segmented by module, not only a consolidated total
-- Validate locally that a deliberate coverage drop in each module fails the build
-- Document the thresholds and their rationale in the README (why domain is held to a stricter bar than infrastructure)
+- Add `logback-classic` and a JSON encoder (`logstash-logback-encoder` or equivalent) to the `infrastructure` module
+- Configure `logback.xml` with a JSON encoder targeting stdout
+- Define separate profiles: `logback-dev.xml` (human-readable, console) vs `logback-prod.xml` (JSON)
+- Document logging conventions in the README (levels: ERROR/WARN/INFO/DEBUG usage criteria)
 
 **Commits:**
 
 ```
-build(jacoco): US-703 configure check goal per module with individual thresholds
-build(jacoco): US-703 define coverage limits for domain module
-build(jacoco): US-703 define coverage limits for application module
-build(jacoco): US-703 define coverage limits for infrastructure module
-build(jacoco): US-703 adjust report-aggregate to display per-module coverage
-docs(readme): US-703 document coverage thresholds and rationale
+build(logging): US-801 add slf4j and logback dependencies
+build(logging): US-801 configure json structured encoder
+build(logging): US-801 add dev and prod logback profiles
+docs(readme): US-801 document logging conventions
 ```
 
 ---
 
-### US-704 — Branch Protection on main
+### US-802 — Retrofit Logging into Existing Use Cases
 
-**Points:** 2
-**Depends on:** US-703
+**Points:** 5
+**Depends on:** US-801
 
-**Story:** As a Product Owner, I need `main` protected against direct pushes and unverified merges, so the CI gate built in this epic is actually enforced, not just informational.
+**Story:** As a Product Owner, I need meaningful log output on every existing business flow, so operational visibility isn't limited to newly built features going forward.
 
 **Scenarios (BDD):**
 
 ```gherkin
-Feature: Branch protection on main
+Feature: Logging in existing use cases
 
-  Scenario: Direct push to main is blocked
-    Given a developer attempts to push directly to the main branch
-    When the push is executed
-    Then the push is rejected by branch protection rules
+  Scenario: Successful loan creation is logged at INFO level
+    Given a valid loan creation request
+    When the use case completes successfully
+    Then an INFO log entry is recorded with the loan and customer identifiers
 
-  Scenario: Merge is blocked when CI check fails
-    Given a pull request targeting main has a failing CI status check
-    When a merge is attempted
-    Then GitHub blocks the merge until the check passes
+  Scenario: Business rule violation is logged at WARN level
+    Given a loan request that violates an active business rule (e.g., book unavailable)
+    When the use case rejects the request
+    Then a WARN log entry is recorded with the violated rule and relevant identifiers
 
-  Scenario: Merge is allowed when all required checks pass
-    Given a pull request targeting main has all required CI checks passing
-    When a merge is attempted
-    Then the merge is permitted
+  Scenario: Unexpected exception is logged at ERROR level
+    Given an unexpected exception occurs during a use case execution
+    When the exception propagates
+    Then an ERROR log entry is recorded with the exception stack trace
 ```
 
 **Tasks:**
 
-- Configure branch protection rule for `main` in GitHub (Settings → Branches)
-- Mark the US-702 workflow as a required status check
-- Disable direct pushes (require a pull request before merging)
-- Validate the negative case: attempt a merge with a failing CI check and confirm it is blocked
-- Validate the positive case: merge with a passing CI check is permitted
-- Document the rule in the README (contribution/workflow section)
+- Inject `Logger` (via `LoggerFactory.getLogger`) into Book, Customer, and Loan usecases
+- Add INFO logging on successful completion of each usecase
+- Add WARN logging on business validation failures (existing custom exceptions)
+- Add ERROR logging at exception boundaries (CLI layer / composition root)
+- Ensure no sensitive data is logged in plain text
 
 **Commits:**
 
 ```
-chore(github): US-704 configure branch protection rule on main
-docs(readme): US-704 document branch protection rule and contribution workflow
+feat(logging): US-802 add info logging to book usecases
+feat(logging): US-802 add info logging to customer usecases
+feat(logging): US-802 add info logging to loan usecases
+feat(logging): US-802 add warn logging on business rule violations
+feat(logging): US-802 add error logging at exception boundaries
 ```
+
+---
+
+### US-803 — Correlation ID Convention via MDC
+
+**Points:** 2
+**Depends on:** US-801
+
+**Story:** As a developer, I need every log line belonging to the same operation to share a correlation identifier, so a single business flow can be traced end-to-end in the logs without a distributed tracing system.
+
+**Scenarios (BDD):**
+
+```gherkin
+Feature: Correlation ID via MDC
+
+  Scenario: Correlation ID is generated at the start of an operation
+    Given a use case execution begins
+    When no correlation ID is present in the current context
+    Then a new correlation ID is generated and placed into MDC
+
+  Scenario: All log lines within the same operation share the correlation ID
+    Given a correlation ID has been set in MDC for the current operation
+    When multiple log statements are executed during that operation
+    Then every log line includes the same correlation ID field
+
+  Scenario: MDC is cleared after the operation completes
+    Given an operation has finished (successfully or with error)
+    When the use case returns control to the caller
+    Then the MDC context is cleared to prevent leaking into unrelated operations
+```
+
+**Tasks:**
+
+- Implement a `CorrelationIdSupport` helper (set/get/clear on MDC)
+- Wire correlation ID generation at the entrypoint of each CLI flow (composition root boundary)
+- Ensure MDC is cleared in a `finally` block to avoid leakage across CLI invocations
+- Validate correlation ID appears consistently across all log lines of a single flow
+
+**Commits:**
+
+```
+feat(logging): US-803 implement correlation id support via mdc
+feat(logging): US-803 wire correlation id generation at cli entrypoint
+test(logging): US-803 validate mdc cleared after operation completes
+```
+
+---
+
+## Placeholder Epics (Titles Only — Not Yet Refined)
+
+Per the just-in-time grooming rule, these exist only as titles (plus any scope notes already captured in conversation) until their turn comes.
+
+### E9 — REST API + Documentation (Swagger/OpenAPI)
+Minimal REST API via `com.sun.net.httpserver.HttpServer` (framework-free, per ADR [0001](./adr/0001-keep-library-express-framework-free.md)), documented with Swagger/OpenAPI. No further detail refined yet.
+
+### E10 — CD / Go Live (Marco 2, AWS)
+Packages the CD pipeline on top of persistence (E6), the documented API (E9), and structured logging (E8) already in place. ADR and formal US breakdown deferred until this epic enters refinement.
+
+### E11 — Log Evolution & Full Observability (placeholder)
+Scope note captured during E8 refinement, not yet detailed:
+- Prometheus for metrics collection (JVM, application-level counters/gauges)
+- Grafana for dashboards/visualization
+- Builds on the SLF4J + Logback + JSON foundation from E8 — adds the metrics pillar, not a replacement for structured logging
+- Full BDD/tasks deferred until this epic enters active refinement
+
+### E12 — Overdue Enforcement Evolution (placeholder)
+Scope note captured during post-E7 refinement (governed by ADR [0005](./adr/0005-roadmap-and-settlement-consolidation.md) and [ADR 0006](./adr/0006-jacoco-and-plpgsql-consolidation.md)):
+- Background scheduler Job automatically transitioning overdue loans with explicit locking in Java (ADR [0002](./adr/0002-domain-owned-overdue-status-rule-with-explicit-locking.md)).
+- Overdue customer restriction rule (3 overdue loans = 30-day block) and narrow fee settlement (late fee + daily interest) per **[0005](./adr/0005-roadmap-and-settlement-consolidation.md)**.
+- Atomic multi-table bookkeeping persisted via a dedicated PL/pgSQL function per **[ADR 0006](./adr/0006-jacoco-and-plpgsql-consolidation.md)**.
+- Domain-level notification port introduced (no-op adapter; real adapter ships in E13).
+- Full BDD/tasks deferred until this epic enters active refinement.
+
+### E13 — Notifications
+Real adapter for the notification port introduced in E12, without touching the Job or the domain rule. Deliberately scheduled post Go-Live to exercise a full live CI/CD cycle. No further detail refined yet.
 
 ---
 
@@ -432,6 +377,30 @@ Full detail (Gherkin, tasks, commits): see the corresponding Issues on GitHub Pr
 
 E5 (standalone Docker) was formally discontinued in favor of this merged scope. TD05 (Fat JAR packaging) resolved via US-503. Full detail (Gherkin, tasks, commits): see the corresponding Issues on GitHub Projects.
 
+### E7 — Real CI (Continuous Integration Gate)
+✅ Done · Sprint 6 · 18 points (8 + 5 + 3 + 2)
+
+| US | Description | Points | Status |
+|---|---|---|---|
+| US-701 | Infrastructure Tests with Testcontainers (resolved TD06) | 8 | ✅ Done |
+| US-702 | CI Pipeline Base (GitHub Actions) | 5 | ✅ Done |
+| US-703 | Per-Module JaCoCo Coverage Quality Gate | 3 | ✅ Done — amended post-close, see below |
+| US-704 | Branch Protection on main | 2 | ✅ Done |
+
+TD06 resolved via US-701 (Testcontainers-based integration tests for `BookDbRepository` and Flyway migrations against real PostgreSQL). CI pipeline (`ci.yml`) builds, tests, and enforces the coverage gate on every push to `develop` and PR into `main`. A `publish-docker` job was present during US-704 implementation and removed — CD scope is out of bounds for this epic, deferred fully to E10.
+
+**US-703 amendment (post-close):** the JaCoCo `check` goal metric is **Instruction**, not Line — a deliberate technical decision (Instruction coverage measures bytecode granularity and is stricter than line coverage). Thresholds were also reduced from the original targets to reflect the current testable surface, most notably `infrastructure` (only the JDBC repository exists, no API layer yet):
+
+| Module | Instruction | Branch |
+|---|---|---|
+| domain | 85% | 90% |
+| application | 85% | 95% |
+| infrastructure | 70% | 50% |
+
+This reduction is temporary — see TD08 for the plan to revisit thresholds once E9 (API layer) and E2E tests against the live system (post E10) expand what's actually exercisable.
+
+`main` requires a passing `build-and-test` check and blocks direct pushes (US-704). Full detail (Gherkin, tasks, commits): see the corresponding Issues on GitHub Projects.
+
 ---
 
 ## Commit Convention
@@ -471,4 +440,4 @@ Follows SemVer (`MAJOR.MINOR.PATCH`):
 
 ---
 
-**Last update:** Epic E6 (Real Persistence JDBC/PostgreSQL + Docker Containerization) closed — 18 points (2+8+3+5), Sprint 5, US-501 to US-504, all Done. Epic E7 (Real CI) refined and ready for execution — 18 points (8+5+3+2), Sprint 6, US-701 to US-704, resolving TD06. Coverage quality gate defined per module (domain 95%/90%, application 90%/85%, infrastructure 75%/65%).
+**Last update:** Roadmap reorganized from E8 onward per **ADR 0005** (Roadmap Restructuring & Settlement) and **ADR 0006** (JaCoCo Metrics & PL/pgSQL Exception). Epic E8 is currently refined and ready for execution (Structured Logging Foundation, resolving TD07). ADR 0005 and ADR 0006 are officially Accepted.
