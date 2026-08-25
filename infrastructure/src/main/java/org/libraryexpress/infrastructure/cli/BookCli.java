@@ -11,6 +11,7 @@ import org.libraryexpress.domain.book.exception.UniqueIsbnViolationException;
 import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.libraryexpress.domain.core.util.RandomGenerator;
 import org.libraryexpress.infrastructure.config.AppContext;
+import org.libraryexpress.infrastructure.config.logging.CorrelationIdSupport;
 import org.libraryexpress.infrastructure.util.JsonPrinter;
 
 import java.util.Scanner;
@@ -54,6 +55,7 @@ public class BookCli {
     }
 
     private void register(Scanner scan) {
+        CorrelationIdSupport.start();
 
         String ISBN = Isbn.generate().value();
 
@@ -69,26 +71,28 @@ public class BookCli {
 
         System.out.println("Enter the year:");
         int year;
+
         try {
             year = Integer.parseInt(scan.nextLine().trim());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid year. Registration cancelled.");
-            return;
-        }
 
-        RegisterBookDto registerBookDto = new RegisterBookDto(ISBN, title, author, year, BookStatus.AVAILABLE);
+            RegisterBookDto registerBookDto = new RegisterBookDto(ISBN, title, author, year, BookStatus.AVAILABLE);
 
-        try {
             this.registerBook.execute(registerBookDto);
 
             System.out.println("Book registered successfully");
 
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid year. Registration cancelled.");
+            return;
         } catch (UniqueIsbnViolationException e) {
             System.out.println(e.getMessage());
+        } finally {
+            CorrelationIdSupport.clear();
         }
     }
 
     private void show(Scanner scan) {
+        CorrelationIdSupport.start();
 
         System.out.println("  ");
         System.out.println("Enter the ISBN:");
@@ -100,11 +104,13 @@ public class BookCli {
             System.out.println(JsonPrinter.print(bookDto));
         } catch (BookNotFoundException e) {
             System.out.println(e.getMessage());
+        } finally {
+            CorrelationIdSupport.clear();
         }
     }
 
     private void list(Scanner scan) {
-
+        CorrelationIdSupport.start();
         var books = this.listBooks.execute();
 
         if (books.isEmpty()) {
@@ -112,5 +118,6 @@ public class BookCli {
         } else {
             System.out.println(JsonPrinter.print(books));
         }
+        CorrelationIdSupport.clear();
     }
 }

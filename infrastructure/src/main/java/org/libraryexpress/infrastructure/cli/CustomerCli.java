@@ -10,6 +10,7 @@ import org.libraryexpress.application.customer.dto.request.CreateCustomerDto;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
 import org.libraryexpress.infrastructure.config.AppContext;
+import org.libraryexpress.infrastructure.config.logging.CorrelationIdSupport;
 import org.libraryexpress.infrastructure.util.JsonPrinter;
 
 import java.util.Scanner;
@@ -55,6 +56,8 @@ class CustomerCli {
     }
 
     private void create(Scanner scan) {
+        CorrelationIdSupport.start();
+
         scan.nextLine();
 
         System.out.println("Enter the customer name:");
@@ -68,7 +71,6 @@ class CustomerCli {
         CreateCustomerDto createCustomerDto = new CreateCustomerDto(name, email);
 
         try {
-
             this.createCustomer.execute(createCustomerDto);
 
             System.out.println(" ");
@@ -82,10 +84,13 @@ class CustomerCli {
             System.out.println(" ");
             System.out.println("Unexpected error has occurred:");
             System.out.println(e.getMessage());
+        } finally {
+            CorrelationIdSupport.clear();
         }
     }
 
     private void show(Scanner scan) {
+        CorrelationIdSupport.start();
 
         System.out.println("Enter the customer e-mail or ID");
         String dataToSearch = scan.next();
@@ -96,11 +101,15 @@ class CustomerCli {
 
         } catch (CustomerNotFoundException e) {
             System.out.println(e.getMessage());
+        } finally {
+            CorrelationIdSupport.clear();
         }
 
     }
 
     private void update(Scanner scan) {
+        CorrelationIdSupport.start();
+
         System.out.println("Enter the customer ID");
         String id = scan.next();
 
@@ -120,10 +129,13 @@ class CustomerCli {
             System.out.println(" ");
             System.out.println("Unexpected error has occurred:");
             System.out.println(e.getMessage());
+        } finally {
+            CorrelationIdSupport.clear();
         }
     }
 
     private void list() {
+        CorrelationIdSupport.start();
         var customers = this.listCustomers.execute();
 
         if (customers.isEmpty()) {
@@ -131,5 +143,7 @@ class CustomerCli {
         } else {
             System.out.println(JsonPrinter.print(customers));
         }
+
+        CorrelationIdSupport.clear();
     }
 }

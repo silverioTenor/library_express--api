@@ -6,6 +6,7 @@ import org.libraryexpress.infrastructure.cli.ManagementCli;
 import org.libraryexpress.infrastructure.config.AppContext;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.config.database.MigrationRunner;
+import org.libraryexpress.infrastructure.config.logging.CorrelationIdSupport;
 import org.libraryexpress.infrastructure.config.logging.Slf4jLoggerAdapter;
 
 import javax.sql.DataSource;
@@ -21,8 +22,6 @@ public class Application {
     public static void main(String[] args) {
         // Step 1: Immediate wire injection of the logging Anti-Corruption Layer
         CustomLoggerFactory.initialize(Slf4jLoggerAdapter::new);
-
-        // Step 2: Safe initialization of the component log reference right after the wire injection
         logger = CustomLoggerFactory.getLogger(Application.class);
 
         logger.info("Starting LibraryExpress infrastructure pipeline...");
@@ -55,9 +54,14 @@ public class Application {
 
             // 3. Register a graceful shutdown hook to release database resources on JVM exit
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                logger.info("Shutting down connection pool gracefully...");
-                connectionProvider.close();
-                logger.info("Database resources released safely.");
+                try {
+                    CorrelationIdSupport.start();
+                    logger.info("Shutting down connection pool gracefully...");
+                    connectionProvider.close();
+                    logger.info("Database resources released safely.");
+                } finally {
+                    CorrelationIdSupport.clear();
+                }
             }));
 
         } catch (Exception e) {
