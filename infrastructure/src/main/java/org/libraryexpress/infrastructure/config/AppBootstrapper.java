@@ -2,6 +2,7 @@ package org.libraryexpress.infrastructure.config;
 
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
+import org.libraryexpress.infrastructure.api.server.EmbeddedHttpServer;
 import org.libraryexpress.infrastructure.cli.ManagementCli;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.config.database.MigrationRunner;
@@ -32,9 +33,8 @@ public class AppBootstrapper {
 
         log.info("Infrastructure baseline loaded successfully! Routing to application entrypoint.");
 
-        // Stage 3: Dynamic Interface Strategy (Current: Interactive CLI interface)
-        // Task/Style Compliance: The bootstrapper completely encapsulates the execution choice
-        initializeCliInterface(context, connectionProvider);
+        EmbeddedHttpServer server = new EmbeddedHttpServer(context);
+        server.start();
     }
 
     private static void initializeCliInterface(AppContext context, ConnectionProvider connectionProvider) {
