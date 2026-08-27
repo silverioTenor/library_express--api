@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.libraryexpress.infrastructure.api.adapter.SunHttpServer;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
+import org.libraryexpress.infrastructure.util.JsonPrinter;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,12 +17,7 @@ public final class Router implements HttpHandler {
 
     private final Map<RouteKey, CustomHttpHandler> routes = new HashMap<>();
 
-    private final ObjectMapper mapper;
-
-    public Router() {
-        mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-    }
+    public Router() {}
 
     public void register(String method, String path, CustomHttpHandler handler) {
         routes.put(new RouteKey(method.toUpperCase(), path), handler);
@@ -41,8 +37,8 @@ public final class Router implements HttpHandler {
         }
 
         try {
-            HttpContextRequest request = SunHttpServer.adaptRequest(exchange, mapper);
-            HttpContextResponse response = SunHttpServer.adaptResponse(exchange, mapper);
+            HttpContextRequest request = SunHttpServer.adaptRequest(exchange);
+            HttpContextResponse response = SunHttpServer.adaptResponse(exchange);
 
             handler.handle(request, response);
         } catch (Exception e) {
@@ -53,7 +49,7 @@ public final class Router implements HttpHandler {
     private void sendError(HttpExchange exchange, int status, String message) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "application/json");
 
-        byte[] payload = mapper.writeValueAsBytes(ErrorResponse.of(status, message));
+        byte[] payload = JsonPrinter.printBytes(ErrorResponse.of(status, message));
 
         exchange.sendResponseHeaders(status, payload.length);
 

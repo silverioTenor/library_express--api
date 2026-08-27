@@ -1,9 +1,10 @@
 package org.libraryexpress.infrastructure.api.adapter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
+import org.libraryexpress.infrastructure.util.JsonPrinter;
+import org.libraryexpress.infrastructure.util.JsonReader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +20,7 @@ public final class SunHttpServer {
 
     private SunHttpServer() {}
 
-    public static HttpContextRequest adaptRequest(HttpExchange exchange, ObjectMapper mapper) {
+    public static HttpContextRequest adaptRequest(HttpExchange exchange) {
         return new HttpContextRequest() {
 
             private Map<String, String> queryParams;
@@ -27,7 +28,7 @@ public final class SunHttpServer {
             @Override
             public <T> T parseBody(Class<T> targetClass) throws IOException {
                 try (InputStream is = exchange.getRequestBody()) {
-                    return  mapper.readValue(is, targetClass);
+                    return  JsonReader.read(is, targetClass);
                 }
             }
 
@@ -75,7 +76,7 @@ public final class SunHttpServer {
         };
     }
 
-    public static HttpContextResponse adaptResponse(HttpExchange exchange, ObjectMapper mapper) {
+    public static HttpContextResponse adaptResponse(HttpExchange exchange) {
 
         return new HttpContextResponse() {
 
@@ -91,7 +92,7 @@ public final class SunHttpServer {
             public void json(Object body) throws IOException {
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
 
-                byte[] bytes = mapper.writeValueAsBytes(body);
+                byte[] bytes = JsonPrinter.printBytes(body);
 
                 exchange.sendResponseHeaders(currentStatus, bytes.length);
 
