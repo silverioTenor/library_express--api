@@ -14,6 +14,7 @@ import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.libraryexpress.application.loan.mapper.LoanMapper;
 import org.libraryexpress.application.loan.usecase.*;
 import org.libraryexpress.application.loan.validator.SearchLoanValidator;
+import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.repository.jdbc.BookDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.CustomerDbRepository;
@@ -34,6 +35,7 @@ public class AppContext {
     private final RegisterBook registerBook;
     private final FindBook findBook;
     private final ListBooks listBooks;
+    private final BookController bookController;
 
     // LOAN
     private final CreateLoan createLoan;
@@ -60,6 +62,7 @@ public class AppContext {
         this.registerBook = new RegisterBook(bookRepository, BookMapper.INSTANCE);
         this.findBook = new FindBook(bookRepository, BookMapper.INSTANCE);
         this.listBooks = new ListBooks(bookRepository, BookMapper.INSTANCE);
+        this.bookController = new BookController(this);
 
         // LOAN
         LoanDbRepository loanRepository = new LoanDbRepository(dataSource);
@@ -119,5 +122,9 @@ public class AppContext {
 
     public CloseOverdueLoan getCloseOverdueLoan() {
         return closeOverdueLoan;
+    }
+
+    public BookController getBookController() {
+        return bookController;
     }
 }

@@ -111,9 +111,9 @@ public class BookCli {
 
     private void list(Scanner scan) {
         CorrelationIdSupport.start();
-        var books = this.listBooks.execute();
+        var books = this.listBooks.execute(null);
 
-        if (books.isEmpty()) {
+        if (books.total() <= 0) {
             System.out.println("No books found.");
         } else {
             System.out.println(JsonPrinter.print(books));

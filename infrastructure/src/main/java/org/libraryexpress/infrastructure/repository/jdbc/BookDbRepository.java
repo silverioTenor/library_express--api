@@ -3,6 +3,7 @@ package org.libraryexpress.infrastructure.repository.jdbc;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.repository.BookRepository;
+import org.libraryexpress.application.core.dto.InputPaginationDto;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -133,8 +134,10 @@ public class BookDbRepository implements BookRepository {
     }
 
     @Override
-    public Set<Book> all() {
+    public Set<Book> all(InputPaginationDto paginationDto) {
         String query = "SELECT * FROM tb_book";
+
+        if (paginationDto != null && paginationDto.isPaginated()) query += " LIMIT ? OFFSET ?";
 
         Set<Book> books = new HashSet<>();
 

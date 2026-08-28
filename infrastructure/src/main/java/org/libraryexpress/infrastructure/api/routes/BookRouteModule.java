@@ -1,22 +1,23 @@
 package org.libraryexpress.infrastructure.api.routes;
 
+import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.api.routing.Router;
 import org.libraryexpress.infrastructure.config.AppContext;
 
-import java.util.Map;
+import static org.libraryexpress.infrastructure.api.enums.HttpVerb.*;
 
 public final class BookRouteModule implements HttpRouteModule {
 
-    private final AppContext context;
+    private final BookController controller;
 
     public BookRouteModule(AppContext context) {
-        this.context = context;
+        this.controller = context.getBookController();
     }
 
     @Override
     public void register(Router router) {
-        router.register("GET", "/books", (request, response) -> {
-            response.status(200).json(Map.of("message", "Book List"));
-        });
+        router.register(POST, "/books", controller::register);
+        router.register(GET, "/books/{isbn}", controller::get);
+        router.register(GET, "/books", controller::list);
     }
 }

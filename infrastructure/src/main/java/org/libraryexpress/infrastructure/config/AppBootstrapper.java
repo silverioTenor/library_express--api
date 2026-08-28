@@ -33,6 +33,11 @@ public class AppBootstrapper {
 
         log.info("Infrastructure baseline loaded successfully! Routing to application entrypoint.");
 
+        initializeApiInterface(context);
+//        initializeCliInterface(context, connectionProvider);
+    }
+
+    private static void initializeApiInterface(AppContext context) {
         EmbeddedHttpServer server = new EmbeddedHttpServer(context);
         server.start();
     }
