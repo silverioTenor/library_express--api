@@ -140,7 +140,7 @@ public class BookDbRepository implements BookRepository {
 
         String query = shouldPaginate
                 ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_book LIMIT ? OFFSET ?"
-                : "SELECT * FROM books";
+                : "SELECT * FROM tb_book";
 
         Set<Book> books = new HashSet<>();
         long totalElements;
