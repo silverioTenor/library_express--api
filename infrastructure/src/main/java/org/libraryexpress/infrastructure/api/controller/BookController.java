@@ -2,8 +2,8 @@ package org.libraryexpress.infrastructure.api.controller;
 
 import org.libraryexpress.application.book.dto.request.RegisterBookDto;
 import org.libraryexpress.application.book.dto.response.BookDto;
-import org.libraryexpress.application.core.dto.InputPaginationDto;
-import org.libraryexpress.application.core.dto.OutputPaginationDto;
+import org.libraryexpress.domain.core.dto.InputPaginationDto;
+import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
@@ -34,11 +34,15 @@ public final class BookController {
     }
 
     public void list(HttpContextRequest request, HttpContextResponse response) throws Exception {
-        Pagination.PageRequest pageRequest = request.getPageRequest();
+        try {
+            Pagination.PageRequest pageRequest = request.getPageRequest();
 
-        var inputDto = InputPaginationDto.of(pageRequest.page(), pageRequest.size());
-        OutputPaginationDto<BookDto> outputDto = context.getListBooks().execute(inputDto);
+            var inputDto = InputPaginationDto.of(pageRequest.page(), pageRequest.size());
+            OutputPaginationDto<BookDto> outputDto = context.getListBooks().execute(inputDto);
 
-        response.status(SUCCESS).json(outputDto);
+            response.status(SUCCESS).json(outputDto);
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 }

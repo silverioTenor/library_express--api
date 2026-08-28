@@ -17,7 +17,7 @@ public class BookUnitTest {
     private static final String VALID_ISBN_2 = "111-22-33333-44-5";
 
     @Test
-    @DisplayName("Should build a book instance successfully with all provided attributes")
+    @DisplayName("Should build a book instance successfully with findAll provided attributes")
     void shouldBuildBook_whenAllAttributesAreProvided() {
         // Arrange & Act
         Book book = new Book.Builder()

@@ -3,7 +3,8 @@ package org.libraryexpress.infrastructure.repository.jdbc;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.repository.BookRepository;
-import org.libraryexpress.application.core.dto.InputPaginationDto;
+import org.libraryexpress.domain.core.dto.InputPaginationDto;
+import org.libraryexpress.domain.core.repository.QueryResult;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -73,7 +74,7 @@ public class BookDbRepository implements BookRepository {
 
         if (hasIsbnFilter) query.append(" AND isbn = ?");
 
-        // Dynamically building the IN (?, ?, ...) clause to match the Set collections size safely
+        // Dynamically building the IN (?, ?, ...) clause to match the Set collections limit safely
         if (hasStatusFilter) query.append(" AND status = ANY(?)");
 
         Set<Book> books = new HashSet<>();
@@ -134,26 +135,49 @@ public class BookDbRepository implements BookRepository {
     }
 
     @Override
-    public Set<Book> all(InputPaginationDto paginationDto) {
-        String query = "SELECT * FROM tb_book";
+    public QueryResult<Book> findAll(InputPaginationDto paginationDto) {
+        boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
 
-        if (paginationDto != null && paginationDto.isPaginated()) query += " LIMIT ? OFFSET ?";
+        String query = shouldPaginate
+                ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_book LIMIT ? OFFSET ?"
+                : "SELECT * FROM books";
 
         Set<Book> books = new HashSet<>();
+        long totalElements;
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query);
-                ResultSet resultSet = statement.executeQuery()
         ) {
-            while (resultSet.next()) {
-                books.add(mapRowToBook(resultSet));
+            if (shouldPaginate) {
+                statement.setInt(1, paginationDto.limit());
+                statement.setInt(2, paginationDto.offset());
+            } else {
+                connection.setAutoCommit(false);
+                statement.setFetchSize(500);
             }
+
+            boolean firstRow = true;
+            long countFromWindow = 0;
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+
+                    if (shouldPaginate && firstRow) {
+                        countFromWindow = resultSet.getLong("full_count");
+                        firstRow = false;
+                    }
+
+                    books.add(mapRowToBook(resultSet));
+                }
+            }
+            totalElements = shouldPaginate ? countFromWindow : books.size();
+
         } catch (SQLException e) {
             throw new RuntimeException("Fatal database error executing unrestricted books catalog query: " + e.getMessage(), e);
         }
 
-        return books;
+        return new QueryResult<Book>(books, totalElements);
     }
 
     /**
