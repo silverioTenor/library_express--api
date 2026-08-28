@@ -34,15 +34,11 @@ public final class BookController {
     }
 
     public void list(HttpContextRequest request, HttpContextResponse response) throws Exception {
-        try {
-            Pagination.PageRequest pageRequest = request.getPageRequest();
+        Pagination.PageRequest pageRequest = request.getPageRequest();
 
-            var inputDto = InputPaginationDto.of(pageRequest.page(), pageRequest.size());
-            OutputPaginationDto<BookDto> outputDto = context.getListBooks().execute(inputDto);
+        var inputDto = InputPaginationDto.of(pageRequest.page(), pageRequest.size());
+        OutputPaginationDto<BookDto> outputDto = context.getListBooks().execute(inputDto);
 
-            response.status(SUCCESS).json(outputDto);
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-        }
+        response.status(SUCCESS).json(outputDto);
     }
 }
