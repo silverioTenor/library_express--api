@@ -136,9 +136,9 @@ class CustomerCli {
 
     private void list() {
         CorrelationIdSupport.start();
-        var customers = this.listCustomers.execute();
+        var customers = this.listCustomers.execute(null);
 
-        if (customers.isEmpty()) {
+        if (customers.items().isEmpty()) {
             System.out.println("No clients found.");
         } else {
             System.out.println(JsonPrinter.print(customers));

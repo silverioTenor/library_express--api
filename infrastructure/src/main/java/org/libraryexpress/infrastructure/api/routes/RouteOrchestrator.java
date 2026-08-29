@@ -14,7 +14,8 @@ public final class RouteOrchestrator {
 
     public RouteOrchestrator(AppContext context) {
         this.modules = List.of(
-                new BookRouteModule(context)
+                new BookRouteModule(context),
+                new CustomerRouteModule(context)
         );
     }
 

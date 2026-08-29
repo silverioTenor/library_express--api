@@ -15,6 +15,7 @@ import org.libraryexpress.application.loan.mapper.LoanMapper;
 import org.libraryexpress.application.loan.usecase.*;
 import org.libraryexpress.application.loan.validator.SearchLoanValidator;
 import org.libraryexpress.infrastructure.api.controller.BookController;
+import org.libraryexpress.infrastructure.api.controller.CustomerController;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.repository.jdbc.BookDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.CustomerDbRepository;
@@ -30,6 +31,7 @@ public class AppContext {
     private final FindCustomer findCustomer;
     private final ListCustomers listCustomers;
     private final UpdateCustomerEmail updateCustomerEmail;
+    private final CustomerController customerController;
 
     // BOOK
     private final RegisterBook registerBook;
@@ -54,6 +56,7 @@ public class AppContext {
         this.findCustomer = new FindCustomer(customerRepository, CustomerMapper.INSTANCE);
         this.listCustomers = new ListCustomers(customerRepository, CustomerMapper.INSTANCE);
         this.updateCustomerEmail = new UpdateCustomerEmail(customerRepository, CustomerMapper.INSTANCE);
+        this.customerController = new CustomerController(this);
 
         // BOOK
         BookDbRepository bookRepository = new BookDbRepository(dataSource);
@@ -126,5 +129,9 @@ public class AppContext {
 
     public BookController getBookController() {
         return bookController;
+    }
+
+    public CustomerController getCustomerController() {
+        return customerController;
     }
 }

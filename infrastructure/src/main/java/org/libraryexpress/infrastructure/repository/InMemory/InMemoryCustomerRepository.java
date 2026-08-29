@@ -1,5 +1,8 @@
 package org.libraryexpress.infrastructure.repository.InMemory;
 
+import org.libraryexpress.domain.core.dto.InputPaginationDto;
+import org.libraryexpress.domain.core.dto.OutputPaginationDto;
+import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
@@ -36,7 +39,7 @@ public class InMemoryCustomerRepository implements CustomerRepository {
     }
 
     @Override
-    public Set<Customer> all() {
-        return Set.copyOf(group.values());
+    public QueryResult<Customer> findAll(InputPaginationDto paginationDto) {
+        return new QueryResult<>(Set.copyOf(group.values()), group.size());
     }
 }

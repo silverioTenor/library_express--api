@@ -3,6 +3,7 @@ package org.libraryexpress.infrastructure.api.enums;
 public enum HttpStatusCode {
     SUCCESS(200),
     CREATED(201),
+    NO_CONTENT(204),
     BAD_REQUEST(400),
     UNAUTHORIZED(401),
     FORBIDDEN(403),
