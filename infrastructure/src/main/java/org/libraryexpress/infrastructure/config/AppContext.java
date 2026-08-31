@@ -16,6 +16,7 @@ import org.libraryexpress.application.loan.usecase.*;
 import org.libraryexpress.application.loan.validator.SearchLoanValidator;
 import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.api.controller.CustomerController;
+import org.libraryexpress.infrastructure.api.controller.LoanController;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.repository.jdbc.BookDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.CustomerDbRepository;
@@ -42,9 +43,9 @@ public class AppContext {
     // LOAN
     private final CreateLoan createLoan;
     private final SearchLoans searchLoans;
-    private final ListLoans listLoans;
     private final ReturnLoan returnLoan;
     private final CloseOverdueLoan closeOverdueLoan;
+    private final LoanController loanController;
 
     public AppContext(ConnectionProvider connectionProvider) {
         DataSource dataSource = connectionProvider.getDataSource();
@@ -74,9 +75,9 @@ public class AppContext {
 
         this.createLoan = new CreateLoan(loanRepository, bookRepository, loanEligibilityValidator, bookAvailabilityValidator);
         this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE, searchLoanValidator);
-        this.listLoans = new ListLoans(loanRepository, LoanMapper.INSTANCE);
         this.returnLoan = new ReturnLoan(loanRepository, bookRepository, Clock.systemDefaultZone());
         this.closeOverdueLoan = new CloseOverdueLoan(loanRepository);
+        this.loanController = new LoanController(this);
     }
 
     public CreateCustomer getCreateCustomer() {
@@ -115,10 +116,6 @@ public class AppContext {
         return searchLoans;
     }
 
-    public ListLoans getListLoans() {
-        return listLoans;
-    }
-
     public ReturnLoan getReturnLoan() {
         return returnLoan;
     }
@@ -133,5 +130,9 @@ public class AppContext {
 
     public CustomerController getCustomerController() {
         return customerController;
+    }
+
+    public LoanController getLoanController() {
+        return loanController;
     }
 }

@@ -24,9 +24,9 @@ class SearchLoanValidatorTest {
     @DisplayName("Should validate successfully when at least one search criteria is provided")
     void shouldValidateSuccessfully_whenAtLeastOneCriteriaIsPresent() {
         // Arrange
-        FilterLoansDto filterWithStatus = new FilterLoansDto(null, null, Set.of(LoanStatus.ACTIVE));
-        FilterLoansDto filterWithCustomer = new FilterLoansDto("customer-123", null, null);
-        FilterLoansDto filterWithIsbn = new FilterLoansDto(null, "978-43-12345-67-8", null);
+        FilterLoansDto filterWithStatus = new FilterLoansDto(null, null, Set.of(LoanStatus.ACTIVE), null);
+        FilterLoansDto filterWithCustomer = new FilterLoansDto("customer-123", null, null, null);
+        FilterLoansDto filterWithIsbn = new FilterLoansDto(null, "978-43-12345-67-8", null, null);
 
         // Act & Assert - Verifying each condition independently to satisfy the OR (||) logic
         assertDoesNotThrow(() -> validator.validate(filterWithStatus));
@@ -49,9 +49,9 @@ class SearchLoanValidatorTest {
     // Advanced Java: Method source factory supplying diverse edge cases for branch coverage
     private static Stream<Arguments> provideInvalidFilters() {
         return Stream.of(
-                Arguments.of(new FilterLoansDto("", null, null)),
-                Arguments.of(new FilterLoansDto(null, "   ", null)),
-                Arguments.of(new FilterLoansDto("   ", null, null))
+                Arguments.of(new FilterLoansDto("", null, null, null)),
+                Arguments.of(new FilterLoansDto(null, "   ", null, null)),
+                Arguments.of(new FilterLoansDto("   ", null, null, null))
         );
     }
 }

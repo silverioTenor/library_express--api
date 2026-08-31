@@ -1,5 +1,7 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
+import org.libraryexpress.domain.core.dto.InputPaginationDto;
+import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
@@ -91,10 +93,20 @@ public class LoanDbRepository implements LoanRepository {
     }
 
     @Override
-    public Set<Loan> search(String customerId, String ISBN, Set<LoanStatus> statuses) {
-        StringBuilder query = new StringBuilder("SELECT * FROM tb_loan WHERE 1=1");
+    public QueryResult<Loan> search(
+            String customerId,
+            String ISBN,
+            Set<LoanStatus> statuses,
+            InputPaginationDto paginationDto
+    ) {
+        boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
+
+        var query = shouldPaginate
+                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_loan LIMIT ? OFFSET ? WHERE 1=1")
+                : new StringBuilder("SELECT * FROM tb_loan WHERE 1=1");
 
         Set<Loan> loans = new HashSet<>();
+        long totalElements;
 
         boolean hasCustomerIdFilter = customerId != null && !customerId.isEmpty();
         boolean hasISBNFilter = ISBN != null && !ISBN.isEmpty();
@@ -110,6 +122,14 @@ public class LoanDbRepository implements LoanRepository {
         ) {
             int parameterIndex = 1;
 
+            if (shouldPaginate) {
+                statement.setInt(parameterIndex++, paginationDto.limit());
+                statement.setInt(parameterIndex++, paginationDto.offset());
+            } else {
+                connection.setAutoCommit(false);
+                statement.setFetchSize(500);
+            }
+
             if (hasCustomerIdFilter) statement.setString(parameterIndex++, customerId);
             if (hasISBNFilter) statement.setString(parameterIndex++, ISBN);
 
@@ -119,40 +139,30 @@ public class LoanDbRepository implements LoanRepository {
                         .toArray(String[]::new);
 
                 Array arrayStatus = connection.createArrayOf("varchar", statusesStr);
-                statement.setArray(parameterIndex++, arrayStatus);
+                statement.setArray(parameterIndex, arrayStatus);
             }
+
+            boolean firstRow = true;
+            long countFromWindow = 0;
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
+
+                    if (shouldPaginate && firstRow) {
+                        countFromWindow = resultSet.getLong("full_count");
+                        firstRow = false;
+                    }
+
                     loans.add(mapRowToLoan(resultSet));
                 }
             }
+            totalElements = shouldPaginate ? countFromWindow : loans.size();
+
         } catch (SQLException e) {
             throw new RuntimeException("Fatal database error executing multi-criteria loans catalog search: " + e.getMessage(), e);
         }
 
-        return loans;
-    }
-
-    @Override
-    public Set<Loan> all() {
-        String query = "SELECT * FROM tb_loan";
-
-        Set<Loan> loans = new HashSet<>();
-
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query);
-                ResultSet resultSet = statement.executeQuery()
-        ) {
-            while (resultSet.next()) {
-                loans.add(mapRowToLoan(resultSet));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing unrestricted loans catalog query: " + e.getMessage(), e);
-        }
-
-        return loans;
+        return new QueryResult<>(loans, totalElements);
     }
 
     /**

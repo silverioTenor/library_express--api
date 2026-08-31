@@ -90,6 +90,7 @@ public class Loan implements Comparable<Loan> {
             if (dueDate.isBefore(startDate))
                 throw new IllegalArgumentException("End date cannot be before start date");
 
+//            TODO: Move logic to create loan use case
             if (dueDate.isAfter(maxDateLimit))
                 throw new IllegalArgumentException("End date cannot exceed the 15-day limit from start date");
 

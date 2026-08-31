@@ -9,6 +9,7 @@ import org.libraryexpress.application.loan.dto.response.LoanDto;
 import org.libraryexpress.application.loan.usecase.*;
 import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.exception.BookUnavailableException;
+import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.exception.InvalidLoanStatusException;
@@ -27,7 +28,6 @@ class LoanCli {
     private final FindCustomer findCustomer;
     private final CreateLoan createLoan;
     private final SearchLoans searchLoans;
-    private final ListLoans listLoans;
     private final ReturnLoan returnLoan;
     private final CloseOverdueLoan closeOverdueLoan;
 
@@ -35,7 +35,6 @@ class LoanCli {
         this.findCustomer = context.getFindCustomer();
         this.createLoan = context.getCreateLoan();
         this.searchLoans = context.getSearchLoans();
-        this.listLoans = context.getListLoans();
         this.returnLoan = context.getReturnLoan();
         this.closeOverdueLoan = context.getCloseOverdueLoan();
     }
@@ -50,7 +49,6 @@ class LoanCli {
             System.out.println("[2] - Search");
             System.out.println("[3] - Devolution");
             System.out.println("[4] - Close Overdue Loan");
-            System.out.println("[5] - List");
             System.out.println("[6] - Back");
             System.out.println(" ");
 
@@ -61,7 +59,6 @@ class LoanCli {
                 case 2 -> this.searchLoan(scan);
                 case 3 -> this.returnLoan(scan);
                 case 4 -> this.closeOverdueLoan(scan);
-                case 5 -> this.listLoans(scan);
                 case 6 -> loop = false;
                 default -> System.out.println("Invalid option!");
             }
@@ -142,12 +139,12 @@ class LoanCli {
 
         Set<LoanStatus> statuses = status != null ? Set.of(status) : null;
 
-        FilterLoansDto filterDto = new FilterLoansDto(customerId, ISBN, statuses);
+        FilterLoansDto filterDto = new FilterLoansDto(customerId, ISBN, statuses, null);
 
         try {
-            Set<LoanDto> loans = this.searchLoans.execute(filterDto);
+            OutputPaginationDto<LoanDto> loans = this.searchLoans.execute(filterDto);
 
-            System.out.println(JsonPrinter.print(loans));
+            System.out.println(JsonPrinter.print(loans.items()));
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -194,13 +191,5 @@ class LoanCli {
         } finally {
             CorrelationIdSupport.clear();
         }
-    }
-
-    public void listLoans(Scanner scan) {
-        CorrelationIdSupport.start();
-        Set<LoanDto> loans = this.listLoans.execute();
-
-        System.out.println(JsonPrinter.print(loans));
-        CorrelationIdSupport.clear();
     }
 }

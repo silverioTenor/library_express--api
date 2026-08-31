@@ -7,7 +7,7 @@ public record InputPaginationDto(Integer page, Integer limit) {
     }
 
     public boolean isPaginated() {
-        return page != null && limit != null;
+        return (page != null && page > 0) && limit != null && limit > 0;
     }
 
     public int offset() {
