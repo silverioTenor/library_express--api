@@ -37,7 +37,10 @@ public final class Router implements HttpHandler {
         if (!regexPattern.endsWith("$")) regexPattern += "$";
 
         Pattern pattern = Pattern.compile(regexPattern);
-        routes.add(new RouteEntry(method.getVerb(), pattern, parameterNames, handler));
+
+        CustomHttpHandler customHttpHandler = new GlobalExceptionHandler(handler);
+
+        routes.add(new RouteEntry(method.getVerb(), pattern, parameterNames, customHttpHandler));
     }
 
     @Override
@@ -50,12 +53,14 @@ public final class Router implements HttpHandler {
         // Java 21 Feature: Advanced Pattern Matching Switch evaluating custom records and destructuring them in-line
         switch (activeMatch) {
             case RouteMatch.Found(RouteEntry entry, Map<String, String> routeParams) -> {
+
+                HttpContextRequest request = SunHttpServer.adaptRequest(exchange, routeParams);
+                HttpContextResponse response = SunHttpServer.adaptResponse(exchange);
+
                 try {
-                    HttpContextRequest request = SunHttpServer.adaptRequest(exchange, routeParams);
-                    HttpContextResponse response = SunHttpServer.adaptResponse(exchange);
                     entry.handler().handle(request, response);
                 } catch (Exception e) {
-                    sendError(exchange, HttpStatusCode.INTERNAL_SERVER_ERROR, "Internal Server execution failure processing routed pipeline stream.");
+                    throw new RuntimeException(e);
                 }
             }
             case RouteMatch.NotFound e ->
