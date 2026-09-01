@@ -2,6 +2,7 @@ package org.libraryexpress.domain.loan.entity;
 
 import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
+import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -88,11 +89,11 @@ public class Loan implements Comparable<Loan> {
 
         if (dueDate != null) {
             if (dueDate.isBefore(startDate))
-                throw new IllegalArgumentException("End date cannot be before start date");
+                throw new DateOutOfBoundException("End date cannot be before start date");
 
 //            TODO: Move logic to create loan use case
             if (dueDate.isAfter(maxDateLimit))
-                throw new IllegalArgumentException("End date cannot exceed the 15-day limit from start date");
+                throw new DateOutOfBoundException("End date cannot exceed the 15-day limit from start date");
 
             return dueDate;
         }

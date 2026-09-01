@@ -1,4 +1,4 @@
-package org.libraryexpress.infrastructure.api.adapter;
+package org.libraryexpress.infrastructure.api.server;
 
 import com.sun.net.httpserver.HttpExchange;
 import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
@@ -10,10 +10,8 @@ import org.libraryexpress.infrastructure.util.JsonReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 

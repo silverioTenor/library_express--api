@@ -1,22 +1,15 @@
 package org.libraryexpress.domain.book.exception;
 
-import org.libraryexpress.domain.core.DomainException;
+import org.libraryexpress.domain.core.exception.DomainErrorType;
+import org.libraryexpress.domain.core.exception.DomainException;
 
 public class InvalidIsbnException extends DomainException {
 
     public InvalidIsbnException() {
-        super("The ISBN cannot be null or empty.");
+        super(DomainErrorType.INVALID_DATA, "The ISBN cannot be null or empty.");
     }
 
     public InvalidIsbnException(String message) {
-        super(message);
-    }
-
-    public InvalidIsbnException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public InvalidIsbnException(Throwable cause) {
-        super(cause);
+        super(DomainErrorType.INVALID_DATA, message);
     }
 }

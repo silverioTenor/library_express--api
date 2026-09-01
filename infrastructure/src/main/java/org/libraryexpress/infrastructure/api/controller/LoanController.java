@@ -93,28 +93,13 @@ public final class LoanController {
     public void search(HttpContextRequest request, HttpContextResponse response) throws Exception {
         Pagination.PageRequest pageRequest = request.getPageRequest();
 
-        String customerId = request.getQueryParam("customerId");
-        String ISBN = request.getQueryParam("ISBN");
-        String statusesStr =  request.getQueryParam("statuses");
-
-        Set<LoanStatus> statuses = new HashSet<>();
-
-        if (statusesStr != null && !statusesStr.isBlank()) {
-            try {
-                statuses = Arrays.stream(statusesStr.split(","))
-                        .map(String::trim)
-                        .map(String::toUpperCase)
-                        .map(LoanStatus::valueOf)
-                        .collect(Collectors.toSet());
-            } catch (IllegalArgumentException e) {
-                response.status(BAD_REQUEST).json("Invalid status values");
-                return;
-            }
-        }
-
-        var paginationDto = new InputPaginationDto(pageRequest.page(), pageRequest.size());
-        var inputDto = new FilterLoansDto(customerId, ISBN, statuses, paginationDto);
-
+        var inputDto = new FilterLoansDto(
+                request.getQueryParam("customerId"),
+                request.getQueryParam("ISBN"),
+                request.getQueryParam("statuses"),
+                pageRequest.page(),
+                pageRequest.size()
+        );
         OutputPaginationDto<LoanDto> outputDto = context.getSearchLoans().execute(inputDto);
 
         response.status(SUCCESS).json(outputDto);
