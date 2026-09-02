@@ -7,7 +7,7 @@
         <withJansi>true</withJansi> <!-- Enhances command prompt compatibility -->
         <encoder>
             <!-- Task Solution: Binding dynamic ANSI color brackets across tokens -->
-            <pattern>%cyan(%d{yyyy-MM-dd HH:mm:ss.SSS}) %magenta([%thread]) %highlight(%-5level) %yellow([%X{correlation_id:-no-trace}]) %cyan(%logger{36}) - %msg%n</pattern>
+            <pattern>%cyan(%d{yyyy-MM-dd HH:mm:ss.SSS}) %magenta([%thread]) %highlight(%-5level) %yellow([%X{trace_id:-no-trace}]) %cyan(%logger{36}) - %msg%n</pattern>
         </encoder>
     </appender>
 

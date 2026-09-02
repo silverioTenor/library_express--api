@@ -9,9 +9,8 @@ import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.exception.UniqueIsbnViolationException;
 import org.libraryexpress.domain.book.valueobject.Isbn;
-import org.libraryexpress.domain.core.util.RandomGenerator;
 import org.libraryexpress.infrastructure.config.AppContext;
-import org.libraryexpress.infrastructure.config.logging.CorrelationIdSupport;
+import org.libraryexpress.infrastructure.config.logging.LogTrace;
 import org.libraryexpress.infrastructure.util.JsonPrinter;
 
 import java.util.Scanner;
@@ -55,7 +54,7 @@ public class BookCli {
     }
 
     private void register(Scanner scan) {
-        CorrelationIdSupport.start();
+        LogTrace.start();
 
         String ISBN = Isbn.generate().value();
 
@@ -87,12 +86,12 @@ public class BookCli {
         } catch (UniqueIsbnViolationException e) {
             System.out.println(e.getMessage());
         } finally {
-            CorrelationIdSupport.clear();
+            LogTrace.clear();
         }
     }
 
     private void show(Scanner scan) {
-        CorrelationIdSupport.start();
+        LogTrace.start();
 
         System.out.println("  ");
         System.out.println("Enter the ISBN:");
@@ -105,12 +104,12 @@ public class BookCli {
         } catch (BookNotFoundException e) {
             System.out.println(e.getMessage());
         } finally {
-            CorrelationIdSupport.clear();
+            LogTrace.clear();
         }
     }
 
     private void list(Scanner scan) {
-        CorrelationIdSupport.start();
+        LogTrace.start();
         var books = this.listBooks.execute(null);
 
         if (books.total() <= 0) {
@@ -118,6 +117,6 @@ public class BookCli {
         } else {
             System.out.println(JsonPrinter.print(books));
         }
-        CorrelationIdSupport.clear();
+        LogTrace.clear();
     }
 }

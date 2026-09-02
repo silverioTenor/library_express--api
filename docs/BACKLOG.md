@@ -133,11 +133,17 @@ Scope: not yet formalized into epics (future backlog). Given the project's termi
 
 ### Decisions on record for this epic
 
-- Logback uses a **JSON structured encoder** (via `logstash-logback-encoder` or equivalent) — not plain text — from the first line of configuration.
-- Output target is **stdout/stderr**, not a file and not a database table. This is the universal container contract: once E10 (Go-Live, AWS ECS) exists, stdout is captured automatically via the `awslogs` driver into CloudWatch Logs, with no additional infrastructure.
-- Correlation across log lines within the same operation is handled via **SLF4J's MDC** (`operationId`/`correlationId`), not a custom database schema.
-- This epic retrofits logging into the **existing** use cases (book, customer, loan). The future API (E9) and scheduler (E12) will follow the same established convention, avoiding rework later.
-- Full observability (metrics, dashboards, distributed tracing) remains explicitly out of scope for this epic — see ADR [0004](./adr/0004-slf4j-logback-without-full-observability.md). That boundary is revisited in E11, not here.
+- No framework: HTTP layer built on `com.sun.net.httpserver.HttpServer`, with a small hand-rolled router (path/method → `HttpHandler`), per ADR [0001](./adr/0001-keep-library-express-framework-free.md).
+- JSON serialization via **Jackson** (already centralized in the parent `dependencyManagement`).
+- **Richardson Maturity Model, Level 2**: correct HTTP verbs, resource-based URIs, semantic status codes. No HATEOAS (Level 3) — deliberately out of scope, since the only consumers are the project's own soon-to-be-sunset CLI and local manual testing; no real client benefits from hypermedia navigation. Full rationale: ADR 0008.
+- **No URI version prefix** (`/books`, not `/v1/books`) — no external consumer exists yet to justify a stable versioned contract.
+- **Pagination:** `page`/`size` query parameters (Spring Data convention), optional with defaults (`page=0`, `size=20`), so the CLI — which sends neither parameter — keeps working unchanged against the first default page.
+- This epic exposes the **existing** book/customer/loan usecases over HTTP; no new business rules are introduced.
+- Central exception handling maps existing domain/application exceptions to HTTP status codes (400/404/409/etc.) — one dedicated US, not scattered per-handler try/catch.
+- Correlation ID (E8's `CorrelationIdSupport`) moves its entrypoint boundary from the CLI to the HTTP handler: accepts an inbound `X-Correlation-Id` header when present, generates one otherwise, and always echoes it back in the response header.
+- OpenAPI documentation generated via `swagger-core` annotations + `swagger-maven-plugin` (build-time static contract) with Swagger UI served as a static resource by the project's own `HttpServer` — not `springdoc-openapi`, which requires a Spring runtime. Full rationale: ADR 0008.
+- Coverage priority is **domain > application > infrastructure**, reflecting where business-rule density actually lives. `domain`/`application` thresholds are not expected to drop (no new business logic). The `infrastructure` threshold is **measured after implementation**, not guessed upfront — closes TD08 as an amendment to ADR 0006.
+- Test strategy: unit tests per `HttpHandler` (usecases mocked via Mockito) + end-to-end tests via **REST-Assured** against the real embedded `HttpServer` backed by Testcontainers Postgres (Java's closest equivalent to Node's supertest).
 
 ### Epic goal
 
@@ -253,7 +259,46 @@ feat(logging): US-802 add error logging at exception boundaries
 **Points:** 2
 **Depends on:** US-801
 
-**Story:** As a developer, I need every log line belonging to the same operation to share a correlation identifier, so a single business flow can be traced end-to-end in the logs without a distributed tracing system.
+  Scenario: Correlation ID is accepted from the request header
+    Given a request arrives with an X-Correlation-Id header
+    When the request is handled
+    Then that value is placed into MDC and echoed back in the response's X-Correlation-Id header
+
+  Scenario: Correlation ID is generated when absent
+    Given a request arrives without an X-Correlation-Id header
+    When the request is handled
+    Then a new correlation ID is generated, placed into MDC, and returned in the response's X-Correlation-Id header
+
+  Scenario: MDC is cleared after the request completes
+    Given a request has finished processing (successfully or with error)
+    When the handler returns control to the server
+    Then the MDC context is cleared to prevent leaking into unrelated requests
+```
+
+**Tasks:**
+
+- Extend the HTTP foundation (US-901) with a correlation filter/wrapper applied to every route
+- Reuse `CorrelationIdSupport` (from E8) — read `X-Correlation-Id` if present, else generate
+- Echo the resolved correlation ID back via the `X-Correlation-Id` response header
+- Ensure MDC is cleared in a `finally` block per request, avoiding leakage across pooled request-handling threads
+
+**Commits:**
+
+```
+feat(api): US-906 implement correlation id http filter
+feat(api): US-906 accept inbound x-correlation-id header
+feat(api): US-906 echo correlation id in response header
+test(api): US-906 validate mdc cleared after request completes
+```
+
+---
+
+### US-907 — OpenAPI Documentation (swagger-core + swagger-maven-plugin, Swagger UI)
+
+**Points:** 5
+**Depends on:** US-902, US-903, US-904, US-905
+
+**Story:** As an API consumer (or reviewer), I need an accurate, browsable API contract, so I can understand and exercise the API without reading the handler source code.
 
 **Scenarios (BDD):**
 
@@ -400,6 +445,17 @@ TD06 resolved via US-701 (Testcontainers-based integration tests for `BookDbRepo
 This reduction is temporary — see TD08 for the plan to revisit thresholds once E9 (API layer) and E2E tests against the live system (post E10) expand what's actually exercisable.
 
 `main` requires a passing `build-and-test` check and blocks direct pushes (US-704). Full detail (Gherkin, tasks, commits): see the corresponding Issues on GitHub Projects.
+
+### E8 — Structured Logging Foundation (SLF4J + Logback, System-Wide)
+✅ Done · Sprint 7 · 10 points (3 + 5 + 2) — resolved TD07
+
+| US | Description | Points | Status |
+|---|---|---|---|
+| US-801 | SLF4J + Logback Setup with Structured JSON Encoder | 3 | ✅ Done |
+| US-802 | Retrofit Logging into Existing Use Cases (book/customer/loan) | 5 | ✅ Done |
+| US-803 | Correlation ID Convention via MDC | 2 | ✅ Done |
+
+Logback configured with a JSON structured encoder (`logstash-logback-encoder`) targeting stdout, with separate `logback-dev.xml`/`logback-prod.xml` profiles. Existing book/customer/loan usecases emit INFO/WARN/ERROR logs consistently. Correlation across log lines within an operation is handled via SLF4J's MDC (`CorrelationIdSupport`), wired at the CLI entrypoint and cleared in a `finally` block. Full observability (metrics, dashboards, tracing) stayed explicitly out of scope — see ADR [0004](./adr/0004-slf4j-logback-without-full-observability.md) — revisited in E11. TD07 formally resolved. Full detail (Gherkin, tasks, commits): see the corresponding Issues on GitHub Projects.
 
 ---
 

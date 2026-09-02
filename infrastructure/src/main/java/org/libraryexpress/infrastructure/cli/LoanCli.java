@@ -17,7 +17,7 @@ import org.libraryexpress.domain.loan.exception.LoanLimitReachedException;
 import org.libraryexpress.domain.loan.exception.LoanNotFoundException;
 import org.libraryexpress.domain.loan.exception.OverdueLoanException;
 import org.libraryexpress.infrastructure.config.AppContext;
-import org.libraryexpress.infrastructure.config.logging.CorrelationIdSupport;
+import org.libraryexpress.infrastructure.config.logging.LogTrace;
 import org.libraryexpress.infrastructure.util.JsonPrinter;
 
 import java.util.Scanner;
@@ -67,7 +67,7 @@ class LoanCli {
     }
 
     public void createLoan(Scanner scan) {
-        CorrelationIdSupport.start();
+        LogTrace.start();
 
         System.out.println("  ");
         System.out.println("Enter the customer ID");
@@ -84,7 +84,7 @@ class LoanCli {
             this.findCustomer.execute(customerId);
         } catch (CustomerNotFoundException e) {
             System.out.println(e.getMessage());
-            CorrelationIdSupport.clear();
+            LogTrace.clear();
             return;
         }
 
@@ -99,12 +99,12 @@ class LoanCli {
         } catch (LoanLimitReachedException | OverdueLoanException | BookUnavailableException | BookNotFoundException e) {
             System.out.println(e.getMessage());
         } finally {
-            CorrelationIdSupport.clear();
+            LogTrace.clear();
         }
     }
 
     public void searchLoan(Scanner scan) {
-        CorrelationIdSupport.start();
+        LogTrace.start();
 
         scan.nextLine();
 
@@ -149,12 +149,12 @@ class LoanCli {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         } finally {
-            CorrelationIdSupport.clear();
+            LogTrace.clear();
         }
     }
 
     public void returnLoan(Scanner scan) {
-        CorrelationIdSupport.start();
+        LogTrace.start();
 
         System.out.println("  ");
         System.out.println("Enter the loan's ID");
@@ -169,12 +169,12 @@ class LoanCli {
         } catch (LoanNotFoundException | InvalidLoanStatusException e) {
             System.out.println(e.getMessage());
         } finally {
-            CorrelationIdSupport.clear();
+            LogTrace.clear();
         }
     }
 
     public void closeOverdueLoan(Scanner scan) {
-        CorrelationIdSupport.start();
+        LogTrace.start();
 
         System.out.println("  ");
         System.out.println("Enter the loan ID");
@@ -189,7 +189,7 @@ class LoanCli {
         } catch (LoanNotFoundException | OverdueLoanException e) {
             System.out.println(e.getMessage());
         } finally {
-            CorrelationIdSupport.clear();
+            LogTrace.clear();
         }
     }
 }

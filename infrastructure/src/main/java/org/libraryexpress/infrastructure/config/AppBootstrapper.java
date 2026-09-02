@@ -6,7 +6,7 @@ import org.libraryexpress.infrastructure.api.server.EmbeddedHttpServer;
 import org.libraryexpress.infrastructure.cli.ManagementCli;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.config.database.MigrationRunner;
-import org.libraryexpress.infrastructure.config.logging.CorrelationIdSupport;
+import org.libraryexpress.infrastructure.config.logging.LogTrace;
 import org.libraryexpress.infrastructure.config.logging.Slf4jLoggerAdapter;
 
 import javax.sql.DataSource;
@@ -60,12 +60,12 @@ public class AppBootstrapper {
             // Registering the standard fallback graceful cleanup shutdown hook
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
-                    CorrelationIdSupport.start();
+                    LogTrace.start();
                     log.info("JVM exit signal intercepted. Shutting down connection pool gracefully...");
                     connectionProvider.close();
                     log.info("Database connection resources released cleanly.");
                 } finally {
-                    CorrelationIdSupport.clear();
+                    LogTrace.clear();
                 }
             }));
 

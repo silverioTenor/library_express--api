@@ -31,6 +31,7 @@ class RouterTest {
         router.register(HttpVerb.GET, "/books", (req, res) -> handlerWasInvoked.set(true));
 
         HttpExchange exchange = mock(HttpExchange.class);
+        when(exchange.getRequestHeaders()).thenReturn(new Headers());
         when(exchange.getRequestMethod()).thenReturn("GET");
         when(exchange.getRequestURI()).thenReturn(new URI("http://localhost:8080/books"));
 
@@ -61,6 +62,7 @@ class RouterTest {
         });
 
         HttpExchange exchange = mock(HttpExchange.class);
+        when(exchange.getRequestHeaders()).thenReturn(new Headers());
         when(exchange.getRequestMethod()).thenReturn("GET");
         when(exchange.getRequestURI()).thenReturn(new URI("http://localhost:8080/books/978-85-333-0227-3"));
 
