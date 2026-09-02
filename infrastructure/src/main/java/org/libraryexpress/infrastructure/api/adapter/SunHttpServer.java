@@ -81,6 +81,11 @@ public final class SunHttpServer {
                 return queryParams;
             }
 
+            @Override
+            public String getHeader(String attr) {
+                return exchange.getRequestHeaders().getFirst(attr);
+            }
+
         };
     }
 
@@ -112,6 +117,11 @@ public final class SunHttpServer {
             @Override
             public void sendEmpty() throws IOException {
                 exchange.sendResponseHeaders(currentStatus, -1);
+            }
+
+            @Override
+            public void setHeader(String name, String value) {
+                exchange.getResponseHeaders().set(name, value);
             }
 
         };

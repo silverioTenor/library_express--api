@@ -1,4 +1,4 @@
-package org.libraryexpress.infrastructure.server;
+package org.libraryexpress.infrastructure.api.server;
 
 import com.sun.net.httpserver.HttpExchange;
 import org.junit.jupiter.api.DisplayName;

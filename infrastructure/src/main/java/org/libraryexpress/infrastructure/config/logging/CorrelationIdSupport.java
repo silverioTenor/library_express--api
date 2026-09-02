@@ -11,16 +11,27 @@ public final class CorrelationIdSupport {
 
     private static final String CORRELATION_ID_KEY = "correlation_id";
 
-    private CorrelationIdSupport() {
-        // Enforcing static utility structures
-    }
+    private CorrelationIdSupport() {}
 
     /**
      * Generates a unique tracking token and binds it into the active MDC thread scope.
      */
-    public static void start() {
+    public static String start() {
         String uniqueId = UUID.randomUUID().toString();
         MDC.put(CORRELATION_ID_KEY, uniqueId);
+        return uniqueId;
+    }
+
+    public static void start(String correlationId) {
+        if (correlationId == null || correlationId.isBlank()) {
+            start();
+            return;
+        }
+        MDC.put(CORRELATION_ID_KEY, correlationId);
+    }
+
+    public static String get() {
+        return MDC.get(CORRELATION_ID_KEY);
     }
 
     /**

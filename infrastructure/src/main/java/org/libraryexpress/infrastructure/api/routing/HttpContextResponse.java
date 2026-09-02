@@ -8,4 +8,5 @@ public interface HttpContextResponse {
     HttpContextResponse status(HttpStatusCode statusCode);
     void json(Object body) throws IOException;
     void sendEmpty() throws IOException;
+    void setHeader(String name, String value);
 }

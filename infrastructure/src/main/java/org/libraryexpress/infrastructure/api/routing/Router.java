@@ -38,9 +38,14 @@ public final class Router implements HttpHandler {
 
         Pattern pattern = Pattern.compile(regexPattern);
 
-        CustomHttpHandler customHttpHandler = new GlobalExceptionHandler(handler);
+        CustomHttpHandler globalExceptionHandler = new GlobalExceptionHandler(handler);
+        CorrelationIdFilter correlationIdFilter = new CorrelationIdFilter();
 
-        routes.add(new RouteEntry(method.getVerb(), pattern, parameterNames, customHttpHandler));
+        CustomHttpHandler fullHandler = (request, response) -> {
+            correlationIdFilter.doFilter(request, response, globalExceptionHandler);
+        };
+
+        routes.add(new RouteEntry(method.getVerb(), pattern, parameterNames, fullHandler));
     }
 
     @Override

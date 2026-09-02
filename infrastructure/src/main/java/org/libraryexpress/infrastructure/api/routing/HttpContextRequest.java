@@ -10,4 +10,5 @@ public interface HttpContextRequest {
     String getRouteParam(String key);
     PageRequest getPageRequest();
     String getPath();
+    String getHeader(String key);
 }

@@ -1,4 +1,4 @@
-package org.libraryexpress.infrastructure.exception;
+package org.libraryexpress.infrastructure.api.exception;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
