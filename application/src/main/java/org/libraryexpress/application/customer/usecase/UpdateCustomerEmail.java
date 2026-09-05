@@ -6,6 +6,7 @@ import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
 import java.util.Optional;
@@ -30,6 +31,11 @@ public class UpdateCustomerEmail {
                     logger.error("CRITICAL: No customer was found for the ID: [{}] ", updateCustomerEmailDto.id());
                     return new CustomerNotFoundException();
                 });
+
+        Customer isEmailUsed = this.customerRepository.getById(updateCustomerEmailDto.id())
+                .orElse(null);
+
+        if (isEmailUsed != null) throw new UniqueEmailViolationException("The email address is not permitted");
 
         customer.changeEmail(updateCustomerEmailDto.email());
 

@@ -1,70 +1,75 @@
-# ADR 0008: REST API Conventions and OpenAPI Tooling (Epic E9)
+# ADR 0008 — REST API Documentation Conventions (RMM Level 2, No URI Versioning, OpenAPI via swagger-core)
 
 ## Status
 
-Accepted
+Accepted (Epic E9, Sprint 8). Amended once — see **Amendment 1** below.
 
 ## Context
 
-Epic E9 introduces the project's first HTTP boundary, exposing the existing book, customer, and loan use cases via a REST API built on `com.sun.net.httpserver.HttpServer` — no application framework, per ADR [0001](./0001-keep-library-express-framework-free.md). Three design decisions needed a formal record before refinement could proceed to formal User Stories, since each affects contract shape, points estimation, and long-term maintainability:
+Epic E9 exposes the existing book/customer/loan usecases over HTTP, on top of the framework-free foundation established in ADR 0001 (`com.sun.net.httpserver.HttpServer`, no Spring). This required closing four related decisions before implementation could start:
 
-1. What level of REST maturity (Richardson Maturity Model) the API targets.
-2. Whether the API is URI-versioned from day one.
-3. How OpenAPI/Swagger documentation is generated without pulling in a framework.
+1. What maturity level the API should target (Richardson Maturity Model).
+2. Whether the API should carry a version prefix in its URIs.
+3. Which tooling generates and serves the OpenAPI/Swagger contract.
+4. Whether a framework-based HTTP layer (e.g. Javalin) should be reconsidered for this epic, given it surfaced as a viable alternative only after the framework-free approach (ADR 0001) had already been reaffirmed.
 
 ## Decision
 
 ### 1. Richardson Maturity Model — Level 2
 
-The API targets **RMM Level 2**: correct use of HTTP verbs (GET/POST/etc.), resource-oriented URIs (`/books`, `/books/{id}`), and semantically correct status codes (200/201/400/404/409/500). **Level 3 (HATEOAS)** is explicitly out of scope.
-
-Rationale: hypermedia controls (response envelopes with `_links`, relation types, client-side link navigation) are a real implementation cost with no corresponding benefit here. The only consumers of this API are the project's own CLI — being sunset to occasional local testing use — and manual/exploratory calls. There is no external client that would ever traverse the API via discovered links instead of a known, documented contract. Adopting Level 3 would be complexity introduced without a real need, which the project's principles explicitly ask to avoid or, if pursued anyway, to document honestly as a learning-only exercise. Level 2 is judged to already deliver the portfolio and interview value expected internationally (correct REST semantics is table-stakes; HATEOAS is a niche, rarely-tested topic in practice).
+The API targets **RMM Level 2**: correct HTTP verbs, resource-based URIs, and semantic status codes. **HATEOAS (Level 3) is explicitly out of scope.** The only consumers of this API are the project's own soon-to-be-sunset CLI and local manual testing — no external client exists that would benefit from hypermedia-driven navigation. Introducing Level 3 here would be complexity without a real consumer to justify it, which conflicts with the project's core principle that new technology is adopted only when it solves a real problem (or is documented honestly as a learning exercise, which is not the case here).
 
 ### 2. No URI version prefix
 
-Endpoints are exposed without a version segment (`/books`, not `/v1/books`).
+Endpoints are exposed as `/books`, `/customers`, `/loans` — **not** `/v1/books`. No external consumer exists yet to justify a stable, versioned contract. Introducing a version prefix now would be speculative design for a compatibility guarantee nobody is depending on. This can be revisited if/when Library Express gains an external consumer with its own release cadence.
 
-Rationale: URI versioning exists to protect existing external consumers from breaking changes. This API has none yet — introducing a version prefix now would be speculative design for a scenario (external consumers, contract stability guarantees) that doesn't exist at this stage of the project. This decision can be revisited if E10 (Go-Live) or beyond introduces a real external consumer requiring contract stability.
+### 3. OpenAPI tooling — swagger-core + swagger-maven-plugin (not springdoc-openapi)
 
-### 3. OpenAPI documentation via swagger-core + swagger-maven-plugin, not springdoc-openapi
+The OpenAPI contract is generated at **build time** via `swagger-core` annotations (`@Operation`, `@Parameter`, `@ApiResponse`, `@OpenAPIDefinition`) combined with the `swagger-maven-plugin` (`resolve` goal, bound to the `compile` phase). Swagger UI is served as a static webjar resource by the project's own `HttpServer`, at `/docs`.
 
-The API is documented using:
-- **`swagger-core`** annotations (`@Operation`, `@Parameter`, `@ApiResponse`, etc.) applied directly to HTTP handlers.
-- **`swagger-maven-plugin`**, which scans those annotations at build time and generates a static `openapi.json`/`openapi.yaml` contract.
-- **Swagger UI**, bundled as a static webjar resource and served by the project's own `HttpServer` at `/docs` — no separate documentation server.
+`springdoc-openapi` was **not** chosen, as it requires a Spring runtime (`@RestController`, Spring MVC dispatch) to introspect — which would silently reintroduce the framework dependency this project deliberately avoids for its entire lifecycle (ADR 0001). `swagger-core` was chosen instead because its annotation model and plugin tooling are framework-agnostic at the library level, even though its default reader mechanics carry their own dependency — see **Amendment 1**.
 
-`springdoc-openapi` was considered and rejected: it scans `@RestController`-annotated Spring beans at runtime, which requires a running Spring context. Adopting it would mean pulling the Spring framework into Library Express's classpath solely to generate documentation — directly contradicting ADR 0001's framework-free scope, for a convenience (annotation scanning wired to DI) that provides no learning value proportional to the architectural cost. `swagger-core` is an annotation/model library, not an application framework — it has no DI container, no request-handling runtime, and does not conflict with the project's framework-free design.
+### 4. Alternatives considered — Javalin
 
-This is a case where, per the project's stated principle, adopting a piece of *tooling* (not a framework) is worth the added dependency: automatically generated, always-in-sync API documentation is real production value and a real interview-relevant skill, and it's achievable here without compromising the project's central architectural bet.
+During refinement, **Javalin** (a lightweight Java web framework with built-in OpenAPI support) surfaced as a technically reasonable alternative to hand-rolling routing on top of `com.sun.net.httpserver.HttpServer`. It was **not adopted**, for two reasons:
 
-## Alternatives Considered
+- **Timing:** it was discovered only after the framework-free foundation for E9 (router, Jackson wiring — US-901) was already aligned and in progress. Reopening that decision mid-epic without a real problem forcing the change would have meant rework without corresponding value.
+- **Learning objective:** US-901's explicit goal is to understand HTTP routing mechanics manually — request dispatch, path matching, handler registration — before any framework abstracts it away. Javalin, while lightweight, would have hidden exactly the mechanism this epic exists to expose. This mirrors the same rationale already recorded in ADR 0001 for deferring the Spring Boot step to the next project.
 
-**Javalin** (a lightweight Java web framework, commonly compared to Express.js — thin routing/handler layer over Jetty, with Jackson integration built in) surfaced during independent research **after** this epic had already been refined and formalized into User Stories. It was not evaluated during the original E9 refinement discussion, and its discovery did not trigger a re-opening of this decision.
-
-Javalin sits in a real middle ground between `com.sun.net.httpserver` (fully manual) and Spring (full framework, DI container, annotation-driven scanning): it removes the boilerplate of routing and JSON wiring without imposing dependency injection or convention-based magic. For a project not bound by ADR 0001's framework-free scope, it would be a reasonable, arguably better-engineered choice than a hand-rolled router.
-
-It was not adopted here, for two compounding reasons:
-1. **ADR 0001 scope.** Even though Javalin is not a full application framework in the Spring sense, it still replaces exactly the mechanism (`HttpServer` routing, request/response binding) that Epic E9 exists to build and understand manually. Adopting it would remove the specific learning value US-901 (HTTP foundation) targets — understanding what a routing layer actually does before a library abstracts it away, the same rationale already applied to raw JUnit, raw JDBC, and manual DI earlier in the roadmap.
-2. **Timing.** By the time Javalin was identified, E9 had already been debated, aligned, and formalized into `BACKLOG.md` per the project's process rule (alignment before formal artifacts). Reversing an already-Accepted decision without a real problem it solves — as opposed to a marginally more convenient one — would not meet the project's bar for introducing new technology.
-
-This alternative is recorded here for traceability and honesty about what was known and considered, not because it changes the decision. `com.sun.net.httpserver.HttpServer` with a hand-rolled router remains the Epic E9 implementation choice.
+This is recorded honestly as a reasonable option not taken, rather than omitted from the record — consistent with the project's principle that technology choices favoring a learning objective over convenience are documented as such.
 
 ## Consequences
 
-**Positive:**
-- REST conventions stay simple and fast to implement — no hypermedia envelope design, no link-relation catalog to maintain.
-- The documented contract (`openapi.json`) is generated from the same annotations that drive the handlers, reducing drift between code and docs.
-- Swagger UI is available locally with zero extra infrastructure (served by the project's own server).
-- The framework-free architectural bet (ADR 0001) is preserved end-to-end through Marco 2 (Go-Live).
+- The API is simple to reason about and test (no framework request lifecycle to mock or understand), at the cost of more manual wiring per endpoint (US-901–US-906).
+- No hypermedia navigation exists; API consumers must know endpoint URIs out-of-band (acceptable given the current consumer set).
+- No versioning strategy exists yet; a breaking change today would break the CLI immediately — acceptable while the CLI is the only real consumer and is itself scheduled for sunset.
+- The OpenAPI contract is regenerated on every `mvn compile`, so it cannot drift from the annotated source by more than one build.
 
-**Negative / trade-offs:**
-- If Library Express ever gained real external API consumers, the lack of URI versioning and hypermedia support would require retrofitting — accepted as a deliberate, documented risk given the project's actual scope and audience.
-- `swagger-core` annotations add verbosity to handler code compared to Spring's more automatic contract inference — accepted as the cost of avoiding a framework dependency.
-- Should the project ever need RMM Level 3 for a real integration need, revisiting this ADR (not silently reversing it) would be required, per the project's ADR discipline.
+---
 
-## Related
+## Amendment 1 — JAX-RS Annotations as Build-Time-Only Metadata
 
-- ADR [0001](./0001-keep-library-express-framework-free.md) — Keep Library Express framework-free
-- ADR [0004](./0004-slf4j-logback-without-full-observability.md) — SLF4J + Logback without full observability
-- ADR [0006](./0006-jacoco-and-plpgsql-consolidation.md) — JaCoCo metrics and PL/pgSQL exception (amended by US-908 with the E9 `infrastructure` coverage baseline)
-- `docs/BACKLOG.md` — Epic E9 (US-901 through US-908)
+**Date:** During US-907 implementation (Epic E9, Sprint 8)
+**Status:** Amendment — clarifies and extends the original decision; does **not** reverse it.
+
+### Context for the amendment
+
+When implementing US-907, it became clear that `swagger-maven-plugin`'s default reader (`swagger-jaxrs2`) discovers endpoints by scanning **JAX-RS annotations** (`@Path`, `@GET`, `@POST`, `@PATCH`, `@Consumes`, `@Produces`) on the annotated classes. This mechanic was not explicit when this ADR was first closed — the original decision named the tooling (`swagger-core` + `swagger-maven-plugin`) but not the reader's dependency on JAX-RS annotations to know each endpoint's path and verb. There is no official swagger-core reader for `com.sun.net.httpserver`.
+
+### Decision
+
+JAX-RS annotations (`jakarta.ws.rs-api`) are added to the existing `HttpHandler`-adjacent Controller classes (`BookController`, `CustomerController`, `LoanController`) **purely as reflective metadata for the build-time reader to scan.** This does **not** introduce a JAX-RS runtime:
+
+- No `Application`, `ResourceConfig`, servlet container, or JAX-RS implementation (Jersey, RESTEasy) is added to the runtime classpath in an active capacity.
+- The hand-rolled `Router` (US-901) remains the **sole real dispatcher** at runtime — it does not read JAX-RS annotations and is functionally unaware of their presence.
+- The `swagger-jaxrs2` reader executes only inside the Maven build process (`compile` phase), never inside the running application.
+
+This is treated as equivalent in kind to using Jackson annotations (`@JsonProperty`) for JSON mapping metadata: a declarative, dependency-light annotation set consumed by tooling, without pulling in the runtime behavior normally associated with that annotation family.
+
+### Known limitation accepted alongside this amendment
+
+Because route registration (`Router.register(HttpVerb, path, handler)` in each `RouteModule`) and the JAX-RS path/verb annotations on Controllers are two independent declarations of the same fact (method + path), **they can drift** if one is changed without the other. This is an accepted, documented trade-off rather than a hidden risk — the alternative (routing via JAX-RS reflection) would reintroduce exactly the routing mechanism ADR 0001 and US-901 deliberately avoid. Discipline (checking both sides when a route changes) is the accepted mitigation; no tooling enforces the consistency automatically.
+
+### Why this is an amendment, not a reversal
+
+The original decision to use `swagger-core` + `swagger-maven-plugin` stands unchanged. This amendment only fills in a mechanical detail — how the chosen plugin's reader identifies endpoints — that was not spelled out originally. No prior decision in this ADR is contradicted or narrowed.

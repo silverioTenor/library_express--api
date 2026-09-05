@@ -73,6 +73,38 @@ It currently uses plain Java, without dependency injection or application framew
 
 Architectural decisions (like the module split above, and the framework-free scope) are recorded as ADRs in `docs/adr/`. A high-level C4 view of the modules lives in `docs/architecture/`.
 
+## 🌐 REST API
+
+The API is served by the application's own embedded HTTP server on the port defined by `API_PORT` (default `3000`).
+
+### Conventions
+
+- **Resource-based URIs**, no version prefix (e.g. `/books`, not `/v1/books`).
+- **Pagination:** paginated list endpoints accept `page` (0-indexed, default `0`) and `size` (default `20`) query parameters.
+- **Error responses:** structured JSON body (`status`, `message`, `timestamp`) on every 4xx/5xx.
+- **Trace ID:** every response includes an `X-Trace-Id` header — echoes a client-supplied value or generates one when absent.
+
+### Endpoints
+
+| Resource | Method | Path | Description |
+|---|---|---|---|
+| Books | POST | `/books` | Register a book |
+| Books | GET | `/books/{isbn}` | Get a book by ISBN |
+| Books | GET | `/books` | List books (paginated) |
+| Customers | POST | `/customers` | Create a customer |
+| Customers | GET | `/customers/search` | Find a customer by id or email |
+| Customers | PATCH | `/customers/{id}/update-email` | Update a customer's email |
+| Customers | GET | `/customers` | List customers (paginated) |
+| Loans | POST | `/loans` | Create a loan |
+| Loans | GET | `/loans` | Search loans (paginated) |
+| Loans | POST | `/loans/{loanId}/returns` | Return a loan |
+| Loans | PATCH | `/loans/close-overdue/{loanId}` | Close an overdue loan (temporary flow) |
+
+### API Documentation
+
+- Swagger UI: `/docs`
+- Raw OpenAPI contract: `/openapi.json`
+
 ## 🚀 Tech Stack
 
 - Java 21
@@ -88,6 +120,7 @@ Architectural decisions (like the module split above, and the framework-free sco
 - JaCoCo (test coverage, enforced per module as a CI quality gate)
 - GitHub Actions (Continuous Integration)
 - SLF4J + Logback (structured JSON logging, MDC-based correlation — Epic E8)
+- Swagger
 
 ## Getting Started
 

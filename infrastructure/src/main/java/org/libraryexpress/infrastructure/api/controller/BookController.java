@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +19,7 @@ import org.libraryexpress.application.book.dto.request.RegisterBookDto;
 import org.libraryexpress.application.book.dto.response.BookDto;
 import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
+import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
@@ -37,11 +39,27 @@ public final class BookController {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Register a book", description = "Registers a new book in the catalog")
+    @Operation(
+            summary = "Register a book",
+            requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = RegisterBookDto.class)))
+    )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Book created", content = @Content(schema = @Schema(implementation = BookDto.class))),
-            @ApiResponse(responseCode = "400", description = "Validation failure"),
-            @ApiResponse(responseCode = "409", description = "Duplicate ISBN")
+            @ApiResponse(responseCode = "201", description = "Book created"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation failure",
+                    content =  @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Duplicate ISBN",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal Server Error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
     public void register(HttpContextRequest request, HttpContextResponse response) throws Exception {
         RegisterBookDto inputDto = request.parseBody(RegisterBookDto.class);
@@ -53,14 +71,21 @@ public final class BookController {
     @GET
     @Path("/{isbn}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a book by ISBN")
+    @Operation(summary = "Get a book by ISBN", requestBody = @RequestBody(content = @Content()))
     @Parameters({
             @Parameter(name = "isbn", in = ParameterIn.PATH, description = "Book ISBN", required = true)
     })
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Book found",
-                    content = @Content(schema = @Schema(implementation = BookDto.class))),
-            @ApiResponse(responseCode = "404", description = "Book not found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Book found",
+                    content = @Content(schema = @Schema(implementation = OutputPaginationDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Book not found",
+                    content =  @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
     })
     public void get(HttpContextRequest request, HttpContextResponse response) throws Exception {
         BookDto outputDto = context.getFindBook()
@@ -71,8 +96,12 @@ public final class BookController {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List books (paginated)")
-    @ApiResponse(responseCode = "200", description = "Paginated list of books")
+    @Operation(summary = "List books", requestBody = @RequestBody(content = @Content()))
+    @ApiResponse(
+            responseCode = "200",
+            description = "Paginated list of books",
+            content = @Content(schema = @Schema(implementation = OutputPaginationDto.class))
+    )
     public void list(HttpContextRequest request, HttpContextResponse response) throws Exception {
         Pagination.PageRequest pageRequest = request.getPageRequest();
 
