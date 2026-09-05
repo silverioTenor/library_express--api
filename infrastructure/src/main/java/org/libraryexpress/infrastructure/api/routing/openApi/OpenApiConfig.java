@@ -15,10 +15,8 @@ import io.swagger.v3.oas.annotations.servers.Server;
         info = @Info(
                 title = "Library Express API",
                 version = "0.0.0-PLACEHOLDER",
-                description = "REST API for the Library Express book/customer/loan management system. "
-                        + "Framework-free HTTP layer (com.sun.net.httpserver.HttpServer), "
-                        + "Richardson Maturity Model Level 2, no URI version prefix.",
-                contact = @Contact(name = "Silvério", url = "https://github.com/silverioTenor/library_express--api"),
+                description = "REST API for the Library Express book/customer/loan management system.",
+                contact = @Contact(name = "GitHub", url = "https://github.com/silverioTenor/library_express--api"),
                 license = @License(name = "MIT", url = "https://opensource.org/licenses/MIT")
         ),
         servers = {
