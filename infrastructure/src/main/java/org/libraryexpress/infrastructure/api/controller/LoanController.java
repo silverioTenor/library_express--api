@@ -1,23 +1,27 @@
 package org.libraryexpress.infrastructure.api.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import org.libraryexpress.application.loan.dto.request.CreateLoanDto;
 import org.libraryexpress.application.loan.dto.request.FilterLoansDto;
 import org.libraryexpress.application.loan.dto.response.LoanDto;
-import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
-import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
 import org.libraryexpress.infrastructure.config.AppContext;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
 
+@Path("/loans")
+@Tag(name = "Loans", description = "Loan lifecycle endpoints")
 public final class LoanController {
 
     private final AppContext context;
@@ -26,6 +30,15 @@ public final class LoanController {
         this.context = context;
     }
 
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Create a loan", description = "Creates a loan for an available book and eligible customer")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Loan created"),
+            @ApiResponse(responseCode = "400", description = "Validation failure"),
+            @ApiResponse(responseCode = "404", description = "Book or customer not found"),
+            @ApiResponse(responseCode = "409", description = "Book unavailable or active loan limit reached")
+    })
     public void create(HttpContextRequest request, HttpContextResponse response) throws Exception {
         var inputDto = request.parseBody(CreateLoanDto.class);
         context.getCreateLoan().execute(inputDto);
@@ -33,6 +46,14 @@ public final class LoanController {
         response.status(CREATED).sendEmpty();
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Search loans (paginated)", description = "Filters loans by customer, ISBN, and/or status")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Paginated list of loans",
+                    content = @Content(schema = @Schema(implementation = LoanDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid filter parameters")
+    })
     public void search(HttpContextRequest request, HttpContextResponse response) throws Exception {
         Pagination.PageRequest pageRequest = request.getPageRequest();
 
@@ -63,6 +84,17 @@ public final class LoanController {
         response.status(SUCCESS).json(outputDto);
     }
 
+    @POST
+    @Path("/{loanId}/returns")
+    @Operation(
+            summary = "Return a loan",
+            description = "Creates a return event for an active loan — updates both the loan status and the book's availability"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Loan returned successfully"),
+            @ApiResponse(responseCode = "404", description = "Loan not found"),
+            @ApiResponse(responseCode = "409", description = "Loan not in a returnable state")
+    })
     public void returnLoan(HttpContextRequest request, HttpContextResponse response) throws Exception {
         String loanId = request.getRouteParam("loanId");
         context.getReturnLoan().execute(loanId);
@@ -76,6 +108,17 @@ public final class LoanController {
      * this flow should become obsolete — OVERDUE loans should transition to FINISHED
      * automatically at return time, not via manual intervention.
      */
+    @PATCH
+    @Path("/{loanId}/close-overdue")
+    @Operation(
+            summary = "Close an overdue loan (temporary/palliative flow)",
+            description = "Manually transitions an OVERDUE loan to FINISHED. To be superseded once fine calculation and score adjustment are handled directly by ReturnLoan."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Overdue loan closed"),
+            @ApiResponse(responseCode = "404", description = "Loan not found"),
+            @ApiResponse(responseCode = "409", description = "Loan not in OVERDUE state")
+    })
     public void closeOverdueLoan(HttpContextRequest request, HttpContextResponse response) throws Exception {
         String loanId = request.getRouteParam("loanId");
         context.getCloseOverdueLoan().execute(loanId);

@@ -31,7 +31,7 @@ public final class Router implements HttpHandler {
             parameterNames.add(parameterMatcher.group(1));
         }
 
-        String regexPattern = path.replaceAll("\\{[^}Setup]+\\}", "([^/]+)");
+        String regexPattern = path.replaceAll("\\{[^}]+\\}", "([^/]+)");
 
         if (!regexPattern.startsWith("^")) regexPattern = "^" + regexPattern;
         if (!regexPattern.endsWith("$")) regexPattern += "$";

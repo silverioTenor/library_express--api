@@ -18,7 +18,7 @@ public class LoanRouteModule implements HttpRouteModule {
     public void register(Router router) {
         router.register(POST, "/loans", controller::create);
         router.register(GET, "/loans", controller::search);
-        router.register(POST, "/loans/return/{loanId}", controller::returnLoan);
-        router.register(POST, "/loans/close-overdue/{loanId}", controller::closeOverdueLoan);
+        router.register(POST, "/loans/{loanId}/returns", controller::returnLoan);
+        router.register(POST, "/loans/{loanId}/close-overdue", controller::closeOverdueLoan);
     }
 }

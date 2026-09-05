@@ -17,6 +17,8 @@ import org.libraryexpress.application.loan.validator.SearchLoanValidator;
 import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.api.controller.CustomerController;
 import org.libraryexpress.infrastructure.api.controller.LoanController;
+import org.libraryexpress.infrastructure.api.routing.openApi.OpenApiContractHandler;
+import org.libraryexpress.infrastructure.api.routing.openApi.SwaggerUiHandler;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.repository.jdbc.BookDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.CustomerDbRepository;
@@ -46,6 +48,9 @@ public class AppContext {
     private final ReturnLoan returnLoan;
     private final CloseOverdueLoan closeOverdueLoan;
     private final LoanController loanController;
+
+    private final OpenApiContractHandler  openApiContractHandler;
+    private final SwaggerUiHandler swaggerUiHandler;
 
     public AppContext(ConnectionProvider connectionProvider) {
         DataSource dataSource = connectionProvider.getDataSource();
@@ -78,6 +83,9 @@ public class AppContext {
         this.returnLoan = new ReturnLoan(loanRepository, bookRepository, Clock.systemDefaultZone());
         this.closeOverdueLoan = new CloseOverdueLoan(loanRepository);
         this.loanController = new LoanController(this);
+
+        this.openApiContractHandler = new OpenApiContractHandler();
+        this.swaggerUiHandler = new SwaggerUiHandler();
     }
 
     public CreateCustomer getCreateCustomer() {
@@ -134,5 +142,13 @@ public class AppContext {
 
     public LoanController getLoanController() {
         return loanController;
+    }
+
+    public OpenApiContractHandler getOpenApiContractHandler() {
+        return openApiContractHandler;
+    }
+
+    public SwaggerUiHandler getSwaggerUiHandler() {
+        return swaggerUiHandler;
     }
 }

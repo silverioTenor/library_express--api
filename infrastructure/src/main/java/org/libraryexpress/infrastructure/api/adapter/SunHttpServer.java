@@ -85,7 +85,6 @@ public final class SunHttpServer {
             public String getHeader(String attr) {
                 return exchange.getRequestHeaders().getFirst(attr);
             }
-
         };
     }
 
@@ -122,6 +121,14 @@ public final class SunHttpServer {
             @Override
             public void setHeader(String name, String value) {
                 exchange.getResponseHeaders().set(name, value);
+            }
+
+            @Override
+            public void raw(byte[] body) throws IOException {
+                exchange.sendResponseHeaders(currentStatus, body.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(body);
+                }
             }
 
         };

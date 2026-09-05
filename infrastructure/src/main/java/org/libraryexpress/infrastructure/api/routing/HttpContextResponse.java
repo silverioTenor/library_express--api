@@ -9,4 +9,5 @@ public interface HttpContextResponse {
     void json(Object body) throws IOException;
     void sendEmpty() throws IOException;
     void setHeader(String name, String value);
+    void raw(byte[] body) throws IOException;
 }

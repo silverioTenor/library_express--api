@@ -105,9 +105,29 @@
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2-jakarta</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>swagger-ui</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
 
         <plugins>
             <!-- Exec Plugin: Exclusive runtime entrypoint configuration for this module -->
@@ -150,12 +170,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <!-- Integration Tests -->
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-failsafe-plugin</artifactId>-->
-<!--            </plugin>-->
 
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -220,6 +234,55 @@
                                     </limits>
                                 </rule>
                             </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-maven-plugin-jakarta</artifactId>
+                <configuration>
+                    <outputFileName>openapi</outputFileName>
+                    <outputPath>${project.build.outputDirectory}/generated-openapi</outputPath>
+                    <outputFormat>JSONANDYAML</outputFormat>
+
+                    <resourcePackages>
+                        <package>org.libraryexpress.infrastructure.api</package>
+                    </resourcePackages>
+
+                    <prettyPrint>true</prettyPrint>
+
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>inject-real-version-into-openapi</id>
+                        <phase>compile</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <replace dir="${project.build.outputDirectory}/generated-openapi"
+                                         token="0.0.0-PLACEHOLDER"
+                                         value="${project.version}">
+                                    <include name="**/*.json"/>
+                                    <include name="**/*.yaml"/>
+                                </replace>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
