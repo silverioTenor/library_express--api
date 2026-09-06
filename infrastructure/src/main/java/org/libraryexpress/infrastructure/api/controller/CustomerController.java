@@ -49,6 +49,9 @@ public final class CustomerController {
                     schema = @Schema(implementation = CreateCustomerDto.class)
             ))
     )
+    @Parameters({
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
+    })
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Customer created"),
             @ApiResponse(
@@ -82,14 +85,20 @@ public final class CustomerController {
             requestBody =  @RequestBody(content = @Content())
     )
     @Parameters({
-            @Parameter(name = "id", in = ParameterIn.QUERY, description = "Customer id", required = false),
-            @Parameter(name = "email", in = ParameterIn.QUERY, description = "Customer email", required = false)
+            @Parameter(name = "id", in = ParameterIn.QUERY),
+            @Parameter(name = "email", in = ParameterIn.QUERY),
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "Customer found",
                     content = @Content(schema = @Schema(implementation = CustomerDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "No parameter provided",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -125,7 +134,8 @@ public final class CustomerController {
             ))
     )
     @Parameters({
-            @Parameter(name = "id", in = ParameterIn.PATH, description = "Customer id", required = true)
+            @Parameter(name = "id", in = ParameterIn.PATH, required = true),
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
             @ApiResponse(

@@ -32,10 +32,16 @@ public class UpdateCustomerEmail {
                     return new CustomerNotFoundException();
                 });
 
-        Customer isEmailUsed = this.customerRepository.getById(updateCustomerEmailDto.id())
+        Customer isEmailUsed = this.customerRepository.getById(updateCustomerEmailDto.email())
                 .orElse(null);
 
-        if (isEmailUsed != null) throw new UniqueEmailViolationException("The email address is not permitted");
+        if (isEmailUsed != null) {
+            logger.warn(
+                    "ALERT: The email address has already been used. Customer ID: [{}] - email provided: [{}]",
+                    updateCustomerEmailDto.id(), updateCustomerEmailDto.email()
+            );
+            throw new UniqueEmailViolationException("The email address is not permitted");
+        }
 
         customer.changeEmail(updateCustomerEmailDto.email());
 

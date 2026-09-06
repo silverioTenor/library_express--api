@@ -43,6 +43,9 @@ public final class BookController {
             summary = "Register a book",
             requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = RegisterBookDto.class)))
     )
+    @Parameters({
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
+    })
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Book created"),
             @ApiResponse(
@@ -73,7 +76,8 @@ public final class BookController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a book by ISBN", requestBody = @RequestBody(content = @Content()))
     @Parameters({
-            @Parameter(name = "isbn", in = ParameterIn.PATH, description = "Book ISBN", required = true)
+            @Parameter(name = "isbn", in = ParameterIn.PATH, required = true),
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
             @ApiResponse(

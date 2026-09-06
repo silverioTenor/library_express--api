@@ -41,6 +41,9 @@ public final class LoanController {
             summary = "Create a loan",
             requestBody = @RequestBody(content =  @Content(schema = @Schema(implementation = CreateLoanDto.class)))
     )
+    @Parameters({
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
+    })
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Loan created"),
             @ApiResponse(
@@ -65,9 +68,10 @@ public final class LoanController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Search loans (paginated)", requestBody =  @RequestBody(content = @Content()))
     @Parameters({
-            @Parameter(name = "customerId", in = ParameterIn.QUERY, allowEmptyValue = true),
-            @Parameter(name = "ISBN", in = ParameterIn.QUERY, allowEmptyValue = true),
-            @Parameter(name = "statuses", in = ParameterIn.QUERY, allowEmptyValue = true)
+            @Parameter(name = "customerId", in = ParameterIn.QUERY),
+            @Parameter(name = "ISBN", in = ParameterIn.QUERY),
+            @Parameter(name = "statuses", in = ParameterIn.QUERY, example = "ACTIVE, OVERDUE, FINISHED"),
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
             @ApiResponse(
@@ -121,7 +125,8 @@ public final class LoanController {
             requestBody =  @RequestBody(content = @Content())
     )
     @Parameters({
-            @Parameter(name = "loanId", in = ParameterIn.PATH, allowEmptyValue = false),
+            @Parameter(name = "loanId", in = ParameterIn.PATH),
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Loan returned successfully"),
@@ -160,7 +165,8 @@ public final class LoanController {
             requestBody =  @RequestBody(content = @Content())
     )
     @Parameters({
-            @Parameter(name = "loanId", in = ParameterIn.PATH, allowEmptyValue = false),
+            @Parameter(name = "loanId", in = ParameterIn.PATH),
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Overdue loan closed"),
