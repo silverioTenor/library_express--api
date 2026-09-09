@@ -32,7 +32,7 @@ public class UpdateCustomerEmail {
                     return new CustomerNotFoundException();
                 });
 
-        Customer isEmailUsed = this.customerRepository.getById(updateCustomerEmailDto.email())
+        Customer isEmailUsed = this.customerRepository.getByEmail(updateCustomerEmailDto.email())
                 .orElse(null);
 
         if (isEmailUsed != null) {
