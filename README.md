@@ -98,7 +98,7 @@ The API is served by the application's own embedded HTTP server on the port defi
 | Loans | POST | `/loans` | Create a loan |
 | Loans | GET | `/loans` | Search loans (paginated) |
 | Loans | POST | `/loans/{loanId}/returns` | Return a loan |
-| Loans | PATCH | `/loans/close-overdue/{loanId}` | Close an overdue loan (temporary flow) |
+| Loans | PATCH | `/loans/{loanId}/close-overdue` | Close an overdue loan (temporary flow) |
 
 ### API Documentation
 

@@ -10,7 +10,7 @@ public class Pagination {
 
         public static PageRequest of(int page, int size) {
             int resolvedPage = Math.max(page, 0);
-            int resolvedSize = size <= 0 ? 20 : size;
+            int resolvedSize = size <= 0 ? 10 : size;
 
             return new PageRequest(resolvedPage, resolvedSize);
         }
