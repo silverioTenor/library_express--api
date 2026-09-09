@@ -24,12 +24,7 @@ public abstract class PostgresTestContainerConfig {
 
         System.out.println("[TESTCONTAINERS] - Constructing ephemeral PostgreSQL docker metadata...");
 
-        postgresContainer = new PostgreSQLContainer(
-                testProperties.getProperty("testcontainers.docker.image", "postgres:17-alpine"))
-                .withDatabaseName(testProperties.getProperty("testcontainers.db.name", "library_express_db_test"))
-                .withUsername(testProperties.getProperty("testcontainers.db.username", "test_user"))
-                .withPassword(testProperties.getProperty("testcontainers.db.password", "test_password")
-        );
+        postgresContainer = new PostgreSQLContainer("postgres:17-alpine");
 
         // Routing real-time container log buffers straight to standard system stdout channels
         postgresContainer.withLogConsumer(outputFrame ->
@@ -79,9 +74,9 @@ public abstract class PostgresTestContainerConfig {
     private static Properties loadTestProperties() {
         Properties props = new Properties();
         try (InputStream input = PostgresTestContainerConfig.class.getClassLoader()
-                .getResourceAsStream("hikari-test.properties")) {
+                .getResourceAsStream("application.properties")) {
             if (input == null) {
-                System.err.println("Warning: hikari-test.properties not found inside test resources classpath.");
+                System.err.println("Warning: application.properties not found inside test resources classpath.");
                 return props;
             }
             props.load(input);

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.libraryexpress.infrastructure.UnitTest;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
-import org.libraryexpress.infrastructure.api.server.SunHttpServer;
 
 import java.net.URI;
 import java.util.Map;

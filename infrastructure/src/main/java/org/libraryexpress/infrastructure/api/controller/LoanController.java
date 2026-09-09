@@ -53,7 +53,7 @@ public final class LoanController {
             ),
             @ApiResponse(
                     responseCode = "422",
-                    description = "Book unavailable or active loan limit reached",
+                    description = "Book unavailable or active loan size reached",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })

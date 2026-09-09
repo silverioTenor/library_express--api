@@ -40,6 +40,7 @@
         <jakart.ws.rs-api.version>3.1.0</jakart.ws.rs-api.version>
         <swagger.core.v3.version>2.2.25</swagger.core.v3.version>
         <swagger.ui.version>5.17.14</swagger.ui.version>
+        <rest.assured.version>5.5.6</rest.assured.version>
 
         <exec.skip>true</exec.skip>
     </properties>
@@ -137,6 +138,11 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>io.rest-assured</groupId>
+                <artifactId>rest-assured</artifactId>
+                <version>${rest.assured.version}</version>
+            </dependency>
 
             <!-- SLF4J API Layer -->
             <dependency>
@@ -232,6 +238,21 @@
                             </configuration>
                         </execution>
 
+                        <!-- Integration test coverage -->
+                        <execution>
+                            <id>prepare-agent-e2e</id>
+                            <goals>
+                                <goal>prepare-agent-integration</goal>
+                            </goals>
+
+                            <configuration>
+                                <propertyName>argLineJaCoCoE2E</propertyName>
+                                <destFile>
+                                    ${project.build.directory}/jacoco-e2e.exec
+                                </destFile>
+                            </configuration>
+                        </execution>
+
                         <!-- Module reports -->
                         <execution>
                             <id>report</id>
@@ -267,6 +288,7 @@
                 <configuration>
                     <groups>unit</groups>
                     <excludedGroups>integration</excludedGroups>
+                    <excludedGroups>e2e</excludedGroups>
 
                     <!-- The @{argLine} ensures compatibility with plugins like JaCoCo in the future. -->
                     <!-- The -Xshare:off option disables the feature that is generating the alert. -->
@@ -285,21 +307,6 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>${failsafe.version}</version>
 
-                <configuration>
-                    <groups>integration</groups>
-
-                    <includes>
-                        <include>**/*IntegrationTest.java</include>
-                    </includes>
-
-                    <argLine>
-                        @{argLine}
-                        @{argLineJaCoCoIntegration}
-                        -javaagent:${org.mockito:mockito-core:jar}
-                        -Xshare:off
-                    </argLine>
-                </configuration>
-
                 <executions>
                     <execution>
                         <id>integration-tests</id>
@@ -307,6 +314,40 @@
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
+                        <configuration>
+                            <groups>integration</groups>
+                            <excludedGroups>e2e</excludedGroups>
+                            <includes>
+                                <include>**/*IntegrationTest.java</include>
+                            </includes>
+                            <argLine>
+                                @{argLine}
+                                @{argLineJaCoCoIntegration}
+                                -javaagent:${org.mockito:mockito-core:jar}
+                                -Xshare:off
+                            </argLine>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>e2e-tests</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <groups>e2e</groups>
+                            <excludedGroups>integration</excludedGroups>
+                            <includes>
+                                <include>**/*E2ETest.java</include>
+                            </includes>
+                            <argLine>
+                                @{argLine}
+                                @{argLineJaCoCoE2E}
+                                -javaagent:${org.mockito:mockito-core:jar}
+                                -Xshare:off
+                            </argLine>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
