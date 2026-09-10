@@ -6,36 +6,42 @@ import org.junit.jupiter.api.BeforeAll;
 import org.libraryexpress.infrastructure.config.AppBootstrapper;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Baseline Architectural E2E Test class.
  * Orchestrates Testcontainers PostgreSQL lifecycles alongside our official AppBootstrapper lifecycles.
  */
 public abstract class E2EBaseConfig {
 
-    private static final PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
+    protected static final PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
+
+    private static final AtomicBoolean serverStarted = new AtomicBoolean(false);
 
     @BeforeAll
     static void setup() {
-        postgres.start();
+        if (!postgres.isRunning()) postgres.start();
 
-        System.setProperty("DB_NAME", postgres.getDatabaseName());
-        System.setProperty("DB_USER", postgres.getUsername());
-        System.setProperty("DB_PASSWORD", postgres.getPassword());
-        System.setProperty("DB_PORT", postgres.getMappedPort(5432).toString());
+        if (serverStarted.compareAndSet(false, true)) {
 
-        AppBootstrapper.boot();
+            System.setProperty("DB_NAME", postgres.getDatabaseName());
+            System.setProperty("DB_USER", postgres.getUsername());
+            System.setProperty("DB_PASSWORD", postgres.getPassword());
+            System.setProperty("DB_PORT", postgres.getMappedPort(5432).toString());
+
+            AppBootstrapper.boot();
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                postgres.stop();
+
+                System.clearProperty("DB_NAME");
+                System.clearProperty("DB_USER");
+                System.clearProperty("DB_PASSWORD");
+                System.clearProperty("DB_PORT");
+            }));
+        }
 
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = 3000;
-    }
-
-    @AfterAll
-    static void tearDown() {
-        postgres.stop();
-
-        System.clearProperty("DB_NAME");
-        System.clearProperty("DB_USER");
-        System.clearProperty("DB_PASSWORD");
-        System.clearProperty("DB_PORT");
     }
 }
