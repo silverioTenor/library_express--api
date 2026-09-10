@@ -102,7 +102,7 @@ public class LoanDbRepository implements LoanRepository {
         boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
 
         var query = shouldPaginate
-                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_loan LIMIT ? OFFSET ? WHERE 1=1")
+                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_loan WHERE 1=1 LIMIT ? OFFSET ?")
                 : new StringBuilder("SELECT * FROM tb_loan WHERE 1=1");
 
         Set<Loan> loans = new HashSet<>();

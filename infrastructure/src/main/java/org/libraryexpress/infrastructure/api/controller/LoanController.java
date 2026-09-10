@@ -55,6 +55,11 @@ public final class LoanController {
                     responseCode = "422",
                     description = "Book unavailable or active loan size reached",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal Server Error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
     public void create(HttpContextRequest request, HttpContextResponse response) throws Exception {
