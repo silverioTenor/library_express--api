@@ -37,3 +37,41 @@ Following the closure of Epic E7 and during the refinement of Epic E12, two tech
 **Negative / Trade-offs**
 - Quality thresholds are temporarily lowered, with `infrastructure` branch coverage (50%) remaining a temporary weakness until Epic E9.
 - Adds PL/pgSQL code requiring Testcontainers integration tests and database migration tracking.
+
+### Amendment 2 — E9 Infrastructure Coverage Baseline (TD08 Resolution)
+
+**Date:** 2026-09-11
+**Context:** Epic E9 (REST API + Documentation) delivered the HTTP handler layer,
+expanding infrastructure's testable surface as anticipated when TD08 was opened
+during E7 (US-703).
+
+**Measured coverage (post-E9, US-908):**
+
+| Module | Instruction | Branch |
+|---|---|---|
+| domain | 93% | 91% |
+| application | 100% | 92% |
+| infrastructure | 87% | 72% |
+
+**Decision:** JaCoCo `check` thresholds are set at measured coverage minus a
+safety margin (~3–7 points), not at the measured value itself. Rationale:
+a threshold pinned to the exact measured number is brittle — it fails the
+build on any natural fluctuation (a single uncovered exception branch
+introduced in an unrelated refactor) without adding real regression protection.
+A margin preserves rigor while tolerating normal variance.
+
+`infrastructure` specifically receives the more conservative end of the
+margin, not a value close to the measured 87%/72%: the current number
+reflects HTTP handlers written in the same sprint they're being measured in,
+with no maintenance cycle yet to confirm the number is stable rather than a
+one-off high-water mark.
+
+**New thresholds (supersedes the US-703 table):**
+
+| Module | Instruction | Branch |
+|---|---|---|
+| domain | 90% | 88% |
+| application | 95% | 88% |
+| infrastructure | 80% | 65% |
+
+**Status:** TD08 formally resolved.
