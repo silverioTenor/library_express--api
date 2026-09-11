@@ -1,8 +1,7 @@
 package org.libraryexpress.infrastructure.api.e2e;
 
 import io.restassured.http.ContentType;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.libraryexpress.application.book.dto.response.BookDto;
 import org.libraryexpress.infrastructure.E2ETest;
 
@@ -10,10 +9,12 @@ import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
 @E2ETest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DisplayName("Book Aggregate Endpoints - E2E Test")
 class BookE2ETest extends E2EBaseConfig {
 
     @Test
+    @Order(1)
     @DisplayName("Should register successfully a book and receive a 201 status code")
     void shouldRegisterBook_whenExecutingFullHappyPath() {
         String bookPayload = """
@@ -37,6 +38,7 @@ class BookE2ETest extends E2EBaseConfig {
     }
 
     @Test
+    @Order(2)
     @DisplayName("Should get a book by ISBN when the data provided is valid")
     void shouldGetBookPreviouslySaved_whenProvideValidIsbn() {
         given()
@@ -52,6 +54,7 @@ class BookE2ETest extends E2EBaseConfig {
     }
 
     @Test
+    @Order(3)
     @DisplayName("Should get a book by ISBN when the data provided is valid")
     void shouldSuccessfullyListBooks_whenCallEndpoint() {
         BookDto bookDto = get("/books/995-29-66530-22-4").as(BookDto.class);
@@ -84,6 +87,7 @@ class BookE2ETest extends E2EBaseConfig {
     }
 
     @Test
+    @Order(4)
     @DisplayName("Should throw an error with status code 409 when trying register a new book with ISBN previous registered")
     void shouldThrowConflictError_whenTryingRegisterNewBookWithISBNPreviousRegistered() {
         String bookPayload = """
@@ -107,6 +111,7 @@ class BookE2ETest extends E2EBaseConfig {
     }
 
     @Test
+    @Order(5)
     @DisplayName("Should throw an error with status code 404 when provide an invalid ISBN")
     void shouldThrowError_whenProvideAnInvalidIsbn() {
         given()
