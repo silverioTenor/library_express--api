@@ -15,7 +15,7 @@ public final class EmbeddedHttpServer {
 
     private static final int SERVER_PORT = ConfigRegistry.getApiPort();
 
-    private static final CustomLogger logger = CustomLoggerFactory.getLogger(RouteOrchestrator.class);
+    private static final CustomLogger logger = CustomLoggerFactory.getLogger(EmbeddedHttpServer.class);
 
     private final HttpServer server;
 
