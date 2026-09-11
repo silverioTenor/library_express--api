@@ -48,9 +48,9 @@ public final class SunHttpServer {
                 Map<String, String> params = getQueryParams();
 
                 int page = params.containsKey("page") ? Integer.parseInt(params.get("page")) : 0;
-                int size = params.containsKey("limit") ? Integer.parseInt(params.get("limit")) : 10;
+                int limit = params.containsKey("limit") ? Integer.parseInt(params.get("limit")) : 10;
 
-                return PageRequest.of(page, size);
+                return PageRequest.of(page, limit);
             }
 
             @Override

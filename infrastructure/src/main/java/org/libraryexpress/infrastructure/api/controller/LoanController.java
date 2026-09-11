@@ -53,7 +53,12 @@ public final class LoanController {
             ),
             @ApiResponse(
                     responseCode = "422",
-                    description = "Book unavailable or active loan limit reached",
+                    description = "Book unavailable or active loan size reached",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
@@ -118,11 +123,6 @@ public final class LoanController {
             @ApiResponse(
                     responseCode = "404",
                     description = "Loan not found",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Loan not in a returnable state",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })

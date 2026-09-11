@@ -74,7 +74,7 @@ public class BookDbRepository implements BookRepository {
 
         if (hasIsbnFilter) query.append(" AND isbn = ?");
 
-        // Dynamically building the IN (?, ?, ...) clause to match the Set collections limit safely
+        // Dynamically building the IN (?, ?, ...) clause to match the Set collections size safely
         if (hasStatusFilter) query.append(" AND status = ANY(?)");
 
         Set<Book> books = new HashSet<>();

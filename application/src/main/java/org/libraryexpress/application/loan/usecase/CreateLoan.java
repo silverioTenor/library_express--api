@@ -58,8 +58,8 @@ public class CreateLoan {
 
         book.changeStatus(BookStatus.BORROWED);
 
-        this.bookRepository.update(book);
         this.loanRepository.create(loan);
+        this.bookRepository.update(book);
 
         logger.info("Created loan flow finished successfully!");
     }

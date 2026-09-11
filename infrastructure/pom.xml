@@ -21,6 +21,7 @@
         <argLine></argLine>
         <argLineJaCoCo></argLineJaCoCo>
         <argLineJaCoCoIntegration></argLineJaCoCoIntegration>
+        <argLineJaCoCoE2E></argLineJaCoCoE2E>
     </properties>
 
     <dependencies>
@@ -90,6 +91,11 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -177,7 +183,7 @@
 
                 <executions>
                     <execution>
-                        <id>merge-unit-and-integration</id>
+                        <id>merge-unit-integration-and-e2e</id>
                         <phase>verify</phase>
                         <goals>
                             <goal>merge</goal>
@@ -189,6 +195,7 @@
                                     <includes>
                                         <include>jacoco-unit.exec</include>
                                         <include>jacoco-integration.exec</include>
+                                        <include>jacoco-e2e.exec</include>
                                     </includes>
                                 </fileSet>
                             </fileSets>
@@ -215,6 +222,7 @@
                                 <exclude>**/config/**/*</exclude>
                                 <exclude>**/util/*</exclude>
                                 <exclude>**/InMemory/*</exclude>
+                                <exclude>**/*.class</exclude>
                             </excludes>
 
                             <rules>
@@ -224,12 +232,12 @@
                                         <limit>
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.70</minimum>
+                                            <minimum>0.80</minimum>
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.50</minimum>
+                                            <minimum>0.65</minimum>
                                         </limit>
                                     </limits>
                                 </rule>

@@ -34,22 +34,16 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Step 1: Compiles all layers cleanly
       - name: Compile Project Modules
         run: mvn -B clean compile
 
-      # Step 2: PO Requirement - Executes ONLY fast Unit Tests (Domain & Application)
-      # Surefire acts natively based on your parent configurations (<groups>unit</groups>)
       - name: Execute Isolated Unit Tests Suite
         run: mvn -B test
 
-      # Step 3: PO Requirement - Executes ONLY Integration Tests (Testcontainers) & Enforces Gates
-      # Task Solution: We pass -Dsurefire.skip=true to completely freeze the unit engine,
-      # forcing the phase to jump directly into Failsafe integration execution blocks!
       - name: Execute Isolated Integration Tests Suite
-        run: mvn -B verify -Dsurefire.skip=true
+        run: mvn -B verify -Dsurefire.skip=false -Dsurefire.includes=none -Dgroups=integration
 
-#  It will be covered in Epic 9. 👇
+#  It will be covered in Epic 10. 👇
 
   # -------------------------------------------------------------------------
   # Job 2: Continuous Delivery (Dynamic Build and Publish to Registry)
