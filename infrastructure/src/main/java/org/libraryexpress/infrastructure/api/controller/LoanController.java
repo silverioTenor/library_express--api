@@ -124,11 +124,6 @@ public final class LoanController {
                     responseCode = "404",
                     description = "Loan not found",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Loan not in a returnable state",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
     public void returnLoan(HttpContextRequest request, HttpContextResponse response) throws Exception {

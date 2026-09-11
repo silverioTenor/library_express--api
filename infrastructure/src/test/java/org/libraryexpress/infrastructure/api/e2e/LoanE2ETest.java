@@ -8,15 +8,15 @@ import org.libraryexpress.application.customer.dto.response.CustomerDto;
 import org.libraryexpress.application.loan.dto.response.LoanDto;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.E2ETest;
-import org.libraryexpress.infrastructure.config.ConfigRegistry;
 
-import javax.sql.DataSource;
 import java.sql.DriverManager;
-import java.util.Arrays;
 import java.util.UUID;
 
-import static io.restassured.RestAssured.*;
-import static org.hamcrest.Matchers.*;
+import static io.restassured.RestAssured.get;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.*;
 
 @E2ETest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -128,7 +128,6 @@ public class LoanE2ETest extends E2EBaseConfig {
     void shouldCloseLoanSuccessfully_whenStatusIsOverdue() {
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
         var book = TestDataFactory.getBook("408-36-74383-60-6");
-        TestDataFactory.getPagedLoans(book.ISBN(), customer.id());
 
         String loanId = UUID.randomUUID().toString();
         TestDataFactory.createOverdueLoan(loanId, customer.id(), book.ISBN());
@@ -146,7 +145,7 @@ public class LoanE2ETest extends E2EBaseConfig {
 
     @Test
     @Order(5)
-    @DisplayName("Should throw an error when trying to create a loan when has no register for customer or book")
+    @DisplayName("Should throw an error when trying to create a loan without customer or book")
     void shouldThrowError_whenTryingCreateLoanWithoutCustomerOrBook() {
         TestDataFactory.createCustomer("hellen.doe@test.com");
         TestDataFactory.createBook("344-89-27240-40-1");
@@ -183,6 +182,151 @@ public class LoanE2ETest extends E2EBaseConfig {
             .post("/loans")
         .then()
             .statusCode(500); // TODO: No have customer validation yet
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("Should throw an error when trying to create a loan with a book unavailable")
+    void shouldThrowError_whenTryingCreateLoanWithBookUnavailable() {
+        var book = TestDataFactory.getBook("408-36-74383-60-6");
+        var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
+
+        String firstPayload = """
+                {
+                    "customerId": "%s",
+                    "ISBN": "%s"
+                }
+                """.formatted(customer.id(), book.ISBN());
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(firstPayload)
+        .when()
+            .post("/loans")
+        .then()
+            .statusCode(422)
+            .body("message", equalTo("Book is not available."));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("Should throw an error when trying to create a loan for a customer who has another overdue loan")
+    void shouldThrowError_whenTryingCreateLoanForCustomerWhichHasAnotherOverdue() {
+        TestDataFactory.createBook("551-67-24636-52-4");
+
+        var book = TestDataFactory.getBook("551-67-24636-52-4");
+        var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
+
+        String loanId = UUID.randomUUID().toString();
+        TestDataFactory.createOverdueLoan(loanId, customer.id(), book.ISBN());
+
+        String payload = """
+                {
+                    "customerId": "%s",
+                    "ISBN": "%s"
+                }
+                """.formatted(customer.id(), book.ISBN());
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(payload)
+        .when()
+            .post("/loans")
+        .then()
+            .statusCode(422)
+            .body("message", equalTo("Customer has a pending overdue return."));
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("Should throw an error when trying to create a loan for a customer has reached the maximum limit of active loans")
+    void shouldThrowError_whenTryingCreateLoanForCustomerHasReachedTheMaximumLimitOfActiveLoans() {
+        TestDataFactory.createBook("145-25-89157-94-8");
+
+        var book = TestDataFactory.getBook("145-25-89157-94-8");
+        var customer = TestDataFactory.getCustomer("j.doe@test.com");
+
+        String payload = """
+                {
+                    "customerId": "%s",
+                    "ISBN": "%s"
+                }
+                """.formatted(customer.id(), book.ISBN());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .post("/loans")
+                .then()
+                .statusCode(422)
+                .body("message", equalTo("Customer has reached the maximum limit of active loans."));
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("Should throw an error when trying to search with invalid parameters")
+    void shouldThrowError_whenTryingSearchWithInvalidParameters() {
+        given()
+        .contentType(ContentType.JSON)
+            .queryParam("statuses", "PENDING")
+        .when()
+            .get("/loans")
+        .then()
+            .statusCode(400)
+            .body("message", equalTo("Invalid status values provided in query params."));
+
+        given()
+            .contentType(ContentType.JSON)
+            .queryParam("statuses", "invalid")
+        .when()
+            .get("/loans")
+        .then()
+            .statusCode(400)
+        .body("message", equalTo("Invalid status values provided in query params."));
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("Should throw an error when trying return loan with an invalid ID")
+    void shouldThrowError_whenTryingReturnLoanWithInvalidId() {
+        given()
+            .contentType(ContentType.JSON)
+            .pathParam("loanId", "invalid-loan-id")
+        .when()
+            .post("/loans/{loanId}/returns")
+        .then()
+            .statusCode(404)
+            .body("message", equalTo("No loan found matching the provided parameters."));
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("Should throw an error when trying close an overdue loan witch status is another")
+    void shouldThrowError_whenTryingCloseOverdueLoan() {
+        given()
+            .contentType(ContentType.JSON)
+            .pathParam("loanId", "invalid-loan-id")
+        .when()
+            .patch("/loans/{loanId}/close-overdue")
+        .then()
+            .statusCode(404)
+            .body("message", equalTo("Loan not found!"));
+
+        var customer = TestDataFactory.getCustomer("j.doe@test.com");
+        var loans = TestDataFactory.getPagedLoans("", customer.id(), "ACTIVE");
+        var loan = loans.items().stream().findFirst();
+
+        if (loan.isEmpty()) throw new RuntimeException("TEST FAILED: No loan found!");
+
+        given()
+            .contentType(ContentType.JSON)
+            .pathParam("loanId", loan.get().id())
+        .when()
+            .patch("/loans/{loanId}/close-overdue")
+        .then()
+            .statusCode(422)
+            .body("message", equalTo("Only overdue loans can be closed through this flow."));
     }
 
     private static class TestDataFactory {
@@ -251,7 +395,7 @@ public class LoanE2ETest extends E2EBaseConfig {
             .then()
                 .statusCode(200)
                 .extract()
-                .body().as(new TypeRef<>() {});
+                .body().as(new TypeRef<OutputPaginationDto<LoanDto>>() {});
         }
 
         static void createOverdueLoan(String loanId, String customerId, String isbn) {
