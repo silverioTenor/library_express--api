@@ -1,18 +1,15 @@
 package org.libraryexpress.domain.loan.exception;
 
-import org.libraryexpress.domain.core.DomainException;
+import org.libraryexpress.domain.core.exception.DomainErrorType;
+import org.libraryexpress.domain.core.exception.DomainException;
 
 public class LoanNotFoundException extends DomainException {
 
     public LoanNotFoundException() {
-        super("Loan not found!");
+        super(DomainErrorType.RESOURCE_NOT_FOUND, "Loan not found!");
     }
 
     public LoanNotFoundException(String message) {
-        super(message);
-    }
-
-    public LoanNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+        super(DomainErrorType.RESOURCE_NOT_FOUND, message);
     }
 }

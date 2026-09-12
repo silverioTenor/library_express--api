@@ -1,5 +1,8 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
+import org.libraryexpress.domain.core.dto.InputPaginationDto;
+import org.libraryexpress.domain.core.dto.OutputPaginationDto;
+import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
@@ -101,24 +104,49 @@ public class CustomerDbRepository implements CustomerRepository {
     }
 
     @Override
-    public Set<Customer> all() {
-        String query = "SELECT * FROM tb_customer";
+    public QueryResult<Customer> findAll(InputPaginationDto paginationDto) {
+        boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
+
+        String query = shouldPaginate
+                ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_customer LIMIT ? OFFSET ?"
+                : "SELECT * FROM tb_customer";
 
         Set<Customer> customers = new HashSet<>();
+        long totalElements;
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query);
-                ResultSet resultSet = statement.executeQuery()
         ) {
-            while (resultSet.next()) {
-                customers.add(mapRowToCustomer(resultSet));
+            if (shouldPaginate) {
+                statement.setInt(1, paginationDto.limit());
+                statement.setInt(2, paginationDto.offset());
+            } else {
+                connection.setAutoCommit(false);
+                statement.setFetchSize(500);
             }
+
+            boolean firstRow = true;
+            long countFromWindow = 0;
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+
+                    if (shouldPaginate && firstRow) {
+                        countFromWindow = resultSet.getLong("full_count");
+                        firstRow = false;
+                    }
+
+                    customers.add(mapRowToCustomer(resultSet));
+                }
+            }
+            totalElements = shouldPaginate ? countFromWindow : customers.size();
+
         } catch (SQLException e) {
             throw new RuntimeException("Fatal database error executing unrestricted customers catalog query: " + e.getMessage(), e);
         }
 
-        return customers;
+        return new QueryResult<>(customers, totalElements);
     }
 
     /**

@@ -1,14 +1,19 @@
 package org.libraryexpress.application.customer.usecase;
 
 import org.libraryexpress.application.customer.dto.request.UpdateCustomerEmailDto;
+import org.libraryexpress.domain.core.logging.CustomLogger;
+import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
 import java.util.Optional;
 
 public class UpdateCustomerEmail {
+
+    private static final CustomLogger logger  = CustomLoggerFactory.getLogger(UpdateCustomerEmail.class);
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper mapper;
@@ -19,12 +24,29 @@ public class UpdateCustomerEmail {
     }
 
     public void execute(UpdateCustomerEmailDto updateCustomerEmailDto) {
+        logger.info("Initiating Update Customer Email Flow");
 
         Customer customer = this.customerRepository.getById(updateCustomerEmailDto.id())
-                .orElseThrow(CustomerNotFoundException::new);
+                .orElseThrow(() -> {
+                    logger.error("CRITICAL: No customer was found for the ID: [{}] ", updateCustomerEmailDto.id());
+                    return new CustomerNotFoundException();
+                });
+
+        Customer isEmailUsed = this.customerRepository.getByEmail(updateCustomerEmailDto.email())
+                .orElse(null);
+
+        if (isEmailUsed != null) {
+            logger.warn(
+                    "ALERT: The email address has already been used. Customer ID: [{}] - email provided: [{}]",
+                    updateCustomerEmailDto.id(), updateCustomerEmailDto.email()
+            );
+            throw new UniqueEmailViolationException("The email address is not permitted");
+        }
 
         customer.changeEmail(updateCustomerEmailDto.email());
 
         this.customerRepository.update(customer);
+
+        logger.info("Customer email successfully updated! Customer ID [{}]", customer.getId());
     }
 }

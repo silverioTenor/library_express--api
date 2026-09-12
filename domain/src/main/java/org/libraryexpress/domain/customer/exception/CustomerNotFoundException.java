@@ -1,18 +1,15 @@
 package org.libraryexpress.domain.customer.exception;
 
-import org.libraryexpress.domain.core.DomainException;
+import org.libraryexpress.domain.core.exception.DomainErrorType;
+import org.libraryexpress.domain.core.exception.DomainException;
 
 public class CustomerNotFoundException extends DomainException {
 
     public CustomerNotFoundException() {
-        super("Customer not found!");
+        super(DomainErrorType.RESOURCE_NOT_FOUND, "Customer not found!");
     }
 
     public CustomerNotFoundException(String message) {
-        super(message);
-    }
-
-    public CustomerNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+        super(DomainErrorType.RESOURCE_NOT_FOUND, message);
     }
 }

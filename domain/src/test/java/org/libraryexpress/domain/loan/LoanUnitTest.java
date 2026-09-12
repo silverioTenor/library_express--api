@@ -6,6 +6,7 @@ import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.book.exception.InvalidIsbnException;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
+import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -258,14 +259,14 @@ public class LoanUnitTest {
     }
 
     @Test
-    @DisplayName("Should throw IllegalArgumentException when provided endDate is before startDate")
+    @DisplayName("Should throw DateOutOfBoundException when provided endDate is before startDate")
     void shouldThrowException_whenEndDateIsBeforeStartDate() {
         // Arrange
         LocalDate startDate = LocalDate.of(2026, 8, 10);
         LocalDate invalidBeforeDate = LocalDate.of(2026, 8, 9); // 1 day before
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        DateOutOfBoundException exception = assertThrows(DateOutOfBoundException.class, () ->
                 new Loan.Builder()
                         .setId("loan-1")
                         .setISBN(VALID_ISBN)
@@ -280,14 +281,14 @@ public class LoanUnitTest {
     }
 
     @Test
-    @DisplayName("Should throw IllegalArgumentException when provided endDate exceeds the 15-day limit")
+    @DisplayName("Should throw DateOutOfBoundException when provided endDate exceeds the 15-day limit")
     void shouldThrowException_whenEndDateExceeds15DaysLimit() {
         // Arrange
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         LocalDate invalidFutureDate = LocalDate.of(2026, 8, 17); // 16 days after (limit é 16/08)
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+        DateOutOfBoundException exception = assertThrows(DateOutOfBoundException.class, () ->
                 new Loan.Builder()
                         .setId("loan-1")
                         .setISBN(VALID_ISBN)

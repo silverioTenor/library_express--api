@@ -141,7 +141,11 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         loanRepository.create(overdueLoan);
 
         // Act - Triggering search using your optimized ANY clause database algorithm
-        Set<Loan> matchedLoans = loanRepository.search(VALID_CUSTOMER_ID, null, Set.of(LoanStatus.OVERDUE));
+        Set<Loan> matchedLoans = loanRepository.search(
+                VALID_CUSTOMER_ID,
+                null,
+                Set.of(LoanStatus.OVERDUE), null
+        ).items();
 
         // Assert
         assertNotNull(matchedLoans);

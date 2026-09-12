@@ -102,7 +102,7 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @Test
     @DisplayName("Should successfully capture and retrieve the entire customers collection dataset during unrestricted scans")
     void shouldReturnAllPersistedCustomers_whenTriggeringUnrestrictedCatalogScan() {
-        // Arrange (Testing all)
+        // Arrange (Testing findAll)
         Customer customer1 = createSampleCustomer("id-multi-1", "User Alpha", "alpha@libraryexpress.com");
         Customer customer2 = createSampleCustomer("id-multi-2", "User Beta", "beta@libraryexpress.com");
 
@@ -110,11 +110,11 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         customerRepository.create(customer2);
 
         // Act
-        Set<Customer> allCustomers = customerRepository.all();
+        var allCustomers = customerRepository.findAll(null);
 
         // Assert
-        assertNotNull(allCustomers);
-        assertTrue(allCustomers.size() >= 2, "Customers list lookup must yield all entries matching current database isolation scopes");
+        assertNotNull(allCustomers.items());
+        assertTrue(allCustomers.total() >= 2, "Customers list lookup must yield findAll entries matching current database isolation scopes");
     }
 
     /**

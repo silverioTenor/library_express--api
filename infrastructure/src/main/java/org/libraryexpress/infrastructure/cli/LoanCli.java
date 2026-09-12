@@ -9,6 +9,7 @@ import org.libraryexpress.application.loan.dto.response.LoanDto;
 import org.libraryexpress.application.loan.usecase.*;
 import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.exception.BookUnavailableException;
+import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.exception.InvalidLoanStatusException;
@@ -16,6 +17,7 @@ import org.libraryexpress.domain.loan.exception.LoanLimitReachedException;
 import org.libraryexpress.domain.loan.exception.LoanNotFoundException;
 import org.libraryexpress.domain.loan.exception.OverdueLoanException;
 import org.libraryexpress.infrastructure.config.AppContext;
+import org.libraryexpress.infrastructure.config.logging.LogTrace;
 import org.libraryexpress.infrastructure.util.JsonPrinter;
 
 import java.util.Scanner;
@@ -26,7 +28,6 @@ class LoanCli {
     private final FindCustomer findCustomer;
     private final CreateLoan createLoan;
     private final SearchLoans searchLoans;
-    private final ListLoans listLoans;
     private final ReturnLoan returnLoan;
     private final CloseOverdueLoan closeOverdueLoan;
 
@@ -34,7 +35,6 @@ class LoanCli {
         this.findCustomer = context.getFindCustomer();
         this.createLoan = context.getCreateLoan();
         this.searchLoans = context.getSearchLoans();
-        this.listLoans = context.getListLoans();
         this.returnLoan = context.getReturnLoan();
         this.closeOverdueLoan = context.getCloseOverdueLoan();
     }
@@ -49,7 +49,6 @@ class LoanCli {
             System.out.println("[2] - Search");
             System.out.println("[3] - Devolution");
             System.out.println("[4] - Close Overdue Loan");
-            System.out.println("[5] - List");
             System.out.println("[6] - Back");
             System.out.println(" ");
 
@@ -60,7 +59,6 @@ class LoanCli {
                 case 2 -> this.searchLoan(scan);
                 case 3 -> this.returnLoan(scan);
                 case 4 -> this.closeOverdueLoan(scan);
-                case 5 -> this.listLoans(scan);
                 case 6 -> loop = false;
                 default -> System.out.println("Invalid option!");
             }
@@ -69,6 +67,7 @@ class LoanCli {
     }
 
     public void createLoan(Scanner scan) {
+        LogTrace.start();
 
         System.out.println("  ");
         System.out.println("Enter the customer ID");
@@ -85,6 +84,7 @@ class LoanCli {
             this.findCustomer.execute(customerId);
         } catch (CustomerNotFoundException e) {
             System.out.println(e.getMessage());
+            LogTrace.clear();
             return;
         }
 
@@ -98,10 +98,13 @@ class LoanCli {
 
         } catch (LoanLimitReachedException | OverdueLoanException | BookUnavailableException | BookNotFoundException e) {
             System.out.println(e.getMessage());
+        } finally {
+            LogTrace.clear();
         }
     }
 
     public void searchLoan(Scanner scan) {
+        LogTrace.start();
 
         scan.nextLine();
 
@@ -136,19 +139,22 @@ class LoanCli {
 
         Set<LoanStatus> statuses = status != null ? Set.of(status) : null;
 
-        FilterLoansDto filterDto = new FilterLoansDto(customerId, ISBN, statuses);
+        FilterLoansDto filterDto = new FilterLoansDto(customerId, ISBN, statuses, null);
 
         try {
-            Set<LoanDto> loans = this.searchLoans.execute(filterDto);
+            OutputPaginationDto<LoanDto> loans = this.searchLoans.execute(filterDto);
 
-            System.out.println(JsonPrinter.print(loans));
+            System.out.println(JsonPrinter.print(loans.items()));
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
+        } finally {
+            LogTrace.clear();
         }
     }
 
     public void returnLoan(Scanner scan) {
+        LogTrace.start();
 
         System.out.println("  ");
         System.out.println("Enter the loan's ID");
@@ -162,10 +168,13 @@ class LoanCli {
 
         } catch (LoanNotFoundException | InvalidLoanStatusException e) {
             System.out.println(e.getMessage());
+        } finally {
+            LogTrace.clear();
         }
     }
 
     public void closeOverdueLoan(Scanner scan) {
+        LogTrace.start();
 
         System.out.println("  ");
         System.out.println("Enter the loan ID");
@@ -173,18 +182,14 @@ class LoanCli {
 
         try {
             this.closeOverdueLoan.execute(loanId);
+
             System.out.println("  ");
             System.out.println("Operation successfully completed!");
 
         } catch (LoanNotFoundException | OverdueLoanException e) {
             System.out.println(e.getMessage());
+        } finally {
+            LogTrace.clear();
         }
-    }
-
-    public void listLoans(Scanner scan) {
-
-        Set<LoanDto> loans = this.listLoans.execute();
-
-        System.out.println(JsonPrinter.print(loans));
     }
 }

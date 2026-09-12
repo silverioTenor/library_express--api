@@ -21,6 +21,7 @@
         <argLine></argLine>
         <argLineJaCoCo></argLineJaCoCo>
         <argLineJaCoCoIntegration></argLineJaCoCoIntegration>
+        <argLineJaCoCoE2E></argLineJaCoCoE2E>
     </properties>
 
     <dependencies>
@@ -64,17 +65,14 @@
             <artifactId>dotenv-java</artifactId>
         </dependency>
 
-        <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
         </dependency>
-        <!-- Mockito Core -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
-        <!-- Mockito JUnit 5 Extension -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
@@ -95,10 +93,47 @@
             <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
 
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2-jakarta</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>swagger-ui</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
 
         <plugins>
             <!-- Exec Plugin: Exclusive runtime entrypoint configuration for this module -->
@@ -142,19 +177,13 @@
                 </executions>
             </plugin>
 
-            <!-- Integration Tests -->
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-failsafe-plugin</artifactId>-->
-<!--            </plugin>-->
-
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
 
                 <executions>
                     <execution>
-                        <id>merge-unit-and-integration</id>
+                        <id>merge-unit-integration-and-e2e</id>
                         <phase>verify</phase>
                         <goals>
                             <goal>merge</goal>
@@ -166,6 +195,7 @@
                                     <includes>
                                         <include>jacoco-unit.exec</include>
                                         <include>jacoco-integration.exec</include>
+                                        <include>jacoco-e2e.exec</include>
                                     </includes>
                                 </fileSet>
                             </fileSets>
@@ -192,6 +222,7 @@
                                 <exclude>**/config/**/*</exclude>
                                 <exclude>**/util/*</exclude>
                                 <exclude>**/InMemory/*</exclude>
+                                <exclude>**/*.class</exclude>
                             </excludes>
 
                             <rules>
@@ -201,16 +232,65 @@
                                         <limit>
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.70</minimum>
+                                            <minimum>0.80</minimum>
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.50</minimum>
+                                            <minimum>0.65</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
                             </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-maven-plugin-jakarta</artifactId>
+                <configuration>
+                    <outputFileName>openapi</outputFileName>
+                    <outputPath>${project.build.outputDirectory}/generated-openapi</outputPath>
+                    <outputFormat>JSONANDYAML</outputFormat>
+
+                    <resourcePackages>
+                        <package>org.libraryexpress.infrastructure.api</package>
+                    </resourcePackages>
+
+                    <prettyPrint>true</prettyPrint>
+
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>inject-real-version-into-openapi</id>
+                        <phase>compile</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <replace dir="${project.build.outputDirectory}/generated-openapi"
+                                         token="0.0.0-PLACEHOLDER"
+                                         value="${project.version}">
+                                    <include name="**/*.json"/>
+                                    <include name="**/*.yaml"/>
+                                </replace>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>

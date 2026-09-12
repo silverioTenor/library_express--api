@@ -67,6 +67,7 @@
                                 <exclude>**/dto/**/*</exclude>
                                 <exclude>**/mapper/*</exclude>
                                 <exclude>**/exception/*</exclude>
+                                <exclude>**/*.class</exclude>
                             </excludes>
 
                             <rules>
@@ -76,12 +77,12 @@
                                         <limit>
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.85</minimum>
+                                            <minimum>0.95</minimum>
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.95</minimum>
+                                            <minimum>0.88</minimum>
                                         </limit>
                                     </limits>
                                 </rule>

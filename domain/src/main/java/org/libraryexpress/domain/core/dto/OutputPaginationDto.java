@@ -1,0 +1,15 @@
+package org.libraryexpress.domain.core.dto;
+
+import java.util.Set;
+
+public record OutputPaginationDto<T>(
+        Set<T> items,
+        int page,
+        int limit,
+        int totalPages,
+        long total
+) {
+    public static <T> OutputPaginationDto<T> unpaginated(Set<T> items) {
+        return new OutputPaginationDto<T>(items, 0, items.size(), 1, items.size());
+    }
+}

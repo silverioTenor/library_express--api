@@ -4,6 +4,7 @@ import org.libraryexpress.application.customer.dto.response.CustomerDto;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.exception.InvalidEmailException;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
 import java.util.Optional;
@@ -18,11 +19,13 @@ public class FindCustomer {
         this.mapper = mapper;
     }
 
-    public CustomerDto execute(String emailOrId) {
+    public CustomerDto execute(String criteria) {
 
-        Optional<Customer> customer = emailOrId.contains("@")
-                ? this.customerRepository.getByEmail(emailOrId)
-                : this.customerRepository.getById(emailOrId);
+        if (criteria == null || criteria.isBlank()) throw new InvalidEmailException("Provide at least one parameter");
+
+        Optional<Customer> customer = criteria.contains("@")
+                ? this.customerRepository.getByEmail(criteria)
+                : this.customerRepository.getById(criteria);
 
         return customer
                 .map(mapper::toResponseDto)

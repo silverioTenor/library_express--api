@@ -2,7 +2,8 @@ package org.libraryexpress.application.customer.usecase;
 
 import org.libraryexpress.application.customer.dto.response.CustomerDto;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
-import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.core.dto.InputPaginationDto;
+import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
 import java.util.Set;
@@ -17,9 +18,23 @@ public class ListCustomers {
         this.mapper = mapper;
     }
 
-    public Set<CustomerDto> execute() {
-        var customers = this.customerRepository.all();
+    public OutputPaginationDto<CustomerDto> execute(InputPaginationDto paginationDto) {
+        var result = this.customerRepository.findAll(paginationDto);
 
-        return mapper.toResponseListDto(customers);
+        Set<CustomerDto> customersDto = mapper.toResponseListDto(result.items());
+
+        if  (paginationDto == null || !paginationDto.isPaginated()) {
+            return OutputPaginationDto.unpaginated(customersDto);
+        }
+
+        int totalPages = Math.toIntExact(result.total() / paginationDto.limit());
+
+        return new OutputPaginationDto<>(
+                customersDto,
+                paginationDto.page(),
+                paginationDto.limit(),
+                totalPages,
+                result.total()
+        );
     }
 }

@@ -18,20 +18,21 @@ public class LoanEligibilityValidator {
 
     public void validate(String customerId) throws OverdueLoanException, LoanLimitReachedException {
 
-        Set<Loan> loans = this.loanRepository.search(
+        var loans = this.loanRepository.search(
                 customerId,
                 null,
-                Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE)
+                Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE),
+                null
         );
 
-        boolean hasOverdue = loans.stream()
+        boolean hasOverdue = loans.items().stream()
                 .anyMatch(loan -> loan.getStatus() == LoanStatus.OVERDUE);
 
         if (hasOverdue) {
             throw new OverdueLoanException("Customer has a pending overdue return.");
         }
 
-        long activeCount = loans.stream()
+        long activeCount = loans.items().stream()
                 .filter(loan -> loan.getStatus() == LoanStatus.ACTIVE)
                 .count();
 

@@ -3,6 +3,8 @@ package org.libraryexpress.infrastructure.repository.InMemory;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.repository.BookRepository;
+import org.libraryexpress.domain.core.dto.InputPaginationDto;
+import org.libraryexpress.domain.core.repository.QueryResult;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +47,8 @@ public class InMemoryBookRepository implements BookRepository {
     }
 
     @Override
-    public Set<Book> all() {
-        return Set.copyOf(group.values());
+    public QueryResult<Book> findAll(InputPaginationDto paginationDto) {
+        var books = Set.copyOf(group.values());
+        return new QueryResult<>(books, books.size());
     }
 }

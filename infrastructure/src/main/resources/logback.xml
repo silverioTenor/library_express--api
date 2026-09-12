@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================================ -->
+<!-- Logback Main Gateway Router                                                  -->
+<!-- Dynamically resolves and includes profile sheets based on APP_ENV settings   -->
+<!-- ============================================================================ -->
+<configuration>
+
+    <!-- Fallback variable resolution: defaults to 'dev' if APP_ENV is absent -->
+    <variable name="ENV" value="${APP_ENV:-dev}" />
+
+    <property name="PROFILE_FILE" value="logback-${ENV}.xml" />
+
+    <!-- Technical log tracing the routing mechanism choice during bootstrap -->
+    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" />
+
+    <!-- Dynamically injecting the target profile classpath resource sheet -->
+    <include resource="${PROFILE_FILE}" />
+
+</configuration>
