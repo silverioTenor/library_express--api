@@ -24,8 +24,8 @@ PO/Scrum Master: Claude · Dev: Silvério
 | E6 | Real Persistence (JDBC/PostgreSQL) + Docker Containerization | ✅ Done (Sprint 5) |
 | E7 | Real CI — automated tests running as a pipeline gate | ✅ Done (Sprint 6) — resolved TD06 |
 | E8 | Structured Logging Foundation (SLF4J + Logback, system-wide) | ✅ Done (Sprint 7) — resolves TD07 |
-| E9 | REST API + Documentation (Swagger/OpenAPI) | 🔵 Refined, ready for execution (Sprint 8) |
-| E10 | CD — Go Live (Marco 2, on AWS) | ⏳ Backlog (title only) |
+| E9 | REST API + Documentation (Swagger/OpenAPI) | ✅ Done (Sprint 8) |
+| E10 | CD — Go Live (Marco 2, on AWS) | 🔵 Refined, ready for execution (Sprint 9) |
 | E11 | Log Evolution & Full Observability (Prometheus/Grafana) | ⏳ Backlog (post Go-Live — scope note captured, not refined) |
 | E12 | Overdue Enforcement Evolution — Job, Loan Restriction & Settlement | ⏳ Backlog (post Go-Live — scope note captured, not refined) |
 | E13 | Notifications (loan created / completed / overdue) | ⏳ Backlog (post Go-Live, title only) |
@@ -71,18 +71,18 @@ Theme sequence:
 2. Real persistence (JDBC/PostgreSQL) + Docker containerization (E6) ✅ done
 3. Real CI — tests as a pipeline gate, including infrastructure tests via Testcontainers/TD06 (E7) ✅ done
 4. Structured logging foundation, system-wide (E8) ✅ done — resolves TD07
-5. REST API + documentation (Swagger/OpenAPI) (E9)
-6. Marco 2 — Go Live (E10, packaging CD on top of persistence, Docker, and the documented API already in place)
+5. REST API + documentation (Swagger/OpenAPI) (E9) ✅ done
+6. Marco 2 — Go Live (E10, packaging CD on top of persistence, Docker, and the documented API already in place) 🔵 refined, ready for execution
 7. Log evolution — full observability with Prometheus/Grafana (E11), post Go-Live
 8. Overdue enforcement evolution — scheduler Job, loan restriction, and settlement/late fees (E12), post Go-Live
 9. Notifications (E13), exercising the full CI/CD cycle against an already-deployed system
 
 **E5 + E6 merge (decision on record):** Epic E5 (standalone Docker) was discontinued as its own block. Rationale: containerization only generates real business value once it's wired to real persistence — "containerize a CLI with an in-memory repository" is a weak portfolio narrative compared to "containerize an application with real PostgreSQL, HikariCP, and versioned migrations." E5 remains visible in the Epics table (not removed from the map), marked as discontinued, to preserve historical traceability. All containerization scope was absorbed by E6, which took on the name Real Persistence (JDBC/PostgreSQL) + Docker Containerization.
 
-Database chosen: PostgreSQL (via pure JDBC, no ORM), aligned with AWS's RDS free tier.
+Database chosen: PostgreSQL. Local development and CI (E6/E7) use it via pure JDBC, no ORM. Production (E10) uses a managed serverless Postgres provider (Neon) instead of AWS RDS — see E10's decisions on record below and ADR 0009 (drafted during E10 execution).
 
 **🚀 Marco 2 — Go Live**
-First real deployment to production — on AWS (free tier). Delivered together: the CD pipeline (E10), real persistence via JDBC + a Docker image (E6, already in place), and the REST API without a framework (`com.sun.net.httpserver.HttpServer`, no Spring — this project stays framework-free for its entire lifecycle, see ADR [0001](./adr/0001-keep-library-express-framework-free.md)), documented via Swagger/OpenAPI (E9, already in place by this point). The deployment "counts" once there is a real HTTP service receiving traffic, backed by real persisted data, with structured logging (E8) already active.
+First real deployment to production — on AWS (free tier / minimal-cost footprint). Delivered together: the CD pipeline (E10), real persistence (E6, already in place; production instance provided by Neon), and the REST API without a framework (`com.sun.net.httpserver.HttpServer`, no Spring — this project stays framework-free for its entire lifecycle, see ADR [0001](./adr/0001-keep-library-express-framework-free.md)), documented via Swagger/OpenAPI (E9, already in place). The deployment "counts" once there is a real HTTP service receiving traffic, backed by real persisted data, with structured logging (E8) already active.
 
 **Deliberately excluded from Marco 2's scope:** automatic overdue enforcement, loan restriction, and settlement/late fees (E12), and full observability via Prometheus/Grafana (E11). These ship *after* Go-Live, as live iterations exercising the CD pipeline — the same pattern the project always intended for Notifications (E13), now extended to business-logic evolution and observability as well.
 
@@ -131,447 +131,430 @@ Ideas surfaced during refinement that were deliberately **not** turned into epic
 
 ---
 
-## 🔵 Epic E9 — REST API + Documentation (Swagger/OpenAPI)
+## 🔵 Epic E10 — CD / Go Live (Marco 2, AWS)
 
-**Sprint:** 8
-**Total points:** 35 (5 + 5 + 5 + 5 + 3 + 2 + 5 + 5)
+**Sprint:** 9
+**Total points:** 34 (3 + 5 + 3 + 2 + 8 + 2 + 8 + 3)
 **Status:** 🔵 Refined, ready for execution
 
 ### Decisions on record for this epic
 
-- No framework: HTTP layer built on `com.sun.net.httpserver.HttpServer`, with a small hand-rolled router (path/method → `HttpHandler`), per ADR [0001](./adr/0001-keep-library-express-framework-free.md).
-- JSON serialization via **Jackson** (already centralized in the parent `dependencyManagement`).
-- **Richardson Maturity Model, Level 2**: correct HTTP verbs, resource-based URIs, semantic status codes. No HATEOAS (Level 3) — deliberately out of scope, since the only consumers are the project's own soon-to-be-sunset CLI and local manual testing; no real client benefits from hypermedia navigation. Full rationale: ADR 0008.
-- **No URI version prefix** (`/books`, not `/v1/books`) — no external consumer exists yet to justify a stable versioned contract.
-- **Pagination:** `page`/`size` query parameters (Spring Data convention), optional with defaults (`page=0`, `size=20`), so the CLI — which sends neither parameter — keeps working unchanged against the first default page.
-- This epic exposes the **existing** book/customer/loan usecases over HTTP; no new business rules are introduced.
-- Central exception handling maps existing domain/application exceptions to HTTP status codes (400/404/409/etc.) — one dedicated US, not scattered per-handler try/catch.
-- Correlation ID (E8's `LogTrace`) moves its entrypoint boundary from the CLI to the HTTP handler: accepts an inbound `X-Correlation-Id` header when present, generates one otherwise, and always echoes it back in the response header.
-- OpenAPI documentation generated via `swagger-core` annotations + `swagger-maven-plugin` (build-time static contract) with Swagger UI served as a static resource by the project's own `HttpServer` — not `springdoc-openapi`, which requires a Spring runtime. Full rationale: ADR 0008.
-- Coverage priority is **domain > application > infrastructure**, reflecting where business-rule density actually lives. `domain`/`application` thresholds are not expected to drop (no new business logic). The `infrastructure` threshold is **measured after implementation**, not guessed upfront — closes TD08 as an amendment to ADR 0006.
-- Test strategy: unit tests per `HttpHandler` (usecases mocked via Mockito) + end-to-end tests via **REST-Assured** against the real embedded `HttpServer` backed by Testcontainers Postgres (Java's closest equivalent to Node's supertest).
+- **Orquestração:** Amazon ECS, launch type **EC2** (not Fargate) — cost control is the priority; Fargate has no free tier under any account model.
+- **No Elastic Beanstalk.** Discarded in favor of ECS.
+- **No Application Load Balancer.** Direct exposure via an **Elastic IP** associated with the EC2 instance + a Route 53 **A** record. ALB is out of scope — no cost/benefit justification without real traffic yet.
+- **No managed RDS.** Persistence via **Neon** (serverless managed Postgres, free tier) — chosen over Supabase because Neon's compute **auto-suspends and auto-resumes** without manual intervention; Supabase's free tier **pauses the entire project after 7 days of inactivity**, requiring manual dashboard action — unacceptable for an unattended portfolio deployment.
+- **Single-container ECS task definition** (application only) — the database lives outside the cluster, on Neon.
+- **AWS account on the Paid Plan**, created July 2026 (post-July-15-2025 model: US$200 credit, no fixed free-hour allowance). Budget configured with 50/80/100% alerts.
+- **Real CD:** GitHub Actions builds the image, publishes to **ECR**, and forces a new deployment on the **ECS service** — not an SSH/`docker compose pull` shortcut.
+- Neon connection string via **AWS Secrets Manager**, injected into the task definition — never plaintext in the versioned `task-definition.json`.
+- Application logs (SLF4J/Logback JSON, E8) shipped to **CloudWatch Logs** via the ECS `awslogs` driver — no additional agent.
 
 ### Epic goal
 
-Expose the existing book, customer, and loan usecases through a documented, framework-free REST API — without introducing new business rules — establishing the HTTP boundary that Marco 2 (Go-Live, E10) will deploy.
+Publish the REST API (E9) to production on AWS, with real persistence via Neon, ECS (EC2 launch type) orchestration, and a CD pipeline that builds, publishes, and deploys on every change to `main` — reaching Marco 2 (Go Live) at the lowest possible cost within the US$200 credit.
 
 ### Business value
 
-A documented REST API (Swagger/OpenAPI) with conventional pagination, correct status-code semantics, and correlation-aware structured logging is the baseline international hiring panels expect from a backend candidate. Building the HTTP layer without a framework — routing, serialization boundaries, and exception mapping by hand — before Go-Live demonstrates the mechanics that Spring normally hides, directly reinforcing the two-project portfolio narrative (ADR 0001).
+Demonstrates the full delivery cycle international backend roles expect: containerization, cloud container orchestration, end-to-end CI/CD, secrets management, and operating a publicly exposed real system — without relying on PaaS abstractions (Heroku, Beanstalk) that hide these decisions. Reinforces the two-project portfolio narrative: this project shows what frameworks and PaaS abstract away; the next one (Internet Banking) shows delivery speed with them.
 
-### Definition of Done — Epic E9
+### Definition of Done — Epic E10
 
-- [ ] HTTP foundation (router + Jackson wiring) in place (US-901)
-- [ ] Book REST endpoints, paginated (US-902)
-- [ ] Customer REST endpoints, paginated (US-903)
-- [ ] Loan REST endpoints, paginated (US-904)
-- [ ] Central exception handler mapping domain/application exceptions to HTTP status codes (US-905)
-- [ ] Correlation ID accepted/generated/echoed via HTTP header, reusing E8's MDC support (US-906)
-- [ ] OpenAPI contract generated (swagger-core + swagger-maven-plugin) and Swagger UI served (US-907)
-- [ ] HTTP layer covered by unit + REST-Assured/Testcontainers e2e tests; `infrastructure` JaCoCo threshold re-measured and raised (US-908)
-- [ ] TD08 formally resolved (amendment recorded against ADR 0006)
+- [ ] AWS account on Paid Plan, budget alerts active, IAM baseline configured (US-1001)
+- [ ] VPC/subnet/security group/Elastic IP provisioned (US-1002)
+- [ ] Neon project provisioned and reachable via SSL connection string (US-1003)
+- [ ] ECR repository created and Docker image published (US-1004)
+- [ ] ECS cluster (EC2), task definition, and service running the application (US-1005)
+- [ ] Domain resolving via Route 53 to the Elastic IP (US-1006)
+- [ ] CD pipeline (GitHub Actions → ECR → ECS) functional on push/merge to `main` (US-1007)
+- [ ] Post-deploy smoke test validated, logs reaching CloudWatch, infrastructure ADR recorded, README updated (US-1008)
 - [ ] All 8 User Stories in Done status
-- [ ] API conventions (pagination, RMM Level 2, no versioning) documented in the README
+- [ ] Marco 2 — Go Live reached and tagged
 
 ---
 
-### US-901 — HTTP Foundation: Router, Jackson Wiring, Base Request/Response Contract
-
-**Points:** 5
-**Depends on:** — (unblocked, first US of the epic)
-
-**Story:** As a developer, I need a minimal, framework-free HTTP foundation (routing + JSON serialization), so every resource endpoint built afterward plugs into a consistent, already-solved boundary instead of reinventing routing and parsing per handler.
-
-**Scenarios (BDD):**
-
-```gherkin
-Feature: HTTP foundation
-
-  Scenario: Router dispatches a request to the correct handler by path and method
-    Given a route is registered for GET /books
-    When a GET request arrives at /books
-    Then the corresponding handler is invoked
-
-  Scenario: Unregistered route returns 404
-    Given no route is registered for a given path/method combination
-    When a request arrives at that path
-    Then the response status is 404 with a structured JSON error body
-
-  Scenario: Request and response bodies are serialized as JSON via Jackson
-    Given a handler returns a Java object as its response
-    When the response is written
-    Then the client receives a valid JSON body with the correct Content-Type header
-
-  Scenario: Pagination parameters have safe defaults
-    Given a GET request to a paginated resource without page or size query parameters
-    When the request is handled
-    Then page defaults to 0 and size defaults to 20
-```
-
-**Tasks:**
-
-- Implement a lightweight router (`Map<RouteKey, HttpHandler>`, `RouteKey` = method + path pattern) on top of `com.sun.net.httpserver.HttpServer`
-- Wire Jackson `ObjectMapper` as a shared component for request/response (de)serialization
-- Implement a `PageRequest`/`PageResponse` contract (page/size params, total count, items) shared across resources
-- Define a base JSON error-response shape (status, message, timestamp) reused by later exception handling (US-905)
-- Add server bootstrap wiring in the composition root (start/stop lifecycle)
-
-**Commits:**
-
-```
-feat(api): US-901 implement lightweight http router
-feat(api): US-901 wire jackson object mapper for json serialization
-feat(api): US-901 add page request and page response contracts
-feat(api): US-901 add base json error response shape
-feat(api): US-901 wire http server bootstrap in composition root
-```
-
----
-
-### US-902 — Book REST Endpoints (Paginated)
-
-**Points:** 5
-**Depends on:** US-901
-
-**Story:** As an API consumer, I need to create, retrieve, and list books over HTTP, so book management is available beyond the CLI.
-
-**Scenarios (BDD):**
-
-```gherkin
-Feature: Book REST endpoints
-
-  Scenario: Create a book
-    Given a valid book payload
-    When a POST request is sent to /books
-    Then the response status is 201 with the created book in the body
-
-  Scenario: Retrieve a book by id
-    Given an existing book
-    When a GET request is sent to /books/{id}
-    Then the response status is 200 with the book's data
-
-  Scenario: List books with pagination
-    Given more books exist than the default page size
-    When a GET request is sent to /books?page=0&size=10
-    Then the response contains at most 10 books and pagination metadata (page, size, totalElements)
-
-  Scenario: Retrieve a non-existent book
-    Given no book exists with a given id
-    When a GET request is sent to /books/{id}
-    Then the response status is 404
-```
-
-**Tasks:**
-
-- Implement `BookHttpHandler` (POST /books, GET /books/{id}, GET /books)
-- Reuse existing Book usecases/DTOs/mappers (application layer) — no new business logic
-- Apply `PageRequest`/`PageResponse` contract from US-901 to the list endpoint
-- Register routes in the router
-
-**Commits:**
-
-```
-feat(api): US-902 implement book creation endpoint
-feat(api): US-902 implement book retrieval by id endpoint
-feat(api): US-902 implement paginated book listing endpoint
-```
-
----
-
-### US-903 — Customer REST Endpoints (Paginated)
-
-**Points:** 5
-**Depends on:** US-901
-
-**Story:** As an API consumer, I need to create, retrieve, and list customers over HTTP, so customer management is available beyond the CLI.
-
-**Scenarios (BDD):**
-
-```gherkin
-Feature: Customer REST endpoints
-
-  Scenario: Create a customer
-    Given a valid customer payload
-    When a POST request is sent to /customers
-    Then the response status is 201 with the created customer in the body
-
-  Scenario: Retrieve a customer by id
-    Given an existing customer
-    When a GET request is sent to /customers/{id}
-    Then the response status is 200 with the customer's data
-
-  Scenario: List customers with pagination
-    Given more customers exist than the default page size
-    When a GET request is sent to /customers?page=0&size=10
-    Then the response contains at most 10 customers and pagination metadata
-
-  Scenario: Create a customer with a duplicate email
-    Given a customer already exists with a given email
-    When a POST request is sent to /customers with that same email
-    Then the response status is 409
-```
-
-**Tasks:**
-
-- Implement `CustomerHttpHandler` (POST /customers, GET /customers/{id}, GET /customers)
-- Reuse existing Customer usecases/DTOs/mappers — no new business logic
-- Apply `PageRequest`/`PageResponse` contract to the list endpoint
-- Register routes in the router
-
-**Commits:**
-
-```
-feat(api): US-903 implement customer creation endpoint
-feat(api): US-903 implement customer retrieval by id endpoint
-feat(api): US-903 implement paginated customer listing endpoint
-```
-
----
-
-### US-904 — Loan REST Endpoints (Paginated)
-
-**Points:** 5
-**Depends on:** US-901
-
-**Story:** As an API consumer, I need to create and retrieve loans over HTTP, so loan management is available beyond the CLI.
-
-**Scenarios (BDD):**
-
-```gherkin
-Feature: Loan REST endpoints
-
-  Scenario: Create a loan
-    Given a valid loan request for an available book and eligible customer
-    When a POST request is sent to /loans
-    Then the response status is 201 with the created loan in the body
-
-  Scenario: Reject a loan for an unavailable book
-    Given a book with no available copies
-    When a POST request is sent to /loans for that book
-    Then the response status is 409 with a message describing the violated rule
-
-  Scenario: Retrieve a loan by id
-    Given an existing loan
-    When a GET request is sent to /loans/{id}
-    Then the response status is 200 with the loan's data
-
-  Scenario: List loans with pagination
-    Given more loans exist than the default page size
-    When a GET request is sent to /loans?page=0&size=10
-    Then the response contains at most 10 loans and pagination metadata
-```
-
-**Tasks:**
-
-- Implement `LoanHttpHandler` (POST /loans, GET /loans/{id}, GET /loans)
-- Reuse existing Loan usecases/DTOs/mappers/validators — no new business logic
-- Apply `PageRequest`/`PageResponse` contract to the list endpoint
-- Register routes in the router
-
-**Commits:**
-
-```
-feat(api): US-904 implement loan creation endpoint
-feat(api): US-904 implement loan retrieval by id endpoint
-feat(api): US-904 implement paginated loan listing endpoint
-```
-
----
-
-### US-905 — Central Exception Handler (Domain/Application Exceptions → HTTP Status)
+### US-1001 — AWS Foundation: Billing Safety Net & IAM Baseline
 
 **Points:** 3
-**Depends on:** US-901
+**Depends on:** — (unblocked, first US of the epic)
 
-**Story:** As an API consumer, I need consistent, correct HTTP status codes and error bodies when a request fails, so client error handling doesn't have to guess or parse free-text messages.
+**Story:** As Product Owner, I need the AWS account on the Paid Plan with budget alerts and a least-privilege IAM baseline, so the rest of the epic is executed on a safe foundation without risk of automatic account closure.
 
 **Scenarios (BDD):**
 
 ```gherkin
-Feature: Central exception handling
+Feature: AWS account and IAM baseline
 
-  Scenario: Validation failure returns 400
-    Given a request payload that fails input validation
-    When the request is handled
-    Then the response status is 400 with a structured error body describing the violation
+  Scenario: Account is on the Paid Plan
+    Given the AWS account was created after July 15, 2025
+    When billing settings are reviewed
+    Then the account is confirmed on the Paid Plan, not the auto-closing Free Plan
 
-  Scenario: Not-found domain exception returns 404
-    Given a request referencing an entity that does not exist
-    When the request is handled
-    Then the response status is 404
+  Scenario: Budget alert is configured
+    Given a monthly budget threshold is defined
+    When spending crosses 50%, 80%, or 100% of the threshold
+    Then an email alert is sent
 
-  Scenario: Business rule violation returns 409
-    Given a request that violates an active business rule (e.g., book unavailable, active loan limit)
-    When the request is handled
-    Then the response status is 409 with a structured error body naming the violated rule
+  Scenario: Deploy credentials follow least privilege
+    Given an IAM user/role dedicated to CI/CD
+    When its policy is inspected
+    Then it grants only ECR push and ECS service update permissions, nothing broader
 
-  Scenario: Unexpected exception returns 500 without leaking internals
-    Given an unhandled exception occurs during request processing
-    When the response is written
-    Then the response status is 500 with a generic error body, and the stack trace is only present in the ERROR log line, not in the response
+  Scenario: EC2 instance has a scoped instance role
+    Given the EC2 container instance for the ECS cluster
+    When its attached IAM role is inspected
+    Then it only grants the permissions required by the ECS agent (ecsInstanceRole managed policy)
 ```
 
 **Tasks:**
 
-- Implement a central `ExceptionMappingHandler`/wrapper applied to every registered route
-- Map existing custom exceptions (validation, not-found, business rule violation) to 400/404/409 respectively
-- Map unexpected exceptions to 500, using the base error-response shape from US-901
-- Ensure ERROR-level logging (from E8's conventions) fires on every 500, without exposing stack traces in the HTTP response
+- Confirm account upgrade to the Paid Plan (Billing and Cost Management)
+- Create a monthly AWS Budget with 50/80/100% alerts
+- Create a dedicated IAM policy for the CD pipeline (ECR: push/pull; ECS: RegisterTaskDefinition, UpdateService, DescribeServices)
+- Create an IAM user (access key) or OIDC role for GitHub Actions to consume that policy
+- Attach the `AmazonEC2ContainerServiceforEC2Role` managed policy to the EC2 instance role (ecsInstanceRole)
 
 **Commits:**
 
 ```
-feat(api): US-905 implement central exception mapping handler
-feat(api): US-905 map validation exceptions to 400 responses
-feat(api): US-905 map not-found exceptions to 404 responses
-feat(api): US-905 map business rule violations to 409 responses
-feat(api): US-905 map unexpected exceptions to 500 without leaking internals
+chore(infra): US-1001 configure aws budget with spend alerts
+chore(infra): US-1001 create least-privilege iam policy for cd pipeline
+chore(infra): US-1001 create ecs instance role for ec2 container instance
+docs(adr): US-1001 record aws billing model and iam baseline decisions
 ```
 
 ---
 
-### US-906 — Correlation ID via HTTP Header (Accept / Generate / Echo)
+### US-1002 — Networking Foundation: VPC, Security Group, Elastic IP
+
+**Points:** 5
+**Depends on:** US-1001
+
+**Story:** As a developer, I need a minimal, secure network (VPC, public subnet, security group, fixed IP), so the ECS cluster's EC2 instance is publicly reachable without exposing unnecessary ports.
+
+**Scenarios (BDD):**
+
+```gherkin
+Feature: Networking foundation
+
+  Scenario: EC2 instance is reachable on the API port
+    Given the security group allows inbound traffic on the API_PORT
+    When a request is sent to the instance's public address
+    Then the connection is accepted
+
+  Scenario: SSH access is restricted
+    Given the security group's SSH rule
+    When its source is inspected
+    Then it is restricted to a specific known IP, not 0.0.0.0/0
+
+  Scenario: Elastic IP survives instance stop/start
+    Given an Elastic IP is associated with the EC2 instance
+    When the instance is stopped and started again
+    Then the public IP address remains the same
+
+  Scenario: No NAT Gateway is provisioned
+    Given the VPC networking setup
+    When resources are reviewed
+    Then no NAT Gateway exists, avoiding its fixed hourly cost
+```
+
+**Tasks:**
+
+- Use the default VPC (or create a minimal one) with a public subnet and Internet Gateway
+- Create a Security Group: inbound API_PORT (0.0.0.0/0), inbound SSH restricted to the Dev's IP, outbound open
+- Provision the EC2 instance (t2/t3.micro) as the ECS cluster's container instance (ECS-optimized AMI)
+- Allocate and associate an Elastic IP with the instance
+- Confirm the absence of a NAT Gateway in the setup
+
+**Commits:**
+
+```
+chore(infra): US-1002 provision ec2 instance as ecs container instance
+chore(infra): US-1002 configure security group for api and ssh access
+chore(infra): US-1002 allocate and associate elastic ip
+docs(adr): US-1002 record networking decisions and nat gateway exclusion
+```
+
+---
+
+### US-1003 — Neon Database Provisioning & Connectivity
+
+**Points:** 3
+**Depends on:** US-1001
+
+**Story:** As a developer, I need a free, managed Postgres database resilient to inactivity, so the application persists real data in production without the cost and operational complexity of RDS.
+
+**Scenarios (BDD):**
+
+```gherkin
+Feature: Neon database connectivity
+
+  Scenario: Application connects to Neon over SSL
+    Given a Neon connection string with sslmode=require
+    When the application starts
+    Then HikariCP establishes a pooled connection successfully
+
+  Scenario: Flyway migrations run against Neon on boot
+    Given a fresh Neon database with no schema
+    When the application starts
+    Then Flyway applies all pending migrations before the HTTP server accepts requests
+
+  Scenario: Connection pool respects Neon's free-tier connection limits
+    Given HikariCP's configured maximum pool size
+    When the application is under normal load
+    Then the pool size stays within Neon's free-tier concurrent connection limit
+
+  Scenario: Database resumes automatically after idle suspension
+    Given the Neon compute has been idle and auto-suspended
+    When a new request reaches the application
+    Then the connection succeeds after Neon's automatic resume, without manual intervention
+```
+
+**Tasks:**
+
+- Create a Neon project (free tier), obtain the pooled connection string (`-pooler` endpoint)
+- Configure `sslmode=require` on the connection string
+- Tune HikariCP's `maximumPoolSize` to a conservative value (e.g., 5) compatible with the free-tier limit
+- Validate Flyway execution against Neon starting from an empty schema
+- Store the connection string in AWS Secrets Manager (not a plaintext environment variable)
+
+**Commits:**
+
+```
+chore(infra): US-1003 provision neon postgres project
+feat(config): US-1003 configure ssl and pooled connection to neon
+chore(config): US-1003 tune hikaricp pool size for neon free tier limits
+chore(infra): US-1003 store neon connection string in secrets manager
+```
+
+---
+
+### US-1004 — Container Registry & Image Publishing (ECR)
 
 **Points:** 2
-**Depends on:** US-901
+**Depends on:** US-1001
 
-**Story:** As a developer, I need every HTTP request to carry a correlation ID — accepted from the client when provided, generated otherwise, and always returned in the response — so a request can be traced end-to-end in the logs the same way a CLI flow already can since E8.
+**Story:** As a developer, I need a versioned image repository on AWS, so the CD pipeline has a trustworthy source for the image the ECS pulls.
 
 **Scenarios (BDD):**
 
 ```gherkin
-Feature: Correlation ID over HTTP
+Feature: Container image publishing
 
-  Scenario: Correlation ID is accepted from the request header
-    Given a request arrives with an X-Correlation-Id header
-    When the request is handled
-    Then that value is placed into MDC and echoed back in the response's X-Correlation-Id header
+  Scenario: Image is pushed with a traceable tag
+    Given a successful Docker build of the application
+    When the image is pushed to ECR
+    Then it is tagged with the Git commit SHA, not just "latest"
 
-  Scenario: Correlation ID is generated when absent
-    Given a request arrives without an X-Correlation-Id header
-    When the request is handled
-    Then a new correlation ID is generated, placed into MDC, and returned in the response's X-Correlation-Id header
-
-  Scenario: MDC is cleared after the request completes
-    Given a request has finished processing (successfully or with error)
-    When the handler returns control to the server
-    Then the MDC context is cleared to prevent leaking into unrelated requests
+  Scenario: Manual first push validates the pipeline's target
+    Given a freshly created ECR repository
+    When the existing multi-stage Dockerfile (E6) is built and pushed manually
+    Then the image appears in ECR and can be pulled successfully
 ```
 
 **Tasks:**
 
-- Extend the HTTP foundation (US-901) with a correlation filter/wrapper applied to every route
-- Reuse `LogTrace` (from E8) — read `X-Correlation-Id` if present, else generate
-- Echo the resolved correlation ID back via the `X-Correlation-Id` response header
-- Ensure MDC is cleared in a `finally` block per request, avoiding leakage across pooled request-handling threads
+- Create an ECR repository (`library-express-api`)
+- Validate reuse of the multi-stage Dockerfile (E6) without structural changes
+- Perform the first manual push (`docker build` + `aws ecr get-login-password` + `docker push`) to validate the repository before automating
+- Define the image tagging convention: `${GIT_SHA}` as the primary tag
 
 **Commits:**
 
 ```
-feat(api): US-906 implement correlation id http filter
-feat(api): US-906 accept inbound x-correlation-id header
-feat(api): US-906 echo correlation id in response header
-test(api): US-906 validate mdc cleared after request completes
+chore(infra): US-1004 create ecr repository for application image
+chore(infra): US-1004 validate manual image push to ecr
+docs(infra): US-1004 document image tagging convention
 ```
 
 ---
 
-### US-907 — OpenAPI Documentation (swagger-core + swagger-maven-plugin, Swagger UI)
+### US-1005 — ECS Cluster, Task Definition & Service (EC2 Launch Type)
 
-**Points:** 5
-**Depends on:** US-902, US-903, US-904, US-905
+**Points:** 8
+**Depends on:** US-1002, US-1003, US-1004
 
-**Story:** As an API consumer (or reviewer), I need an accurate, browsable API contract, so I can understand and exercise the API without reading the handler source code.
+**Story:** As a developer, I need the application running as a long-lived ECS service on the provisioned EC2 instance, with environment variables and secrets correctly injected, so the system operates resiliently and is restartable.
 
 **Scenarios (BDD):**
 
 ```gherkin
-Feature: OpenAPI documentation
+Feature: ECS cluster and service
 
-  Scenario: OpenAPI contract is generated at build time
-    Given all resource handlers are annotated with swagger-core annotations
-    When the Maven build runs
-    Then an openapi.json/yaml contract is generated reflecting all registered endpoints
+  Scenario: ECS cluster registers the EC2 instance
+    Given the ECS agent is running on the EC2 instance
+    When the cluster is inspected
+    Then the instance appears as an active container instance
 
-  Scenario: Swagger UI is reachable
-    Given the application is running
-    When a browser navigates to /docs
-    Then the Swagger UI is rendered, listing all documented endpoints
+  Scenario: Task definition injects the database secret
+    Given a task definition referencing the Secrets Manager ARN for the Neon connection string
+    When a task is launched
+    Then the container receives the resolved secret as an environment variable, not a plaintext value in the definition
 
-  Scenario: Generated contract matches actual response shapes
-    Given a documented endpoint's response schema
-    When the corresponding handler is exercised
-    Then the actual JSON response conforms to the documented schema
+  Scenario: Service maintains desired count
+    Given an ECS service with desired count 1
+    When the running task is stopped unexpectedly
+    Then ECS automatically launches a replacement task
+
+  Scenario: Application logs reach CloudWatch
+    Given the task definition uses the awslogs log driver
+    When the application emits a structured log line
+    Then the line appears in the corresponding CloudWatch Logs group
 ```
 
 **Tasks:**
 
-- Add `swagger-core` and `swagger-maven-plugin` to the `infrastructure` module
-- Annotate Book/Customer/Loan handlers (`@Operation`, `@Parameter`, `@ApiResponse`) including pagination and error responses (400/404/409/500)
-- Configure `swagger-maven-plugin` to generate `openapi.json`/`openapi.yaml` at build time
-- Serve Swagger UI (static webjar resource) via the project's own `HttpServer` at `/docs`
-- Document the RMM Level 2 / no-versioning / pagination conventions in the README
+- Create an ECS cluster (EC2 launch type) associated with the provisioned instance (US-1002)
+- Create a single-container task definition: ECR image (US-1004), environment variables, Neon secret via `secrets` (US-1003), `awslogs` log driver
+- Map the container port to the host port (bridge mode) matching `API_PORT`
+- Create the ECS service (desired count 1) referencing the task definition
+- Validate automatic task recovery on failure
 
 **Commits:**
 
 ```
-build(docs): US-907 add swagger-core and swagger-maven-plugin
-docs(api): US-907 annotate book handlers with openapi metadata
-docs(api): US-907 annotate customer handlers with openapi metadata
-docs(api): US-907 annotate loan handlers with openapi metadata
-feat(docs): US-907 serve swagger ui as static resource
-docs(readme): US-907 document rest api conventions
+chore(infra): US-1005 create ecs cluster with ec2 launch type
+chore(infra): US-1005 define ecs task definition with secrets and awslogs
+chore(infra): US-1005 create ecs service with desired count one
+test(infra): US-1005 validate automatic task recovery on failure
 ```
 
 ---
 
-### US-908 — HTTP Layer Test Suite (Unit + E2E) and TD08 Closure
+### US-1006 — DNS & Public Access (Route 53)
 
-**Points:** 5
-**Depends on:** US-902, US-903, US-904, US-905, US-906
+**Points:** 2
+**Depends on:** US-1002
 
-**Story:** As a Product Owner, I need the new HTTP layer covered by both fast unit tests and realistic end-to-end tests, and the `infrastructure` coverage threshold re-measured against real numbers, so the API ships with the same testing discipline as the rest of the system instead of an arbitrary guessed target.
+**Story:** As an API consumer, I need to reach the application through a stable domain, so I don't depend on the instance's raw IP.
 
 **Scenarios (BDD):**
 
 ```gherkin
-Feature: HTTP layer test coverage
+Feature: DNS resolution
 
-  Scenario: Handler unit tests exercise routing and error mapping with mocked usecases
-    Given a resource handler under test
-    When a request is simulated with a mocked usecase dependency
-    Then the handler's response status and body match the expected contract
+  Scenario: Domain resolves to the Elastic IP
+    Given a Route 53 A record pointing to the Elastic IP
+    When a DNS lookup is performed for the domain
+    Then it resolves to the correct Elastic IP address
 
-  Scenario: End-to-end tests exercise the real server against real persistence
-    Given the embedded HttpServer is running against a Testcontainers PostgreSQL instance
-    When a REST-Assured request is sent to a resource endpoint
-    Then the full request/response cycle (routing, usecase, persistence, JSON serialization) behaves correctly
-
-  Scenario: Infrastructure coverage threshold reflects the newly measured surface
-    Given the HTTP handlers and router are fully covered by unit and e2e tests
-    When JaCoCo coverage is measured for the infrastructure module
-    Then the check goal threshold is updated to the measured value, not an assumed one
+  Scenario: API is reachable via the domain
+    Given the DNS record has propagated
+    When a request is sent to the domain on the API_PORT
+    Then the response matches what direct IP access returns
 ```
 
 **Tasks:**
 
-- Add `rest-assured` as a test-scope dependency in `infrastructure`
-- Write unit tests per `HttpHandler` (Book, Customer, Loan, exception mapping) with Mockito-mocked usecases
-- Write e2e tests (REST-Assured + Testcontainers) covering the full happy path and key error paths (400/404/409) per resource
-- Measure resulting `infrastructure` module Instruction/Branch coverage and set the new JaCoCo `check` threshold accordingly
-- Record the new threshold as an amendment to ADR 0006; formally resolve TD08 in `BACKLOG.md`
+- Create (or reuse) a hosted zone in Route 53
+- Create an A record pointing to the instance's Elastic IP
+- Validate propagation and access via the domain
 
 **Commits:**
 
 ```
-build(test): US-908 add rest-assured test dependency
-test(api): US-908 add unit tests for book handler
-test(api): US-908 add unit tests for customer handler
-test(api): US-908 add unit tests for loan handler
-test(api): US-908 add unit tests for exception mapping handler
-test(api): US-908 add e2e tests via rest-assured and testcontainers
-build(coverage): US-908 raise infrastructure jacoco thresholds to measured baseline
-docs(adr): US-908 amend adr 0006 with e9 infrastructure coverage baseline
+chore(infra): US-1006 create route53 hosted zone
+chore(infra): US-1006 create a record pointing to elastic ip
+docs(infra): US-1006 document public domain access
+```
+
+---
+
+### US-1007 — CD Pipeline (GitHub Actions → ECR → ECS Deploy)
+
+**Points:** 8
+**Depends on:** US-1004, US-1005
+
+**Story:** As a developer, I need every change merged into `main` to be automatically built, published, and deployed, so the delivery cycle is real and doesn't depend on manual steps.
+
+**Scenarios (BDD):**
+
+```gherkin
+Feature: Continuous Deployment pipeline
+
+  Scenario: Merge to main triggers the CD workflow
+    Given a pull request is merged into main
+    When the CD workflow runs
+    Then it builds the Docker image, tags it with the commit SHA, and pushes it to ECR
+
+  Scenario: ECS service is updated with the new image
+    Given a new image was pushed to ECR
+    When the workflow registers a new task definition revision referencing that image
+    Then the ECS service is updated to use the new revision and a new deployment is forced
+
+  Scenario: Deployment waits for stability before finishing
+    Given a new ECS deployment has been triggered
+    When the workflow polls the service status
+    Then it only reports success after the service reaches a stable state with the new task running
+
+  Scenario: Failed deployment does not silently succeed
+    Given a new task fails to start (e.g., bad image, missing secret)
+    When the service fails to stabilize
+    Then the workflow fails visibly instead of reporting success
+```
+
+**Tasks:**
+
+- Create `cd.yml` in GitHub Actions, triggered on push/merge to `main` (reusing E7's `build-and-test` as a prior gate)
+- Configure AWS authentication in the workflow (IAM user/OIDC created in US-1001)
+- Step: build the Docker image + push to ECR tagged with `${GIT_SHA}`
+- Step: register a new task definition revision pointing to the new image
+- Step: `aws ecs update-service --force-new-deployment` + wait for stabilization (`wait services-stable`)
+- Ensure stabilization failure breaks the workflow (non-zero exit code)
+
+**Commits:**
+
+```
+ci(cd): US-1007 add github actions workflow for continuous deployment
+ci(cd): US-1007 build and push docker image to ecr with commit sha tag
+ci(cd): US-1007 register new ecs task definition revision
+ci(cd): US-1007 force new ecs deployment and wait for service stability
+```
+
+---
+
+### US-1008 — Go-Live Validation & Documentation
+
+**Points:** 3
+**Depends on:** US-1005, US-1006, US-1007
+
+**Story:** As Product Owner, I need to validate that the production system works end-to-end and that the infrastructure decision is documented, so Marco 2 can be formally declared reached.
+
+**Scenarios (BDD):**
+
+```gherkin
+Feature: Go-live validation
+
+  Scenario: Smoke test validates the live API
+    Given the application is running in production
+    When a smoke test exercises a basic CRUD flow (e.g., create and retrieve a book) against the public domain
+    Then all responses match expected status codes and payloads
+
+  Scenario: Correlation ID and logs are traceable in production
+    Given a smoke test request carries a known X-Correlation-Id
+    When the corresponding CloudWatch log group is inspected
+    Then log lines for that request carry the same correlation id
+
+  Scenario: Infrastructure decisions are recorded
+    Given the ECS/EC2/Neon/no-ALB/no-RDS architecture decisions made during E10 refinement
+    When docs/adr is reviewed
+    Then a new ADR documents these decisions and their rationale
+```
+
+**Tasks:**
+
+- Write and run a manual/scripted smoke test against the public domain (basic book/customer/loan flow)
+- Verify log arrival and correlation in CloudWatch (end-to-end X-Correlation-Id)
+- Draft ADR 0009 (AWS infrastructure: ECS/EC2, no ALB, no RDS, Neon, CD via ECR)
+- Update the README (production/deploy section, replacing the "Epic E10, not yet implemented" note in the CI section)
+- Tag the Marco 2 release following the SemVer convention (beta suffix, the first time it applies post public API)
+
+**Commits:**
+
+```
+test(e2e): US-1008 add production smoke test for core crud flow
+docs(adr): US-1008 record aws infrastructure decisions for marco 2
+docs(readme): US-1008 document production deployment and cd pipeline
+chore(release): US-1008 tag marco 2 go-live release
 ```
 
 ---
@@ -579,9 +562,6 @@ docs(adr): US-908 amend adr 0006 with e9 infrastructure coverage baseline
 ## Placeholder Epics (Titles Only — Not Yet Refined)
 
 Per the just-in-time grooming rule, these exist only as titles (plus any scope notes already captured in conversation) until their turn comes.
-
-### E10 — CD / Go Live (Marco 2, AWS)
-Packages the CD pipeline on top of persistence (E6), the documented API (E9), and structured logging (E8) already in place. ADR and formal US breakdown deferred until this epic enters refinement.
 
 ### E11 — Log Evolution & Full Observability (placeholder)
 Scope note captured during E8 refinement, not yet detailed:
@@ -692,6 +672,22 @@ This reduction is temporary — see TD08 for the plan to revisit thresholds once
 
 Logback configured with a JSON structured encoder (`logstash-logback-encoder`) targeting stdout, with separate `logback-dev.xml`/`logback-prod.xml` profiles. Existing book/customer/loan usecases emit INFO/WARN/ERROR logs consistently. Correlation across log lines within an operation is handled via SLF4J's MDC (`LogTrace`), wired at the CLI entrypoint and cleared in a `finally` block. Full observability (metrics, dashboards, tracing) stayed explicitly out of scope — see ADR [0004](./adr/0004-slf4j-logback-without-full-observability.md) — revisited in E11. TD07 formally resolved. Full detail (Gherkin, tasks, commits): see the corresponding Issues on GitHub Projects.
 
+### E9 — REST API + Documentation (Swagger/OpenAPI)
+✅ Done · Sprint 8 · 35 points (5 + 5 + 5 + 5 + 3 + 2 + 5 + 5)
+
+| US | Description | Points | Status |
+|---|---|---|---|
+| US-901 | HTTP Foundation: Router, Jackson Wiring, Base Request/Response Contract | 5 | ✅ Done |
+| US-902 | Book REST Endpoints (Paginated) | 5 | ✅ Done |
+| US-903 | Customer REST Endpoints (Paginated) | 5 | ✅ Done |
+| US-904 | Loan REST Endpoints (Paginated) | 5 | ✅ Done |
+| US-905 | Central Exception Handler (Domain/Application Exceptions → HTTP Status) | 3 | ✅ Done |
+| US-906 | Correlation ID via HTTP Header (Accept / Generate / Echo) | 2 | ✅ Done |
+| US-907 | OpenAPI Documentation (swagger-core + swagger-maven-plugin, Swagger UI) | 5 | ✅ Done |
+| US-908 | HTTP Layer Test Suite (Unit + E2E) and TD08 Closure | 5 | ✅ Done |
+
+The HTTP layer was built framework-free on `com.sun.net.httpserver.HttpServer` with a hand-rolled router (path/method → `HttpHandler`), per ADR 0001. Richardson Maturity Model Level 2 achieved (no HATEOAS), no URI version prefix, `page`/`size` pagination with safe defaults — full rationale in ADR 0008, including Amendment 1 (JAX-RS annotations used purely as build-time metadata for `swagger-jaxrs2`, with the hand-rolled `Router` remaining the sole runtime dispatcher). RMM corrections resolved inline during refinement (`GET /customers/search`, `POST /loans/{loanId}/returns`, `PATCH /loans/{loanId}/close-overdue`). OpenAPI contract generated via `swagger-core`/`swagger-maven-plugin`, with the version placeholder resolved by `maven-antrun-plugin` from the POM; Swagger UI served at `/docs`, raw contract at `/openapi.json`. TD08 formally resolved via US-908, with `infrastructure` JaCoCo thresholds re-measured and raised against real coverage (ADR 0006 Amendment 2). README updated with the REST API conventions section. Full detail (Gherkin, tasks, commits): see the corresponding Issues on GitHub Projects.
+
 ---
 
 ## Commit Convention
@@ -731,4 +727,4 @@ Follows SemVer (`MAJOR.MINOR.PATCH`):
 
 ---
 
-**Last update:** Epic E8 (Structured Logging Foundation) closed — Sprint 7, 10 points, resolved TD07. Epic E9 (REST API + Documentation) fully refined and ready for execution — Sprint 8, 35 points across 8 User Stories (US-901–US-908). Key E9 conventions: framework-free HTTP via `com.sun.net.httpserver.HttpServer`, Richardson Maturity Model Level 2 (no HATEOAS), no URI version prefix, `page`/`size` pagination, OpenAPI via `swagger-core`/`swagger-maven-plugin` (no Spring), REST-Assured for e2e tests. These conventions are recorded in ADR 0008 (pending drafting). TD08 (infrastructure coverage thresholds) will be closed at the end of E9 via US-908, based on measured coverage rather than an assumed target.
+**Last update:** Epic E9 (REST API + Documentation) closed — Sprint 8, 35 points, TD08 resolved. Epic E10 (CD / Go Live, Marco 2) fully refined and ready for execution — Sprint 9, 34 points across 8 User Stories (US-1001–US-1008). Key E10 decisions: Amazon ECS with EC2 launch type (not Fargate), no Elastic Beanstalk, no Application Load Balancer (direct Elastic IP + Route 53), no managed RDS (Neon serverless Postgres chosen over Supabase for its automatic idle-resume behavior), single-container ECS task definition, AWS account on the Paid Plan (post-July-2025 credit model, US$200 budget with alerts), and a real CD pipeline (GitHub Actions → ECR → ECS service update). These conventions will be recorded in ADR 0009 (drafted during E10 execution, US-1008).
