@@ -41,6 +41,7 @@ public abstract class E2EBaseConfig {
             System.setProperty("DB_USER", postgres.getUsername());
             System.setProperty("DB_PASSWORD", postgres.getPassword());
             System.setProperty("DB_PORT", postgres.getMappedPort(5432).toString());
+            System.setProperty("APP_ENV", "test");
 
             AppBootstrapper.boot();
 
