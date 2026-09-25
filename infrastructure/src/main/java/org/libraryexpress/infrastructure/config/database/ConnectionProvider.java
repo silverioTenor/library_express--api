@@ -24,6 +24,11 @@ public class ConnectionProvider implements AutoCloseable {
         config.setUsername(ConfigRegistry.getDbUser());
         config.setPassword(ConfigRegistry.getDbPassword());
 
+        if (!ConfigRegistry.getAppEnv().equals("test")) {
+            config.addDataSourceProperty("sslmode", "require");
+            config.addDataSourceProperty("channelBinding", "require");
+        }
+
         // Binding variables using safe configuration loaders
         config.setMaximumPoolSize(ConfigRegistry.getMaximumPoolSize());
         config.setMinimumIdle(ConfigRegistry.getMinimumIdle());

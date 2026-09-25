@@ -77,6 +77,10 @@ public final class ConfigRegistry {
         return Long.parseLong(resolve("hikari.connection-timeout", "30000"));
     }
 
+    public static String getAppEnv() {
+        return resolve("APP_ENV", "production");
+    }
+
     private static String resolve(String key, String defaultValue) {
         if (key == null || key.isBlank()) return defaultValue;
 
