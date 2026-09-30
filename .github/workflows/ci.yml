@@ -1,8 +1,8 @@
 # ============================================================================
-# GitHub Actions: Continuous Integration and Delivery (CI/CD) Pipeline
+# GitHub Actions: Continuous Integration Pipeline
 # Scope: Restricted branch triggers, automated testing, and dynamic image delivery
 # ============================================================================
-name: Library Express Pipeline
+name: CI Pipeline
 
 on:
   push:
@@ -42,61 +42,3 @@ jobs:
 
       - name: Execute Isolated Integration Tests Suite
         run: mvn -B verify -Dsurefire.skip=false -Dsurefire.includes=none -Dgroups=integration
-
-#  It will be covered in Epic 10. 👇
-
-  # -------------------------------------------------------------------------
-  # Job 2: Continuous Delivery (Dynamic Build and Publish to Registry)
-  # -------------------------------------------------------------------------
-#  publish-docker:
-#    name: Build and Publish Production Docker Image
-#    needs: build-and-test
-#    # Enforces strict execution guard: Only triggers upon actual pushes/merges onto the main branch
-#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout Source Code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up JDK 21 Environment
-#        uses: actions/setup-java@v4
-#        with:
-#          java-version: '21'
-#          distribution: 'temurin'
-#          cache: 'maven'
-#
-#      # Task Solution: Dynamically extracting the active version string from the root pom.xml descriptor
-#      - name: Extract Maven Project Version
-#        id: version_extractor
-#        run: |
-#          POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-#          echo "PROJECT_VERSION=${POM_VERSION}" >> $GITHUB_ENV
-#          echo "Extracted project deployment version target: ${POM_VERSION}"
-#
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
-#
-#      - name: Log in to Docker Hub
-#        uses: docker/login-action@v3
-#        with:
-#          username: ${{ secrets.DOCKERHUB_USERNAME }}
-#          password: ${{ secrets.DOCKERHUB_TOKEN }}
-#
-#      # Task Solution: Binding the dynamically loaded GITHUB_ENV variable keys straight into image metadata
-#      - name: Extract Docker Image Metadata
-#        id: meta
-#        uses: docker/metadata-action@v5
-#        with:
-#          images: ${{ secrets.DOCKERHUB_USERNAME }}/library_express_app
-#          tags: |
-#            type=raw,value=latest
-#            type=raw,value=${{ env.PROJECT_VERSION }}
-#
-#      - name: Build and Push Production Artifact Image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          file: ./Dockerfile
-#          push: true
-#          tags: ${{ steps.meta.outputs.tags }}
-#          labels: ${{ steps.meta.outputs.labels }}
