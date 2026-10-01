@@ -11,4 +11,5 @@ public interface HttpContextRequest {
     PageRequest getPageRequest();
     String getPath();
     String getHeader(String key);
+    String getMethod();
 }

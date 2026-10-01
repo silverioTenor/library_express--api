@@ -83,6 +83,11 @@ public final class SunHttpServer {
             public String getHeader(String attr) {
                 return exchange.getRequestHeaders().getFirst(attr);
             }
+
+            @Override
+            public String getMethod() {
+                return exchange.getRequestMethod().toUpperCase();
+            }
         };
     }
 
