@@ -39,8 +39,6 @@ public final class EmbeddedHttpServer {
         try {
             server.start();
             logger.info("Server running on port {}", SERVER_PORT);
-
-            Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
         } catch (Exception e) {
             logger.error("FATAL: Failed to start embedded HTTP Server network listeners", e);
             System.exit(1);
@@ -50,7 +48,7 @@ public final class EmbeddedHttpServer {
     public void stop() {
         logger.info("JVM execution signal captured. Tearing down embedded HTTP Server listeners...");
         if (server != null) {
-            server.stop(1);
+            server.stop(5);
         }
         logger.info("HTTP Server connection resources cleared safely.");
     }
