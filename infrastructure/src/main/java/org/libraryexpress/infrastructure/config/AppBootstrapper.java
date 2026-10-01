@@ -33,16 +33,41 @@ public class AppBootstrapper {
 
         log.info("Infrastructure baseline loaded successfully! Routing to application entrypoint.");
 
-        initializeApiInterface(context);
-//        initializeCliInterface(context, connectionProvider);
+        initializeApi(context, connectionProvider);
+//        initializeCli(context, connectionProvider);
     }
 
-    private static void initializeApiInterface(AppContext context) {
+    private static void initializeApi(AppContext context, ConnectionProvider connectionProvider) {
         EmbeddedHttpServer server = new EmbeddedHttpServer(context);
         server.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                LogTrace.start();
+                log.info("JVM exit signal intercepted. Executing cascading graceful shutdown sequence...");
+
+                // Passo 1: Fecha a porta de entrada (Ninguém mais entra na aplicação)
+                log.info("Stopping HTTP server layer...");
+                server.stop();
+
+                // Passo 2: Fecha os serviços de aplicação (Seu futuro SesV2Client dentro do AppContext)
+                log.info("Closing application contexts and clients...");
+                // context.close(); // Se o seu AppContext fechar o cliente de email da AWS
+
+                // Passo 3: Finalmente, desliga o banco de dados (Garante que as queries finais rodaram)
+                log.info("Shutting down relational connection pool...");
+                connectionProvider.close();
+
+                log.info("LibraryExpress core infrastructure released cleanly. Farewell!");
+            } catch (Exception e) {
+                log.error("Error encountered during graceful shutdown cascade", e);
+            } finally {
+                LogTrace.clear();
+            }
+        }));
     }
 
-    private static void initializeCliInterface(AppContext context, ConnectionProvider connectionProvider) {
+    private static void initializeCli(AppContext context, ConnectionProvider connectionProvider) {
         var managementCli = new ManagementCli(context, connectionProvider);
         managementCli.app();
     }
@@ -56,18 +81,6 @@ public class AppBootstrapper {
             log.info("Executing relational schema migrations via Flyway...");
             MigrationRunner.run(dataSource);
             log.info("Database schema state is fully synchronized!");
-
-            // Registering the standard fallback graceful cleanup shutdown hook
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                try {
-                    LogTrace.start();
-                    log.info("JVM exit signal intercepted. Shutting down connection pool gracefully...");
-                    connectionProvider.close();
-                    log.info("Database connection resources released cleanly.");
-                } finally {
-                    LogTrace.clear();
-                }
-            }));
 
         } catch (Exception e) {
             log.error("FATAL: Application bootstrap failed due to infrastructure collapse: " + e.getMessage(), e);

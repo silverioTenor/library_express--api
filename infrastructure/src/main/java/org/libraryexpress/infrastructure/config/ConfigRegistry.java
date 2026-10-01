@@ -78,7 +78,7 @@ public final class ConfigRegistry {
     }
 
     public static String getAppEnv() {
-        return resolve("APP_ENV", "production");
+        return resolve("APP_ENV", "prod");
     }
 
     private static String resolve(String key, String defaultValue) {

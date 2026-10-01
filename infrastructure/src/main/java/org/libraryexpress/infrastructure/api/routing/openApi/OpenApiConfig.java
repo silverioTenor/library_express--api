@@ -20,7 +20,8 @@ import io.swagger.v3.oas.annotations.servers.Server;
                 license = @License(name = "MIT", url = "https://opensource.org/licenses/MIT")
         ),
         servers = {
-                @Server(url = "http://localhost:4000", description = "Local development server")
+                @Server(url = "http://localhost:4000", description = "Local development server"),
+                @Server(url = "https://api.jlibraryexpress.com", description = "production server")
         }
 )
 public final class OpenApiConfig {
