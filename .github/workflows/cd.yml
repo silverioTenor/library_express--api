@@ -15,6 +15,10 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    env:
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_SERVICE: ${{ vars.ECS_SERVICE }}
     steps:
       - uses: actions/checkout@v4
 
@@ -64,13 +68,13 @@ jobs:
       - name: Deploy new task definition to ECS service
         run: |
           aws ecs update-service \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --service ${{ vars.ECS_SERVICE }} \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
             --task-definition ${{ steps.register-task-def.outputs.arn }} \
             --force-new-deployment
 
       - name: Wait for service to stabilize
         run: |
           aws ecs wait services-stable \
-            --cluster ${{ vars.ECS_CLUSTER }} \
-            --services ${{ vars.ECS_SERVICE }}
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE
