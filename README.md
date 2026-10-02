@@ -121,6 +121,12 @@ The API is served by the application's own embedded HTTP server on the port defi
 - GitHub Actions (Continuous Integration)
 - SLF4J + Logback (structured JSON logging, MDC-based correlation — Epic E8)
 - Swagger
+- Nginx (reverse proxy, TLS termination)
+- Let's Encrypt / Certbot (TLS certificates, auto-renewed)
+- Neon (serverless managed PostgreSQL, production)
+- Amazon ECS (EC2 launch type) + Amazon ECR
+- AWS Route 53 (DNS)
+- AWS Systems Manager (Session Manager — instance access, no SSH)
 
 ## Getting Started
 
@@ -233,7 +239,14 @@ Every push to `develop` and pull request targeting `main` triggers a GitHub Acti
 
 `main` is protected: direct pushes are disabled, and a pull request can only be merged once the required `build-and-test` check passes. There is no separate Pull Request review flow yet — merging is gated purely on the automated check. Pushes straight to `develop` remain unrestricted.
 
-Continuous **Delivery** (building and publishing a production image/deploying to AWS) is intentionally out of scope for this pipeline — that is Epic E10 (Go Live), not yet implemented.
+Continuous **Delivery** is handled by a separate workflow (`cd.yml`), triggered only by pushing a version tag (`vX.Y.Z`) — not by every push/merge to `main`. The release flow is manual and explicit: a release branch is cut from `main`, the version is bumped in `pom.xml` before the PR is opened, and after merge the Git tag is created and pushed locally. The tag push builds the Docker image (tagged with the release version), publishes it to ECR, and deploys it to the ECS service on AWS.
+
+## 🌐 Production
+
+The API is live at `https://api.jlibraryexpress.com` — no port needed; TLS is terminated by an Nginx reverse proxy running on the same EC2 instance that hosts the application container.
+
+- Swagger UI: `https://api.jlibraryexpress.com/docs`
+- Raw OpenAPI contract: `https://api.jlibraryexpress.com/openapi.json`
 
 ## 📚 Learning Purpose & Agile Process
 
