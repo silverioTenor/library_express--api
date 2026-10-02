@@ -134,8 +134,8 @@ Ideas surfaced during refinement that were deliberately **not** turned into epic
 ## 🔵 Epic E10 — CD / Go Live (Marco 2, AWS)
 
 **Sprint:** 9
-**Total points:** 34 (3 + 5 + 3 + 2 + 8 + 2 + 8 + 3)
-**Status:** 🔵 Refined, ready for execution
+**Total points:** 39 (3 + 5 + 3 + 2 + 8 + 2 + 8 + 3 + 5)
+**Status:** 🟡 In Progress — 8 of 9 User Stories done, US-1008 (Go-Live Validation) pending
 
 ### Decisions on record for this epic
 
@@ -167,6 +167,7 @@ Demonstrates the full delivery cycle international backend roles expect: contain
 - [ ] Domain resolving via Route 53 to the Elastic IP (US-1006)
 - [ ] CD pipeline (GitHub Actions → ECR → ECS) functional on push/merge to `main` (US-1007)
 - [ ] Post-deploy smoke test validated, logs reaching CloudWatch, infrastructure ADR recorded, README updated (US-1008)
+- [ ] HTTPS reachable without a port, via Nginx + Let's Encrypt (US-1009)
 - [ ] All 8 User Stories in Done status
 - [ ] Marco 2 — Go Live reached and tagged
 
@@ -529,10 +530,10 @@ Feature: Go-live validation
     When a smoke test exercises a basic CRUD flow (e.g., create and retrieve a book) against the public domain
     Then all responses match expected status codes and payloads
 
-  Scenario: Correlation ID and logs are traceable in production
-    Given a smoke test request carries a known X-Correlation-Id
+  Scenario: Trace ID and logs are traceable in production
+    Given a smoke test request carries a known X-Trace-Id
     When the corresponding CloudWatch log group is inspected
-    Then log lines for that request carry the same correlation id
+    Then log lines for that request carry the same trace id
 
   Scenario: Infrastructure decisions are recorded
     Given the ECS/EC2/Neon/no-ALB/no-RDS architecture decisions made during E10 refinement
@@ -555,6 +556,68 @@ test(e2e): US-1008 add production smoke test for core crud flow
 docs(adr): US-1008 record aws infrastructure decisions for marco 2
 docs(readme): US-1008 document production deployment and cd pipeline
 chore(release): US-1008 tag marco 2 go-live release
+```
+
+---
+
+### US-1009 — HTTPS Termination via Nginx Reverse Proxy & Let's Encrypt
+
+**Points:** 5
+**Depends on:** US-1002, US-1006
+**Status:** ✅ Done
+
+**Story:** As an API consumer, I need to reach the application via HTTPS without specifying a port, so the public API meets baseline production security and usability expectations instead of exposing a raw HTTP port.
+
+**Scenarios (BDD):**
+
+```gherkin
+Feature: HTTPS termination via Nginx
+
+Scenario: API is reachable over HTTPS without a port
+Given Nginx is configured as a reverse proxy on the EC2 instance
+When a request is sent to https://api.jlibraryexpress.com/books
+Then the response matches what http://<Elastic IP>:3000/books returns, over a valid TLS connection
+
+Scenario: HTTP requests are redirected to HTTPS
+Given Certbot has configured the Nginx server block
+When a request is sent to http://api.jlibraryexpress.com/books
+Then the response is a redirect to the HTTPS equivalent URL
+
+Scenario: TLS certificate is valid and trusted
+Given a certificate was issued by Let's Encrypt for api.jlibraryexpress.com
+When the certificate is inspected
+Then it is valid, not self-signed, and trusted by standard CA bundles
+
+Scenario: Certificate renews automatically
+Given Certbot's systemd timer is active
+When the timer's status is checked
+Then it is enabled and scheduled to run before the certificate's 90-day expiration
+
+Scenario: Application port is not directly exposed
+Given the Security Group rules for the EC2 instance
+When inbound rules are inspected
+Then port 3000 is not open to 0.0.0.0/0 — only Nginx (via localhost) can reach it
+```
+
+**Tasks:**
+
+- Restrict Security Group to 80/443 inbound, remove public inbound on 3000
+- Install `nginx` and `python3-certbot-nginx` on the container instance (via SSM Session Manager)
+- Configure Nginx reverse proxy: `api.jlibraryexpress.com` → `http://localhost:3000`
+- Issue certificate via `certbot --nginx -d api.jlibraryexpress.com`, accepting the HTTP→HTTPS redirect
+- Validate Certbot's renewal systemd timer is active
+- Validate HTTPS response parity against the previous direct-IP/port access
+
+**Commits:**
+
+```
+chore(infra): US-1009 restrict security group to 80/443, close public 3000
+chore(infra): US-1009 install nginx and certbot on ecs container instance
+chore(infra): US-1009 configure nginx reverse proxy to localhost:3000
+chore(infra): US-1009 issue letsencrypt certificate via certbot
+test(infra): US-1009 validate https parity and certbot renewal timer
+docs(adr): US-1009 record tls termination decision and alternatives considered
+docs(readme): US-1009 update public endpoint to https without port
 ```
 
 ---
@@ -668,7 +731,7 @@ This reduction is temporary — see TD08 for the plan to revisit thresholds once
 |---|---|---|---|
 | US-801 | SLF4J + Logback Setup with Structured JSON Encoder | 3 | ✅ Done |
 | US-802 | Retrofit Logging into Existing Use Cases (book/customer/loan) | 5 | ✅ Done |
-| US-803 | Correlation ID Convention via MDC | 2 | ✅ Done |
+| US-803 | Trace ID Convention via MDC | 2 | ✅ Done |
 
 Logback configured with a JSON structured encoder (`logstash-logback-encoder`) targeting stdout, with separate `logback-dev.xml`/`logback-prod.xml` profiles. Existing book/customer/loan usecases emit INFO/WARN/ERROR logs consistently. Correlation across log lines within an operation is handled via SLF4J's MDC (`LogTrace`), wired at the CLI entrypoint and cleared in a `finally` block. Full observability (metrics, dashboards, tracing) stayed explicitly out of scope — see ADR [0004](./adr/0004-slf4j-logback-without-full-observability.md) — revisited in E11. TD07 formally resolved. Full detail (Gherkin, tasks, commits): see the corresponding Issues on GitHub Projects.
 
@@ -682,7 +745,7 @@ Logback configured with a JSON structured encoder (`logstash-logback-encoder`) t
 | US-903 | Customer REST Endpoints (Paginated) | 5 | ✅ Done |
 | US-904 | Loan REST Endpoints (Paginated) | 5 | ✅ Done |
 | US-905 | Central Exception Handler (Domain/Application Exceptions → HTTP Status) | 3 | ✅ Done |
-| US-906 | Correlation ID via HTTP Header (Accept / Generate / Echo) | 2 | ✅ Done |
+| US-906 | Trace ID via HTTP Header (Accept / Generate / Echo) | 2 | ✅ Done |
 | US-907 | OpenAPI Documentation (swagger-core + swagger-maven-plugin, Swagger UI) | 5 | ✅ Done |
 | US-908 | HTTP Layer Test Suite (Unit + E2E) and TD08 Closure | 5 | ✅ Done |
 

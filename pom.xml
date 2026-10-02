@@ -6,7 +6,7 @@
 
     <groupId>org.libraryexpress</groupId>
     <artifactId>LibraryExpress</artifactId>
-    <version>0.1.6</version>
+    <version>0.2.0-beta</version>
     <packaging>pom</packaging>
 
     <modules>
