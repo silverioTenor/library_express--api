@@ -12,14 +12,17 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/LibraryExpressCDRole
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/LibraryExpressCDRole
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to ECR
         id: ecr-login
@@ -38,7 +41,7 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition ${{ env.ECS_TASK_FAMILY }} \
+            --task-definition ${{ vars.ECS_TASK_FAMILY }} \
             --query taskDefinition \
             > task-definition.json
 
@@ -47,7 +50,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: ${{ env.CONTAINER_NAME }}
+          container-name: ${{ vars.CONTAINER_NAME }}
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Register new task definition revision
@@ -61,13 +64,13 @@ jobs:
       - name: Deploy new task definition to ECS service
         run: |
           aws ecs update-service \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --service ${{ env.ECS_SERVICE }} \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --service ${{ vars.ECS_SERVICE }} \
             --task-definition ${{ steps.register-task-def.outputs.arn }} \
             --force-new-deployment
 
       - name: Wait for service to stabilize
         run: |
           aws ecs wait services-stable \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --services ${{ env.ECS_SERVICE }}
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --services ${{ vars.ECS_SERVICE }}
