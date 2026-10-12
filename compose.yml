@@ -26,8 +26,6 @@ services:
     # ----------------=========================================================
     # MANDATORY FOR INTERACTIVE CLI APPLICATIONS (SCANNER) INSIDE DOCKER:
     # ----------------=========================================================
-    tty: true          # Allocates a pseudo-TTY terminal descriptor for output rendering
-    stdin_open: true   # Keeps the standard input stream (System.in) persistently open for keyboard capture
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
