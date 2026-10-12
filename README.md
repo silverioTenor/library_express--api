@@ -55,7 +55,6 @@ library_express--api
 │   ├── pom.xml
 │   └── src
 │       ├── main/java/org.libraryexpress.infrastructure
-│       │   ├── cli (current entrypoint/UI)
 │       │   ├── config
 │       │   ├── exception
 │       │   └── repository (JDBC implementations, backed by PostgreSQL)
@@ -191,18 +190,7 @@ The entrypoint lives in the infrastructure module. `exec-maven-plugin` is skippe
 mvn test
 ```
 
-Runs unit tests across all modules. To run a single module's tests only:
-
-```
-mvn test -pl domain
-mvn test -pl application
-```
-
-Infrastructure integration tests use Testcontainers to spin up a real, ephemeral PostgreSQL container and run Flyway migrations against it — **Docker must be running locally** for these to execute. They run as part of the `verify` phase, separately from fast unit tests:
-
-```
-mvn verify -pl infrastructure
-```
+Runs unit tests across all modules.
 
 ## 📊 Test Coverage
 

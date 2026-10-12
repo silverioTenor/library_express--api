@@ -3,7 +3,6 @@ package org.libraryexpress.infrastructure.config;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.infrastructure.api.server.EmbeddedHttpServer;
-import org.libraryexpress.infrastructure.cli.ManagementCli;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.config.database.MigrationRunner;
 import org.libraryexpress.infrastructure.config.logging.LogTrace;
@@ -34,7 +33,6 @@ public class AppBootstrapper {
         log.info("Infrastructure baseline loaded successfully! Routing to application entrypoint.");
 
         initializeApi(context, connectionProvider);
-//        initializeCli(context, connectionProvider);
     }
 
     private static void initializeApi(AppContext context, ConnectionProvider connectionProvider) {
@@ -65,11 +63,6 @@ public class AppBootstrapper {
                 LogTrace.clear();
             }
         }));
-    }
-
-    private static void initializeCli(AppContext context, ConnectionProvider connectionProvider) {
-        var managementCli = new ManagementCli(context, connectionProvider);
-        managementCli.app();
     }
 
     private static ConnectionProvider prepareDatabaseConnection() {
