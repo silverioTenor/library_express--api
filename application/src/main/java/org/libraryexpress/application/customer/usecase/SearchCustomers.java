@@ -8,18 +8,18 @@ import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
 import java.util.List;
 
-public class ListCustomers {
+public class SearchCustomers {
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper mapper;
 
-    public ListCustomers(CustomerRepository customerRepository, CustomerMapper mapper) {
+    public SearchCustomers(CustomerRepository customerRepository, CustomerMapper mapper) {
         this.customerRepository = customerRepository;
         this.mapper = mapper;
     }
 
-    public OutputPaginationDto<CustomerDto> execute(InputPaginationDto paginationDto) {
-        var result = this.customerRepository.findAll(paginationDto);
+    public OutputPaginationDto<CustomerDto> execute(String name, String email, InputPaginationDto paginationDto) {
+        var result = this.customerRepository.search(name, email, paginationDto);
 
         List<CustomerDto> customersDto = mapper.toResponseListDto(result.items());
 

@@ -102,23 +102,42 @@ public class CustomerDbRepository implements CustomerRepository {
     }
 
     @Override
-    public QueryResult<Customer> findAll(InputPaginationDto paginationDto) {
+    public QueryResult<Customer> search(String name, String email, InputPaginationDto paginationDto) {
         boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
 
-        String query = shouldPaginate
-                ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_customer ORDER BY created_at DESC LIMIT ? OFFSET ?;"
-                : "SELECT * FROM tb_customer ORDER BY created_at DESC;";
+        var query = shouldPaginate
+                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_customer WHERE 1=1")
+                : new StringBuilder("SELECT * FROM tb_customer WHERE 1=1");
 
         List<Customer> customers = new ArrayList<>();
         long totalElements;
 
+        boolean hasName = name != null && !name.isBlank();
+        boolean hasEmail = email != null && !email.isBlank();
+
+        if (hasName) query.append(" AND name LIKE ?");
+        if (hasEmail) query.append(" AND email LIKE ?");
+
+        if (shouldPaginate) query.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?;");
+        else query.append(" ORDER BY created_at DESC;");
+
         try (
                 Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query);
+                PreparedStatement statement = connection.prepareStatement(query.toString());
         ) {
+            int parameterIndex = 1;
+
+            if (hasName) {
+                statement.setString(parameterIndex++, name);
+            }
+
+            if (hasEmail) {
+                statement.setString(parameterIndex++, email);
+            }
+
             if (shouldPaginate) {
-                statement.setInt(1, paginationDto.limit());
-                statement.setInt(2, paginationDto.offset());
+                statement.setInt(parameterIndex++, paginationDto.limit());
+                statement.setInt(parameterIndex, paginationDto.offset());
             } else {
                 connection.setAutoCommit(false);
                 statement.setFetchSize(500);

@@ -73,48 +73,6 @@ public final class CustomerController {
         response.status(CREATED).sendEmpty();
     }
 
-    @GET
-    @Path("/search")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Find a customer by id or email",
-            requestBody =  @RequestBody(content = @Content())
-    )
-    @Parameters({
-            @Parameter(name = "id", in = ParameterIn.QUERY),
-            @Parameter(name = "email", in = ParameterIn.QUERY),
-            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
-    })
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Customer found",
-                    content = @Content(schema = @Schema(implementation = CustomerDto.class))
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "No parameter provided",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Customer not found",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
-    })
-    public void get(HttpContextRequest request, HttpContextResponse response) throws Exception {
-        String customerId = request.getQueryParam("id");
-        String email = request.getQueryParam("email");
-
-        String criteria = (customerId != null && !customerId.isBlank())
-                ? customerId
-                : email;
-
-        CustomerDto outputDto = context.getFindCustomer().execute(criteria);
-
-        response.status(SUCCESS).json(outputDto);
-    }
-
     @PATCH
     @Path("/{id}/update-email")
     @Produces(MediaType.APPLICATION_JSON)
@@ -161,19 +119,34 @@ public final class CustomerController {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List customers", requestBody =  @RequestBody(content = @Content()))
+    @Operation(summary = "Search customers", requestBody =  @RequestBody(content = @Content()))
+    @Parameters({
+            @Parameter(name = "id", in = ParameterIn.QUERY),
+            @Parameter(name = "email", in = ParameterIn.QUERY),
+            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
+    })
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
                     description = "Paginated list of customers",
                     content = @Content(schema = @Schema(implementation = OutputPaginationDto.class) )
             ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Customer not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
-    public void list(HttpContextRequest request, HttpContextResponse response) throws Exception {
+    public void search(HttpContextRequest request, HttpContextResponse response) throws Exception {
         Pagination.PageRequest pageRequest = request.getPageRequest();
 
+        String name = request.getQueryParam("name");
+        String email = request.getQueryParam("email");
+
+        // TODO: create filterDTO
+
         var inputDto = InputPaginationDto.of(pageRequest.page(), pageRequest.size());
-        var outputDto = context.getListCustomers().execute(inputDto);
+        var outputDto = context.getListCustomers().execute(name, email, inputDto);
 
         response.status(SUCCESS).json(outputDto);
     }

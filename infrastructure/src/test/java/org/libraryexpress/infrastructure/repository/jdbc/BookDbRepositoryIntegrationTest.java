@@ -110,7 +110,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @Test
     @DisplayName("Should successfully scan and retrieve the entire catalog collection payload without criteria constraints")
     void shouldReturnFindAllPersistedBooks_whenTriggeringUnrestrictedCatalogScan() {
-        // Arrange (Testing findAll)
+        // Arrange (Testing search)
         Book book1 = createSampleBook("978-44-44444-40-4", "Domain-Driven Design", BookStatus.AVAILABLE);
         Book book2 = createSampleBook("978-55-55555-50-5", "Implementing Domain-Driven Design", BookStatus.AVAILABLE);
 
@@ -122,7 +122,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         // Assert
         assertNotNull(allBooks);
-        assertTrue(allBooks.size() >= 2, "Catalog set must retrieve findAll entries currently matching isolation scopes");
+        assertTrue(allBooks.size() >= 2, "Catalog set must retrieve search entries currently matching isolation scopes");
     }
 
     /**

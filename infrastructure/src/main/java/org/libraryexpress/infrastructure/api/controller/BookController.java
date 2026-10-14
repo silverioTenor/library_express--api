@@ -110,7 +110,7 @@ public final class BookController {
         Pagination.PageRequest pageRequest = request.getPageRequest();
 
         var inputDto = InputPaginationDto.of(pageRequest.page(), pageRequest.size());
-        OutputPaginationDto<BookDto> outputDto = context.getListBooks().execute(inputDto);
+        OutputPaginationDto<BookDto> outputDto = context.getListBooks().execute(null, null, inputDto);
 
         response.status(SUCCESS).json(outputDto);
     }

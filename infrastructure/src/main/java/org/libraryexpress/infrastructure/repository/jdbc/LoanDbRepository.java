@@ -101,7 +101,7 @@ public class LoanDbRepository implements LoanRepository {
         boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
 
         var query = shouldPaginate
-                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_loan WHERE 1=1 LIMIT ? OFFSET ?")
+                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_loan WHERE 1=1")
                 : new StringBuilder("SELECT * FROM tb_loan WHERE 1=1");
 
         List<Loan> loans = new ArrayList<>();
@@ -115,21 +115,14 @@ public class LoanDbRepository implements LoanRepository {
         if (hasISBNFilter) query.append(" AND isbn = ?");
         if (hasStatusesFilter) query.append(" AND status = ANY(?)");
 
-        query.append(" ORDER BY created_at DESC;");
+        if (shouldPaginate) query.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?;");
+        else query.append(" ORDER BY created_at DESC;");
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query.toString())
         ) {
             int parameterIndex = 1;
-
-            if (shouldPaginate) {
-                statement.setInt(parameterIndex++, paginationDto.limit());
-                statement.setInt(parameterIndex++, paginationDto.offset());
-            } else {
-                connection.setAutoCommit(false);
-                statement.setFetchSize(500);
-            }
 
             if (hasCustomerIdFilter) statement.setString(parameterIndex++, customerId);
             if (hasISBNFilter) statement.setString(parameterIndex++, ISBN);
@@ -140,7 +133,15 @@ public class LoanDbRepository implements LoanRepository {
                         .toArray(String[]::new);
 
                 Array arrayStatus = connection.createArrayOf("varchar", statusesStr);
-                statement.setArray(parameterIndex, arrayStatus);
+                statement.setArray(parameterIndex++, arrayStatus);
+            }
+
+            if (shouldPaginate) {
+                statement.setInt(parameterIndex++, paginationDto.limit());
+                statement.setInt(parameterIndex, paginationDto.offset());
+            } else {
+                connection.setAutoCommit(false);
+                statement.setFetchSize(500);
             }
 
             boolean firstRow = true;

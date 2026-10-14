@@ -5,6 +5,7 @@ import org.libraryexpress.domain.book.exception.BookUnavailableException;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.repository.BookRepository;
+import org.libraryexpress.domain.core.repository.QueryResult;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +20,8 @@ public class BookAvailabilityValidator {
 
     public Book validate(String ISBN) {
 
-        List<Book> books = this.bookRepository.search(ISBN, null);
+        QueryResult<Book> result = this.bookRepository.search(ISBN, null, null);
+        var books = result.items();
 
         Book book = books.stream()
                 .findFirst()
