@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +47,7 @@ public class BookAvailabilityValidatorUnitTest {
                 .setStatus(BookStatus.AVAILABLE)
                 .build();
 
-        when(bookRepository.search(IsbnStr, null)).thenReturn(Set.of(book));
+        when(bookRepository.search(IsbnStr, null)).thenReturn(List.of(book));
 
         // Act
         Book availableBook = bookAvailabilityValidator.validate(IsbnStr);
@@ -67,7 +68,7 @@ public class BookAvailabilityValidatorUnitTest {
     void shouldThrowBookNotFoundException_whenBookIsNotFound() {
         // Arrange
         String isbnStr = "9780132350884";
-        when(bookRepository.search(isbnStr, null)).thenReturn(Collections.emptySet());
+        when(bookRepository.search(isbnStr, null)).thenReturn(Collections.emptyList());
 
         // Act & Assert
         assertThrows(BookNotFoundException.class, () -> bookAvailabilityValidator.validate(isbnStr));
@@ -88,7 +89,7 @@ public class BookAvailabilityValidatorUnitTest {
                 .setStatus(BookStatus.BORROWED)
                 .build();
 
-        when(bookRepository.search(isbnStr, null)).thenReturn(Set.of(borrowedBook));
+        when(bookRepository.search(isbnStr, null)).thenReturn(List.of(borrowedBook));
 
         // Act & Assert
         assertThrows(BookUnavailableException.class, () -> bookAvailabilityValidator.validate(isbnStr));

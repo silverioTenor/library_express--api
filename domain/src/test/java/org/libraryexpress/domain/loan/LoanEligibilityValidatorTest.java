@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,7 +42,7 @@ class LoanEligibilityValidatorTest {
     void shouldValidateSuccessfully_whenCustomerHasNoLoans() {
         // Arrange
         when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
-                .thenReturn(new QueryResult<>(Collections.emptySet(), 0));
+                .thenReturn(new QueryResult<>(Collections.emptyList(), 0));
 
         // Act & Assert
         // assertDoesNotThrow ensures the flow runs cleanly without triggering business exceptions
@@ -63,7 +64,7 @@ class LoanEligibilityValidatorTest {
                 .build();
 
         when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
-                .thenReturn(new QueryResult<>(Set.of(overdueLoan), 1));
+                .thenReturn(new QueryResult<>(List.of(overdueLoan), 1));
 
         // Act & Assert
         OverdueLoanException exception = assertThrows(OverdueLoanException.class, () ->
@@ -94,7 +95,7 @@ class LoanEligibilityValidatorTest {
                 .build();
 
         when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
-                .thenReturn(new QueryResult<>(Set.of(activeLoan1, activeLoan2), 1));
+                .thenReturn(new QueryResult<>(List.of(activeLoan1, activeLoan2), 1));
 
         // Act & Assert
         LoanLimitReachedException exception = assertThrows(LoanLimitReachedException.class, () ->
@@ -117,7 +118,7 @@ class LoanEligibilityValidatorTest {
                 .build();
 
         when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
-                .thenReturn(new QueryResult<>(Set.of(activeLoan), 1));
+                .thenReturn(new QueryResult<>(List.of(activeLoan), 1));
 
         // Act & Assert
         assertDoesNotThrow(() -> validator.validate(CUSTOMER_ID));

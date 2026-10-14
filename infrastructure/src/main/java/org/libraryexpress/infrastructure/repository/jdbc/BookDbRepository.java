@@ -8,9 +8,7 @@ import org.libraryexpress.domain.core.repository.QueryResult;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class BookDbRepository implements BookRepository {
 
@@ -63,7 +61,7 @@ public class BookDbRepository implements BookRepository {
     }
 
     @Override
-    public Set<Book> search(String ISBN, Set<BookStatus> statuses) {
+    public List<Book> search(String ISBN, Set<BookStatus> statuses) {
         // Dynamic search query assembly based on parameter presence flags
         StringBuilder query = new StringBuilder(
                 "SELECT isbn, title, author, year_published, status FROM tb_book WHERE 1=1"
@@ -77,7 +75,9 @@ public class BookDbRepository implements BookRepository {
         // Dynamically building the IN (?, ?, ...) clause to match the Set collections size safely
         if (hasStatusFilter) query.append(" AND status = ANY(?)");
 
-        Set<Book> books = new HashSet<>();
+        query.append(" ORDER BY created_at DESC;");
+
+        List<Book> books = new ArrayList<>();
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -139,10 +139,10 @@ public class BookDbRepository implements BookRepository {
         boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
 
         String query = shouldPaginate
-                ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_book LIMIT ? OFFSET ?"
-                : "SELECT * FROM tb_book";
+                ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_book ORDER BY created_at DESC LIMIT ? OFFSET ?;"
+                : "SELECT * FROM tb_book ORDER BY created_at DESC;";
 
-        Set<Book> books = new HashSet<>();
+        List<Book> books = new ArrayList<>();
         long totalElements;
 
         try (

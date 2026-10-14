@@ -10,7 +10,7 @@ import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
-import java.util.Set;
+import java.util.List;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface BookMapper {
@@ -19,7 +19,7 @@ public interface BookMapper {
 
     BookDto toResponseDto(Book book);
 
-    Set<BookDto> toResponseListDto(Set<Book> books);
+    List<BookDto> toResponseListDto(List<Book> books);
 
     @Mapping(target = "ISBN", source = "ISBN", qualifiedByName = "stringToIsbn")
     Book.Builder toEntity(RegisterBookDto dto);

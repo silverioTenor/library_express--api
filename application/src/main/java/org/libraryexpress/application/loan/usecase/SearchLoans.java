@@ -9,7 +9,7 @@ import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class SearchLoans {
@@ -35,9 +35,9 @@ public class SearchLoans {
                 filter.paginationDto()
         );
 
-        Set<LoanDto> loansDto =  result.items().stream()
+        List<LoanDto> loansDto =  result.items().stream()
                 .map(mapper::toResponseDto)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
 
         if (filter.paginationDto() == null || !filter.paginationDto().isPaginated()) {
             return OutputPaginationDto.unpaginated(loansDto);

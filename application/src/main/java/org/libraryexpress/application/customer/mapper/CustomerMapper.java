@@ -10,7 +10,7 @@ import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
-import java.util.Set;
+import java.util.List;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface CustomerMapper {
@@ -19,7 +19,7 @@ public interface CustomerMapper {
 
     CustomerDto toResponseDto(Customer customer);
 
-    Set<CustomerDto> toResponseListDto(Set<Customer> customers);
+    List<CustomerDto> toResponseListDto(List<Customer> customers);
 
     @Mapping(target = "email", source = "email", qualifiedByName = "stringToEmail")
     Customer.Builder toEntity(CreateCustomerDto dto);

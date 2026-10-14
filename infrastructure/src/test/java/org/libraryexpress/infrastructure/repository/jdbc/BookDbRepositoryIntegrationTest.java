@@ -8,6 +8,7 @@ import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -97,7 +98,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book3);
 
         // Act - Searching using your awesome high-performance ANY arrays filter implementation
-        Set<Book> foundBooks = bookRepository.search(null, Set.of(BookStatus.AVAILABLE));
+        List<Book> foundBooks = bookRepository.search(null, Set.of(BookStatus.AVAILABLE));
 
         // Assert
         assertNotNull(foundBooks);
@@ -117,7 +118,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book2);
 
         // Act
-        Set<Book> allBooks = bookRepository.findAll(null).items();
+        List<Book> allBooks = bookRepository.findAll(null).items();
 
         // Assert
         assertNotNull(allBooks);

@@ -8,7 +8,7 @@ import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
 
-import java.util.Set;
+import java.util.List;
 
 public class ListBooks {
 
@@ -23,7 +23,7 @@ public class ListBooks {
     public OutputPaginationDto<BookDto> execute(InputPaginationDto paginationDto) {
         QueryResult<Book> result = this.bookRepository.findAll(paginationDto);
 
-        Set<BookDto> booksDto = mapper.toResponseListDto(result.items());
+        List<BookDto> booksDto = mapper.toResponseListDto(result.items());
 
         if  (paginationDto == null || !paginationDto.isPaginated()) {
             return OutputPaginationDto.unpaginated(booksDto);

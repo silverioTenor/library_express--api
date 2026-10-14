@@ -19,6 +19,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,7 +64,7 @@ class SearchLoansTest {
         LoanDto expectedDto = new LoanDto("loan-1", CUSTOMER_ID, ISBN_STR, LoanStatus.ACTIVE, LocalDate.now(), LocalDate.now().plusDays(15));
 
         // Stubbing repository query and mapper conversion layers
-        when(loanRepository.search(CUSTOMER_ID, ISBN_STR, statuses, null)).thenReturn(new QueryResult<>(Set.of(mockLoan), 1));
+        when(loanRepository.search(CUSTOMER_ID, ISBN_STR, statuses, null)).thenReturn(new QueryResult<>(List.of(mockLoan), 1));
         when(mapper.toResponseDto(mockLoan)).thenReturn(expectedDto);
 
         // Act

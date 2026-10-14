@@ -6,7 +6,7 @@ import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
-import java.util.Set;
+import java.util.List;
 
 public class ListCustomers {
 
@@ -21,7 +21,7 @@ public class ListCustomers {
     public OutputPaginationDto<CustomerDto> execute(InputPaginationDto paginationDto) {
         var result = this.customerRepository.findAll(paginationDto);
 
-        Set<CustomerDto> customersDto = mapper.toResponseListDto(result.items());
+        List<CustomerDto> customersDto = mapper.toResponseListDto(result.items());
 
         if  (paginationDto == null || !paginationDto.isPaginated()) {
             return OutputPaginationDto.unpaginated(customersDto);

@@ -8,9 +8,8 @@ import org.libraryexpress.domain.loan.repository.LoanRepository;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.sql.Date;
+import java.util.*;
 
 public class LoanDbRepository implements LoanRepository {
 
@@ -105,7 +104,7 @@ public class LoanDbRepository implements LoanRepository {
                 ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_loan WHERE 1=1 LIMIT ? OFFSET ?")
                 : new StringBuilder("SELECT * FROM tb_loan WHERE 1=1");
 
-        Set<Loan> loans = new HashSet<>();
+        List<Loan> loans = new ArrayList<>();
         long totalElements;
 
         boolean hasCustomerIdFilter = customerId != null && !customerId.isEmpty();
@@ -115,6 +114,8 @@ public class LoanDbRepository implements LoanRepository {
         if (hasCustomerIdFilter) query.append(" AND customer_id = ?");
         if (hasISBNFilter) query.append(" AND isbn = ?");
         if (hasStatusesFilter) query.append(" AND status = ANY(?)");
+
+        query.append(" ORDER BY created_at DESC;");
 
         try (
                 Connection connection = dataSource.getConnection();

@@ -11,9 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class CustomerDbRepository implements CustomerRepository {
 
@@ -108,10 +106,10 @@ public class CustomerDbRepository implements CustomerRepository {
         boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
 
         String query = shouldPaginate
-                ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_customer LIMIT ? OFFSET ?"
-                : "SELECT * FROM tb_customer";
+                ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_customer ORDER BY created_at DESC LIMIT ? OFFSET ?;"
+                : "SELECT * FROM tb_customer ORDER BY created_at DESC;";
 
-        Set<Customer> customers = new HashSet<>();
+        List<Customer> customers = new ArrayList<>();
         long totalElements;
 
         try (

@@ -12,6 +12,7 @@ import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -141,7 +142,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         loanRepository.create(overdueLoan);
 
         // Act - Triggering search using your optimized ANY clause database algorithm
-        Set<Loan> matchedLoans = loanRepository.search(
+        List<Loan> matchedLoans = loanRepository.search(
                 VALID_CUSTOMER_ID,
                 null,
                 Set.of(LoanStatus.OVERDUE), null
