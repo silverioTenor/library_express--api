@@ -3,8 +3,8 @@ package org.libraryexpress.infrastructure.repository.jdbc;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.repository.BookRepository;
-import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
+import org.libraryexpress.domain.book.repository.BookFilter;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -85,8 +85,8 @@ public class BookDbRepository implements BookRepository {
     }
 
     @Override
-    public QueryResult<Book> search(String ISBN, Set<BookStatus> statuses, InputPaginationDto paginationDto) {
-        boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
+    public QueryResult<Book> search(BookFilter filter) {
+        boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
         var query = shouldPaginate
                 ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_book WHERE 1=1")
@@ -95,8 +95,8 @@ public class BookDbRepository implements BookRepository {
         List<Book> books = new ArrayList<>();
         long totalElements;
 
-        boolean hasIsbnFilter = ISBN != null && !ISBN.isBlank();
-        boolean hasStatusFilter = statuses != null && !statuses.isEmpty();
+        boolean hasIsbnFilter = filter.ISBN() != null && !filter.ISBN().value().isBlank();
+        boolean hasStatusFilter = filter.statuses() != null && !filter.statuses().isEmpty();
 
         if (hasIsbnFilter) query.append(" AND isbn = ?");
 
@@ -113,11 +113,11 @@ public class BookDbRepository implements BookRepository {
             int parameterIndex = 1;
 
             if (hasIsbnFilter) {
-                statement.setString(parameterIndex++, ISBN);
+                statement.setString(parameterIndex++, filter.ISBN().value());
             }
 
             if (hasStatusFilter) {
-                String[] statusStr = statuses.stream()
+                String[] statusStr = filter.statuses().stream()
                         .map(BookStatus::name)
                         .toArray(String[]::new);
 
@@ -126,8 +126,8 @@ public class BookDbRepository implements BookRepository {
             }
 
             if (shouldPaginate) {
-                statement.setInt(parameterIndex++, paginationDto.limit());
-                statement.setInt(parameterIndex, paginationDto.offset());
+                statement.setInt(parameterIndex++, filter.paginationDto().limit());
+                statement.setInt(parameterIndex, filter.paginationDto().offset());
             } else {
                 connection.setAutoCommit(false);
                 statement.setFetchSize(500);

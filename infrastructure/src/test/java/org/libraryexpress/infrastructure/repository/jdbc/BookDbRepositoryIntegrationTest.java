@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
+import org.libraryexpress.domain.core.repository.QueryResult;
+import org.libraryexpress.domain.book.repository.BookFilter;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
 
@@ -97,8 +99,12 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book2);
         bookRepository.create(book3);
 
+
         // Act - Searching using your awesome high-performance ANY arrays filter implementation
-        List<Book> foundBooks = bookRepository.search(null, Set.of(BookStatus.AVAILABLE));
+        BookFilter filter = new BookFilter(null, null, null, null, Set.of(BookStatus.AVAILABLE), null);
+        QueryResult<Book> result = bookRepository.search(filter);
+
+        List<Book> foundBooks = result.items();
 
         // Assert
         assertNotNull(foundBooks);
@@ -118,7 +124,8 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book2);
 
         // Act
-        List<Book> allBooks = bookRepository.findAll(null).items();
+        BookFilter filter = new BookFilter(null, null, null, null, null, null);
+        List<Book> allBooks = bookRepository.search(filter).items();
 
         // Assert
         assertNotNull(allBooks);

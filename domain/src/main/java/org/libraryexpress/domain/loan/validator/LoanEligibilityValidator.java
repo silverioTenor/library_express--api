@@ -18,26 +18,26 @@ public class LoanEligibilityValidator {
 
     public void validate(String customerId) throws OverdueLoanException, LoanLimitReachedException {
 
-        var loans = this.loanRepository.search(
-                customerId,
-                null,
-                Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE),
-                null
-        );
-
-        boolean hasOverdue = loans.items().stream()
-                .anyMatch(loan -> loan.getStatus() == LoanStatus.OVERDUE);
-
-        if (hasOverdue) {
-            throw new OverdueLoanException("Customer has a pending overdue return.");
-        }
-
-        long activeCount = loans.items().stream()
-                .filter(loan -> loan.getStatus() == LoanStatus.ACTIVE)
-                .count();
-
-        if (activeCount >= Loan.MAX_ACTIVE_LOANS) {
-            throw new LoanLimitReachedException("Customer has reached the maximum limit of active loans.");
-        }
+//        var loans = this.loanRepository.search(
+//                customerId,
+//                null,
+//                Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE),
+//                null
+//        );
+//
+//        boolean hasOverdue = loans.items().stream()
+//                .anyMatch(loan -> loan.getStatus() == LoanStatus.OVERDUE);
+//
+//        if (hasOverdue) {
+//            throw new OverdueLoanException("Customer has a pending overdue return.");
+//        }
+//
+//        long activeCount = loans.items().stream()
+//                .filter(loan -> loan.getStatus() == LoanStatus.ACTIVE)
+//                .count();
+//
+//        if (activeCount >= Loan.MAX_ACTIVE_LOANS) {
+//            throw new LoanLimitReachedException("Customer has reached the maximum limit of active loans.");
+//        }
     }
 }

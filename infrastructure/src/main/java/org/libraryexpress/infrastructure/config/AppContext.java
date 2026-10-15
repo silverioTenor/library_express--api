@@ -3,7 +3,7 @@ package org.libraryexpress.infrastructure.config;
 import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.application.book.usecase.FindBook;
-import org.libraryexpress.application.book.usecase.SerchBooks;
+import org.libraryexpress.application.book.usecase.SearchBooks;
 import org.libraryexpress.application.book.usecase.RegisterBook;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.application.customer.usecase.CreateCustomer;
@@ -13,7 +13,6 @@ import org.libraryexpress.application.customer.usecase.UpdateCustomerEmail;
 import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.libraryexpress.application.loan.mapper.LoanMapper;
 import org.libraryexpress.application.loan.usecase.*;
-import org.libraryexpress.application.loan.validator.SearchLoanValidator;
 import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.api.controller.CustomerController;
 import org.libraryexpress.infrastructure.api.controller.LoanController;
@@ -39,7 +38,7 @@ public class AppContext {
     // BOOK
     private final RegisterBook registerBook;
     private final FindBook findBook;
-    private final SerchBooks serchBooks;
+    private final SearchBooks serchBooks;
     private final BookController bookController;
 
     // LOAN
@@ -70,16 +69,15 @@ public class AppContext {
 
         this.registerBook = new RegisterBook(bookRepository, BookMapper.INSTANCE);
         this.findBook = new FindBook(bookRepository, BookMapper.INSTANCE);
-        this.serchBooks = new SerchBooks(bookRepository, BookMapper.INSTANCE);
+        this.serchBooks = new SearchBooks(bookRepository, BookMapper.INSTANCE);
         this.bookController = new BookController(this);
 
         // LOAN
         LoanDbRepository loanRepository = new LoanDbRepository(dataSource);
         LoanEligibilityValidator loanEligibilityValidator = new LoanEligibilityValidator(loanRepository);
-        SearchLoanValidator searchLoanValidator = new SearchLoanValidator();
 
         this.createLoan = new CreateLoan(loanRepository, bookRepository, loanEligibilityValidator, bookAvailabilityValidator);
-        this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE, searchLoanValidator);
+        this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE);
         this.returnLoan = new ReturnLoan(loanRepository, bookRepository, Clock.systemDefaultZone());
         this.closeOverdueLoan = new CloseOverdueLoan(loanRepository);
         this.loanController = new LoanController(this);
@@ -112,7 +110,7 @@ public class AppContext {
         return findBook;
     }
 
-    public SerchBooks getListBooks() {
+    public SearchBooks getListBooks() {
         return serchBooks;
     }
 

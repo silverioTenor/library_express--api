@@ -1,12 +1,15 @@
 package org.libraryexpress.infrastructure.api.e2e;
 
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.*;
 import org.libraryexpress.application.customer.dto.response.CustomerDto;
+import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.E2ETest;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @E2ETest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -42,12 +45,12 @@ class CustomerE2ETest extends E2EBaseConfig {
             .contentType(ContentType.JSON)
             .queryParam("email", "j.doe@test.com")
         .when()
-            .get("/customers/search")
+            .get("/customers")
         .then()
             .statusCode(200)
-            .body("id", is(notNullValue()))
-            .body("name", is("John Doe"))
-            .body("email", is("j.doe@test.com"));
+            .body("items[0].id", is(notNullValue()))
+            .body("items[0].name", is("John Doe"))
+            .body("items[0].email", is("j.doe@test.com"));
     }
 
     @Test
@@ -55,11 +58,14 @@ class CustomerE2ETest extends E2EBaseConfig {
     @DisplayName("Should update email customer when provided a non-used email")
     void shouldUpdateCustomerEmail_whenProvidedANonUsedEmail() {
         // Get an exist customer
-        CustomerDto customerDto = given()
+        var result = given()
                 .contentType(ContentType.JSON)
                 .queryParam("email", "j.doe@test.com")
                 .when()
-                .get("/customers/search").as(CustomerDto.class);
+                .get("/customers").as(new TypeRef<OutputPaginationDto<CustomerDto>>() {});
+
+        assertNotNull(result.items());
+        CustomerDto customerDto = result.items().getFirst();
 
         String payload = """
                     {
@@ -84,11 +90,11 @@ class CustomerE2ETest extends E2EBaseConfig {
             .contentType(ContentType.JSON)
             .queryParam("email", "another@test.com")
         .when()
-            .get("/customers/search")
+            .get("/customers")
         .then()
             .statusCode(200)
-            .body("id", is(customerDto.id()))
-            .body("name", is(customerDto.name()));
+            .body("items[0].id", is(customerDto.id()))
+            .body("items[0].name", is(customerDto.name()));
     }
 
     @Test
@@ -136,14 +142,14 @@ class CustomerE2ETest extends E2EBaseConfig {
                 """;
 
         given()
-                .contentType(ContentType.JSON)
-                .header("X-Trace-Id", "c0c20fcc-6ad1-4ec2-a48d-1d960933e266")
-                .body(customerPayload)
-                .when()
-                .post("/customers")
-                .then()
-                .statusCode(409)
-                .body("message", is("E-mail must be unique."));
+            .contentType(ContentType.JSON)
+            .header("X-Trace-Id", "c0c20fcc-6ad1-4ec2-a48d-1d960933e266")
+            .body(customerPayload)
+        .when()
+            .post("/customers")
+        .then()
+            .statusCode(409)
+            .body("message", is("E-mail must be unique."));
     }
 
     @Test
@@ -168,19 +174,6 @@ class CustomerE2ETest extends E2EBaseConfig {
     }
 
     @Test
-    @Order(7)
-    @DisplayName("Should throw an error when has no parameters provided")
-    void shouldThrowError_whenHasNoParametersProvided() {
-        given()
-                .contentType(ContentType.JSON)
-                .when()
-                .get("/customers/search")
-                .then()
-                .statusCode(400)
-                .body("message", is("Provide at least one parameter"));
-    }
-
-    @Test
     @Order(8)
     @DisplayName("Should throw an error when provided an invalid parameter")
     void shouldThrowError_whenProvidedAnInvalidParameter() {
@@ -188,7 +181,7 @@ class CustomerE2ETest extends E2EBaseConfig {
             .contentType(ContentType.JSON)
             .queryParam("id", "invalid-uuid")
         .when()
-            .get("/customers/search")
+            .get("/customers")
         .then()
             .statusCode(404)
             .body("message", is("Customer not found!"));
@@ -214,11 +207,14 @@ class CustomerE2ETest extends E2EBaseConfig {
         .then()
             .statusCode(201);
 
-        CustomerDto customerDto = given()
+        var result = given()
             .contentType(ContentType.JSON)
             .queryParam("email", "another@test.com")
         .when()
-            .get("/customers/search").as(CustomerDto.class);
+            .get("/customers").as(new TypeRef<OutputPaginationDto<CustomerDto>>() {});
+
+        assertNotNull(result.items());
+        CustomerDto customerDto = result.items().getFirst();
 
         String payload = """
                     {

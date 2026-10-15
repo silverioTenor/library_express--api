@@ -4,6 +4,7 @@ import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
+import org.libraryexpress.domain.loan.repository.LoanFilter;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 
 import javax.sql.DataSource;
@@ -92,13 +93,8 @@ public class LoanDbRepository implements LoanRepository {
     }
 
     @Override
-    public QueryResult<Loan> search(
-            String customerId,
-            String ISBN,
-            Set<LoanStatus> statuses,
-            InputPaginationDto paginationDto
-    ) {
-        boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
+    public QueryResult<Loan> search(LoanFilter filter) {
+        boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
         var query = shouldPaginate
                 ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_loan WHERE 1=1")
@@ -107,13 +103,15 @@ public class LoanDbRepository implements LoanRepository {
         List<Loan> loans = new ArrayList<>();
         long totalElements;
 
-        boolean hasCustomerIdFilter = customerId != null && !customerId.isEmpty();
-        boolean hasISBNFilter = ISBN != null && !ISBN.isEmpty();
-        boolean hasStatusesFilter = statuses != null && !statuses.isEmpty();
+        boolean hasId = filter.id() != null && !filter.id().isBlank();
+        boolean hasCustomerId = filter.customerId() != null && !filter.customerId().isBlank();
+        boolean hasISBN = filter.ISBN() != null && !filter.ISBN().value().isBlank();
+        boolean hasStatuses = filter.statuses() != null && !filter.statuses().isEmpty();
 
-        if (hasCustomerIdFilter) query.append(" AND customer_id = ?");
-        if (hasISBNFilter) query.append(" AND isbn = ?");
-        if (hasStatusesFilter) query.append(" AND status = ANY(?)");
+        if (hasId) query.append(" AND id = ?");
+        if (hasCustomerId) query.append(" AND customer_id = ?");
+        if (hasISBN) query.append(" AND isbn = ?");
+        if (hasStatuses) query.append(" AND status = ANY(?)");
 
         if (shouldPaginate) query.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?;");
         else query.append(" ORDER BY created_at DESC;");
@@ -124,11 +122,11 @@ public class LoanDbRepository implements LoanRepository {
         ) {
             int parameterIndex = 1;
 
-            if (hasCustomerIdFilter) statement.setString(parameterIndex++, customerId);
-            if (hasISBNFilter) statement.setString(parameterIndex++, ISBN);
+            if (hasCustomerId) statement.setString(parameterIndex++, filter.customerId());
+            if (hasISBN) statement.setString(parameterIndex++, filter.ISBN().value());
 
-            if (hasStatusesFilter) {
-                String[] statusesStr = statuses.stream()
+            if (hasStatuses) {
+                String[] statusesStr = filter.statuses().stream()
                         .map(LoanStatus::name)
                         .toArray(String[]::new);
 
@@ -137,8 +135,8 @@ public class LoanDbRepository implements LoanRepository {
             }
 
             if (shouldPaginate) {
-                statement.setInt(parameterIndex++, paginationDto.limit());
-                statement.setInt(parameterIndex, paginationDto.offset());
+                statement.setInt(parameterIndex++, filter.paginationDto().limit());
+                statement.setInt(parameterIndex, filter.paginationDto().offset());
             } else {
                 connection.setAutoCommit(false);
                 statement.setFetchSize(500);

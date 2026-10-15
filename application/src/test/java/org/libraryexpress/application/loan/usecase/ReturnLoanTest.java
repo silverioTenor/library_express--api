@@ -8,9 +8,9 @@ import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.repository.BookRepository;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
-import org.libraryexpress.domain.loan.exception.InvalidLoanStatusException;
 import org.libraryexpress.domain.loan.exception.LoanNotFoundException;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 import org.mockito.InjectMocks;
@@ -135,7 +135,7 @@ class ReturnLoanTest {
 
     // --- ADDITIONAL TECHNICAL PROTECTION SCENARIO 1 ---
     @Test
-    @DisplayName("Should throw InvalidLoanStatusException when trying to return a loan that is already finished")
+    @DisplayName("Should throw InvalidArgumentException when trying to return a loan that is already finished")
     void shouldThrowInvalidLoanStatusException_whenLoanStatusIsNotAllowed() {
         // Arrange
         Loan finishedLoan = new Loan.Builder()
@@ -149,7 +149,7 @@ class ReturnLoanTest {
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(finishedLoan));
 
         // Act & Assert
-        assertThrows(InvalidLoanStatusException.class, () -> returnLoan.execute(LOAN_ID));
+        assertThrows(InvalidArgumentException.class, () -> returnLoan.execute(LOAN_ID));
 
         verifyNoInteractions(bookRepository);
         verify(loanRepository, never()).update(any());

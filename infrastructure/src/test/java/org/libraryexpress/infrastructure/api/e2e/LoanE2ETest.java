@@ -155,18 +155,18 @@ public class LoanE2ETest extends E2EBaseConfig {
         String firstPayload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "invalid-isbn"
+                    "ISBN": "204-15-82822-80-5"
                 }
                 """.formatted(customer.id());
 
         given()
-                .contentType(ContentType.JSON)
-                .body(firstPayload)
-                .when()
-                .post("/loans")
-                .then()
-                .statusCode(404)
-                .body("message", equalTo("Book not Found!"));
+            .contentType(ContentType.JSON)
+            .body(firstPayload)
+        .when()
+            .post("/loans")
+        .then()
+            .statusCode(404)
+            .body("message", equalTo("Book not Found!"));
 
         String secondPayload = """
                 {
@@ -350,7 +350,12 @@ public class LoanE2ETest extends E2EBaseConfig {
         }
 
         static CustomerDto getCustomer(String email) {
-            return get("/customers/search?email=" + email).as(CustomerDto.class);
+            var result = get("/customers?email=" + email).as(new TypeRef<OutputPaginationDto<CustomerDto>>() {
+            });
+
+            assertNotNull(result.items());
+
+            return result.items().getFirst();
         }
 
         static void createBook(String isbn) {

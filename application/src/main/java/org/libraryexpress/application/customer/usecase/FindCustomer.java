@@ -14,6 +14,9 @@ public class FindCustomer {
     private final CustomerRepository customerRepository;
     private final CustomerMapper mapper;
 
+    /**
+     * Deprecated
+     * */
     public FindCustomer(CustomerRepository customerRepository, CustomerMapper mapper) {
         this.customerRepository = customerRepository;
         this.mapper = mapper;

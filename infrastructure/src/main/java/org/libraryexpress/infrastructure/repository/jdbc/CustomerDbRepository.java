@@ -4,6 +4,7 @@ import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.repository.CustomerFilter;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
 import javax.sql.DataSource;
@@ -102,8 +103,8 @@ public class CustomerDbRepository implements CustomerRepository {
     }
 
     @Override
-    public QueryResult<Customer> search(String name, String email, InputPaginationDto paginationDto) {
-        boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
+    public QueryResult<Customer> search(CustomerFilter filter) {
+        boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
         var query = shouldPaginate
                 ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_customer WHERE 1=1")
@@ -112,9 +113,11 @@ public class CustomerDbRepository implements CustomerRepository {
         List<Customer> customers = new ArrayList<>();
         long totalElements;
 
-        boolean hasName = name != null && !name.isBlank();
-        boolean hasEmail = email != null && !email.isBlank();
+        boolean hasId = filter.id() != null && !filter.id().isBlank();
+        boolean hasName = filter.name() != null && !filter.name().isBlank();
+        boolean hasEmail = filter.email() != null && !filter.email().isBlank();
 
+        if (hasId) query.append(" AND id = ?");
         if (hasName) query.append(" AND name LIKE ?");
         if (hasEmail) query.append(" AND email LIKE ?");
 
@@ -127,17 +130,21 @@ public class CustomerDbRepository implements CustomerRepository {
         ) {
             int parameterIndex = 1;
 
+            if (hasId) {
+                statement.setString(parameterIndex++, filter.id());
+            }
+
             if (hasName) {
-                statement.setString(parameterIndex++, name);
+                statement.setString(parameterIndex++, filter.name());
             }
 
             if (hasEmail) {
-                statement.setString(parameterIndex++, email);
+                statement.setString(parameterIndex++, filter.email());
             }
 
             if (shouldPaginate) {
-                statement.setInt(parameterIndex++, paginationDto.limit());
-                statement.setInt(parameterIndex, paginationDto.offset());
+                statement.setInt(parameterIndex++, filter.paginationDto().limit());
+                statement.setInt(parameterIndex, filter.paginationDto().offset());
             } else {
                 connection.setAutoCommit(false);
                 statement.setFetchSize(500);

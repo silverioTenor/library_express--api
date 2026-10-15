@@ -109,7 +109,7 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         customerRepository.create(customer2);
 
         // Act
-        var allCustomers = customerRepository.search(null);
+        var allCustomers = customerRepository.search(null, null, null);
 
         // Assert
         assertNotNull(allCustomers.items());

@@ -11,5 +11,5 @@ public interface CustomerRepository {
     void update(Customer customerToUpdate);
     Optional<Customer> getById(String id);
     Optional<Customer> getByEmail(String email);
-    QueryResult<Customer> search(String name, String email, InputPaginationDto paginationDto);
+    QueryResult<Customer> search(CustomerFilter filter);
 }

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
-import org.libraryexpress.application.loan.dto.request.FilterLoansDto;
+import org.libraryexpress.application.loan.dto.request.LoanFilterDTO;
 import org.libraryexpress.application.loan.dto.response.LoanDto;
 import org.libraryexpress.application.loan.mapper.LoanMapper;
 import org.libraryexpress.application.loan.validator.SearchLoanValidator;
@@ -51,7 +51,7 @@ class SearchLoansTest {
     void shouldReturnLoanDtos_whenFilterCriteriaAreValid() {
         // Arrange
         Set<LoanStatus> statuses = Set.of(LoanStatus.ACTIVE);
-        FilterLoansDto validFilter = new FilterLoansDto(CUSTOMER_ID, ISBN_STR, statuses, null);
+        LoanFilterDTO validFilter = new LoanFilterDTO(CUSTOMER_ID, ISBN_STR, statuses, null);
 
         Loan mockLoan = new Loan.Builder()
                 .setId("loan-1")

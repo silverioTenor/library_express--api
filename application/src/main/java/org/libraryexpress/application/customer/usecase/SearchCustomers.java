@@ -1,5 +1,6 @@
 package org.libraryexpress.application.customer.usecase;
 
+import org.libraryexpress.application.customer.dto.request.CustomerFilterDTO;
 import org.libraryexpress.application.customer.dto.response.CustomerDto;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.core.dto.InputPaginationDto;
@@ -18,21 +19,21 @@ public class SearchCustomers {
         this.mapper = mapper;
     }
 
-    public OutputPaginationDto<CustomerDto> execute(String name, String email, InputPaginationDto paginationDto) {
-        var result = this.customerRepository.search(name, email, paginationDto);
+    public OutputPaginationDto<CustomerDto> execute(CustomerFilterDTO filterDto) {
+        var result = this.customerRepository.search(filterDto.toCustomerFilter());
 
         List<CustomerDto> customersDto = mapper.toResponseListDto(result.items());
 
-        if  (paginationDto == null || !paginationDto.isPaginated()) {
+        if  (filterDto.paginationDto() == null || !filterDto.paginationDto().isPaginated()) {
             return OutputPaginationDto.unpaginated(customersDto);
         }
 
-        int totalPages = Math.toIntExact(result.total() / paginationDto.limit());
+        int totalPages = Math.toIntExact(result.total() / filterDto.paginationDto().limit());
 
         return new OutputPaginationDto<>(
                 customersDto,
-                paginationDto.page(),
-                paginationDto.limit(),
+                filterDto.paginationDto().page(),
+                filterDto.paginationDto().limit(),
                 totalPages,
                 result.total()
         );

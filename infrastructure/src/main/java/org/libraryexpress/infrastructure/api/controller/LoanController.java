@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.libraryexpress.application.loan.dto.request.CreateLoanDto;
-import org.libraryexpress.application.loan.dto.request.FilterLoansDto;
+import org.libraryexpress.application.loan.dto.request.LoanFilterDTO;
 import org.libraryexpress.application.loan.dto.response.LoanDto;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
@@ -93,14 +93,13 @@ public final class LoanController {
     public void search(HttpContextRequest request, HttpContextResponse response) throws Exception {
         Pagination.PageRequest pageRequest = request.getPageRequest();
 
-        var inputDto = new FilterLoansDto(
-                request.getQueryParam("customerId"),
-                request.getQueryParam("ISBN"),
-                request.getQueryParam("statuses"),
-                pageRequest.page(),
-                pageRequest.size()
-        );
-        OutputPaginationDto<LoanDto> outputDto = context.getSearchLoans().execute(inputDto);
+        String id = request.getQueryParam("id");
+        String customerId = request.getQueryParam("customerId");
+        String ISBN = request.getQueryParam("ISBN");
+        String statuses = request.getQueryParam("statuses");
+
+        var filterDTO = new LoanFilterDTO(id, customerId, ISBN, statuses, pageRequest.page(),  pageRequest.size());
+        OutputPaginationDto<LoanDto> outputDto = context.getSearchLoans().execute(filterDTO);
 
         response.status(SUCCESS).json(outputDto);
     }

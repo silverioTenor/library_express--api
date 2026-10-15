@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.libraryexpress.application.customer.dto.request.CreateCustomerDto;
+import org.libraryexpress.application.customer.dto.request.CustomerFilterDTO;
 import org.libraryexpress.application.customer.dto.request.UpdateCustomerEmailDto;
 import org.libraryexpress.application.customer.dto.response.CustomerDto;
 import org.libraryexpress.domain.core.dto.InputPaginationDto;
@@ -140,13 +141,12 @@ public final class CustomerController {
     public void search(HttpContextRequest request, HttpContextResponse response) throws Exception {
         Pagination.PageRequest pageRequest = request.getPageRequest();
 
+        String id = request.getQueryParam("id");
         String name = request.getQueryParam("name");
         String email = request.getQueryParam("email");
 
-        // TODO: create filterDTO
-
-        var inputDto = InputPaginationDto.of(pageRequest.page(), pageRequest.size());
-        var outputDto = context.getListCustomers().execute(name, email, inputDto);
+        var filterDto = new CustomerFilterDTO(id, name, email, pageRequest.page(), pageRequest.size());
+        var outputDto = context.getListCustomers().execute(filterDto);
 
         response.status(SUCCESS).json(outputDto);
     }
