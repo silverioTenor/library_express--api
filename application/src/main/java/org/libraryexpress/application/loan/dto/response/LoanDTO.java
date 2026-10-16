@@ -4,7 +4,7 @@ import org.libraryexpress.domain.loan.enums.LoanStatus;
 
 import java.time.LocalDate;
 
-public record LoanDto(
+public record LoanDTO(
         String id,
         String customerId,
         String ISBN,

@@ -89,13 +89,13 @@ The API is served by the application's own embedded HTTP server on the port defi
 |---|---|---|---|
 | Books | POST | `/books` | Register a book |
 | Books | GET | `/books/{isbn}` | Get a book by ISBN |
-| Books | GET | `/books` | List books (paginated) |
+| Books | GET | `/books` | Search books by filters (paginated) |
 | Customers | POST | `/customers` | Create a customer |
-| Customers | GET | `/customers/search` | Find a customer by id or email |
+| Customers | GET | `/customers` | Search customers by filters (paginated |
 | Customers | PATCH | `/customers/{id}/update-email` | Update a customer's email |
 | Customers | GET | `/customers` | List customers (paginated) |
 | Loans | POST | `/loans` | Create a loan |
-| Loans | GET | `/loans` | Search loans (paginated) |
+| Loans | GET | `/loans` | Search loans by filters (paginated) |
 | Loans | POST | `/loans/{loanId}/returns` | Return a loan |
 | Loans | PATCH | `/loans/{loanId}/close-overdue` | Close an overdue loan (temporary flow) |
 

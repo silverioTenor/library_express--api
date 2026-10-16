@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
-import org.libraryexpress.application.customer.dto.response.CustomerDto;
+import org.libraryexpress.application.customer.dto.response.CustomerDTO;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
@@ -46,14 +46,14 @@ class FindCustomerTest {
                 .setEmail(VALID_EMAIL)
                 .build();
 
-        CustomerDto expectedDto = new CustomerDto(VALID_ID, CUSTOMER_NAME, VALID_EMAIL);
+        CustomerDTO expectedDto = new CustomerDTO(VALID_ID, CUSTOMER_NAME, VALID_EMAIL);
 
         // Stubbing email query pathway and mapping translation
         when(customerRepository.getByEmail(VALID_EMAIL)).thenReturn(Optional.of(foundCustomer));
         when(mapper.toResponseDto(foundCustomer)).thenReturn(expectedDto);
 
         // Act
-        CustomerDto result = findCustomer.execute(VALID_EMAIL);
+        CustomerDTO result = findCustomer.execute(VALID_EMAIL);
 
         // Assert
         assertNotNull(result);
@@ -74,14 +74,14 @@ class FindCustomerTest {
                 .setEmail(VALID_EMAIL)
                 .build();
 
-        CustomerDto expectedDto = new CustomerDto(VALID_ID, CUSTOMER_NAME, VALID_EMAIL);
+        CustomerDTO expectedDto = new CustomerDTO(VALID_ID, CUSTOMER_NAME, VALID_EMAIL);
 
         // Stubbing ID query pathway and mapping translation
         when(customerRepository.getById(VALID_ID)).thenReturn(Optional.of(foundCustomer));
         when(mapper.toResponseDto(foundCustomer)).thenReturn(expectedDto);
 
         // Act
-        CustomerDto result = findCustomer.execute(VALID_ID);
+        CustomerDTO result = findCustomer.execute(VALID_ID);
 
         // Assert
         assertNotNull(result);

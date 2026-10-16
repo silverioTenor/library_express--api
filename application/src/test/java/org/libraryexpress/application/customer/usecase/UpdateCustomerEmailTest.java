@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
-import org.libraryexpress.application.customer.dto.request.UpdateCustomerEmailDto;
+import org.libraryexpress.application.customer.dto.request.UpdateCustomerEmailDTO;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
@@ -37,7 +37,7 @@ class UpdateCustomerEmailTest {
     @DisplayName("Should successfully modify customer email and persist updates when customer ID exists")
     void shouldUpdateCustomerEmail_whenCustomerExistsAndNewEmailIsValid() {
         // Arrange
-        UpdateCustomerEmailDto requestDto = new UpdateCustomerEmailDto(VALID_ID, NEW_EMAIL);
+        UpdateCustomerEmailDTO requestDto = new UpdateCustomerEmailDTO(VALID_ID, NEW_EMAIL);
 
         Customer targetCustomer = new Customer.Builder()
                 .setId(VALID_ID)
@@ -62,7 +62,7 @@ class UpdateCustomerEmailTest {
     @DisplayName("Should throw CustomerNotFoundException and abort update cycle when customer ID does not exist")
     void shouldThrowCustomerNotFoundException_whenCustomerIdDoesNotExist() {
         // Arrange
-        UpdateCustomerEmailDto requestDto = new UpdateCustomerEmailDto(VALID_ID, NEW_EMAIL);
+        UpdateCustomerEmailDTO requestDto = new UpdateCustomerEmailDTO(VALID_ID, NEW_EMAIL);
 
         when(customerRepository.getById(VALID_ID)).thenReturn(Optional.empty());
 

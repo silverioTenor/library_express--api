@@ -6,7 +6,7 @@ import org.libraryexpress.infrastructure.config.AppContext;
 import java.util.List;
 
 /**
- * Infrastructure composite pattern orchestrator collecting and firing findAll modular resource routes.
+ * Infrastructure composite pattern orchestrator collecting and firing search modular resource routes.
  */
 public final class RouteOrchestrator {
 

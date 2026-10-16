@@ -1,4 +1,4 @@
 package org.libraryexpress.application.customer.dto.request;
 
-public record CreateCustomerDto(String name, String email) {
+public record CreateCustomerDTO(String name, String email) {
 }

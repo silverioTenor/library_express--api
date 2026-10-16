@@ -2,7 +2,7 @@ package org.libraryexpress.infrastructure.api.e2e;
 
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.*;
-import org.libraryexpress.application.book.dto.response.BookDto;
+import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.infrastructure.E2ETest;
 
 import static io.restassured.RestAssured.*;
@@ -57,7 +57,7 @@ class BookE2ETest extends E2EBaseConfig {
     @Order(3)
     @DisplayName("Should get a book by ISBN when the data provided is valid")
     void shouldSuccessfullyListBooks_whenCallEndpoint() {
-        BookDto bookDto = get("/books/995-29-66530-22-4").as(BookDto.class);
+        BookDTO bookDto = get("/books/995-29-66530-22-4").as(BookDTO.class);
 
         given()
                 .contentType(ContentType.JSON)

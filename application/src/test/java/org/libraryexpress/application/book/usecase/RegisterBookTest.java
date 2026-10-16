@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
-import org.libraryexpress.application.book.dto.request.RegisterBookDto;
+import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
@@ -39,7 +39,7 @@ class RegisterBookTest {
     @DisplayName("Should successfully register a book when the ISBN does not exist in database")
     void shouldRegisterBook_whenIsbnIsUnique() {
         // Arrange
-        RegisterBookDto requestDto = new RegisterBookDto(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
+        RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
 
         // Setting up a Book.Builder mock since mapper returns a Builder instance chain
         Book.Builder mockBuilder = mock(Book.Builder.class);
@@ -65,7 +65,7 @@ class RegisterBookTest {
     @DisplayName("Should throw UniqueIsbnViolationException and abort persistence when ISBN already exists")
     void shouldThrowUniqueIsbnViolationException_whenIsbnAlreadyExists() {
         // Arrange
-        RegisterBookDto requestDto = new RegisterBookDto(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
+        RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
 
         Book existingBook = new Book.Builder()
                 .setISBN(ISBN_STR)

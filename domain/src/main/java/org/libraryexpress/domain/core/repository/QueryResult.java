@@ -1,6 +1,6 @@
 package org.libraryexpress.domain.core.repository;
 
-import java.util.Set;
+import java.util.List;
 
-public record QueryResult<T>(Set<T> items, long total) {
+public record QueryResult<T>(List<T> items, long total) {
 }

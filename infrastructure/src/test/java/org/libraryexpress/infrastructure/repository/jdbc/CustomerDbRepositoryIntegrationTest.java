@@ -4,11 +4,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.repository.CustomerFilter;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
 
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -102,7 +102,7 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @Test
     @DisplayName("Should successfully capture and retrieve the entire customers collection dataset during unrestricted scans")
     void shouldReturnAllPersistedCustomers_whenTriggeringUnrestrictedCatalogScan() {
-        // Arrange (Testing findAll)
+        // Arrange (Testing search)
         Customer customer1 = createSampleCustomer("id-multi-1", "User Alpha", "alpha@libraryexpress.com");
         Customer customer2 = createSampleCustomer("id-multi-2", "User Beta", "beta@libraryexpress.com");
 
@@ -110,11 +110,12 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         customerRepository.create(customer2);
 
         // Act
-        var allCustomers = customerRepository.findAll(null);
+        var filter = new CustomerFilter(null, null, null, null);
+        var allCustomers = customerRepository.search(filter);
 
         // Assert
         assertNotNull(allCustomers.items());
-        assertTrue(allCustomers.total() >= 2, "Customers list lookup must yield findAll entries matching current database isolation scopes");
+        assertTrue(allCustomers.total() >= 2, "Customers list lookup must yield search entries matching current database isolation scopes");
     }
 
     /**

@@ -41,7 +41,7 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
         if (statusCode.equals(INTERNAL_SERVER_ERROR)) {
             logger.error("Internal error occurred while processing request", exception);
             response.status(INTERNAL_SERVER_ERROR)
-                    .json(ErrorResponse.of(500, "An unexpected internal server error occurred. Please contact technical support."));
+                    .json(ErrorResponse.of(500, "An unexpected internal server error occurred. Please contact support."));
             return;
         }
 

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
-import org.libraryexpress.application.customer.dto.request.CreateCustomerDto;
+import org.libraryexpress.application.customer.dto.request.CreateCustomerDTO;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
@@ -39,7 +39,7 @@ class CreateCustomerTest {
     @DisplayName("Should successfully create a customer when the email is unique in database")
     void shouldCreateCustomer_whenEmailIsUnique() {
         // Arrange
-        CreateCustomerDto requestDto = new CreateCustomerDto(CUSTOMER_NAME, EMAIL_STR);
+        CreateCustomerDTO requestDto = new CreateCustomerDTO(CUSTOMER_NAME, EMAIL_STR);
 
         // Mocking the Customer.Builder fluid chain returned by the mapper layer
         Customer.Builder mockBuilder = mock(Customer.Builder.class);
@@ -64,7 +64,7 @@ class CreateCustomerTest {
     @DisplayName("Should throw UniqueEmailViolationException and abort persistence when email already exists")
     void shouldThrowUniqueEmailViolationException_whenEmailAlreadyExists() {
         // Arrange
-        CreateCustomerDto requestDto = new CreateCustomerDto(CUSTOMER_NAME, EMAIL_STR);
+        CreateCustomerDTO requestDto = new CreateCustomerDTO(CUSTOMER_NAME, EMAIL_STR);
 
         Customer existingCustomer = new Customer.Builder()
                 .setId("existing-id")

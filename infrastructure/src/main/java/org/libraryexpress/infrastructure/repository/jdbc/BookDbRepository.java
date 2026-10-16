@@ -3,14 +3,12 @@ package org.libraryexpress.infrastructure.repository.jdbc;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.repository.BookRepository;
-import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
+import org.libraryexpress.domain.book.repository.BookFilter;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class BookDbRepository implements BookRepository {
 
@@ -63,54 +61,6 @@ public class BookDbRepository implements BookRepository {
     }
 
     @Override
-    public Set<Book> search(String ISBN, Set<BookStatus> statuses) {
-        // Dynamic search query assembly based on parameter presence flags
-        StringBuilder query = new StringBuilder(
-                "SELECT isbn, title, author, year_published, status FROM tb_book WHERE 1=1"
-        );
-
-        boolean hasIsbnFilter = ISBN != null && !ISBN.isBlank();
-        boolean hasStatusFilter = statuses != null && !statuses.isEmpty();
-
-        if (hasIsbnFilter) query.append(" AND isbn = ?");
-
-        // Dynamically building the IN (?, ?, ...) clause to match the Set collections size safely
-        if (hasStatusFilter) query.append(" AND status = ANY(?)");
-
-        Set<Book> books = new HashSet<>();
-
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query.toString())
-        ) {
-            int parameterIndex = 1;
-
-            if (hasIsbnFilter) {
-                statement.setString(parameterIndex++, ISBN);
-            }
-
-            if (hasStatusFilter) {
-                String[] statusStr = statuses.stream()
-                        .map(BookStatus::name)
-                        .toArray(String[]::new);
-
-                Array statusArray = connection.createArrayOf("varchar", statusStr);
-                statement.setArray(parameterIndex++, statusArray);
-            }
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    books.add(mapRowToBook(resultSet));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing multi-criteria books catalog search: " + e.getMessage(), e);
-        }
-
-        return books;
-    }
-
-    @Override
     public Optional<Book> getByIsbn(String ISBN) {
         String query = "SELECT isbn, title, author, year_published, status FROM tb_book WHERE isbn = ?";
 
@@ -135,23 +85,49 @@ public class BookDbRepository implements BookRepository {
     }
 
     @Override
-    public QueryResult<Book> findAll(InputPaginationDto paginationDto) {
-        boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
+    public QueryResult<Book> search(BookFilter filter) {
+        boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
-        String query = shouldPaginate
-                ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_book LIMIT ? OFFSET ?"
-                : "SELECT * FROM tb_book";
+        var query = shouldPaginate
+                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_book WHERE 1=1")
+                : new StringBuilder("SELECT * FROM tb_book WHERE 1=1");
 
-        Set<Book> books = new HashSet<>();
+        List<Book> books = new ArrayList<>();
         long totalElements;
+
+        boolean hasIsbnFilter = filter.ISBN() != null && !filter.ISBN().value().isBlank();
+        boolean hasStatusFilter = filter.statuses() != null && !filter.statuses().isEmpty();
+
+        if (hasIsbnFilter) query.append(" AND isbn = ?");
+
+        // Dynamically building the IN (?, ?, ...) clause to match the Set collections size safely
+        if (hasStatusFilter) query.append(" AND status = ANY(?)");
+
+        if (shouldPaginate) query.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?;");
+        else query.append(" ORDER BY created_at DESC;");
 
         try (
                 Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query);
+                PreparedStatement statement = connection.prepareStatement(query.toString());
         ) {
+            int parameterIndex = 1;
+
+            if (hasIsbnFilter) {
+                statement.setString(parameterIndex++, filter.ISBN().value());
+            }
+
+            if (hasStatusFilter) {
+                String[] statusStr = filter.statuses().stream()
+                        .map(BookStatus::name)
+                        .toArray(String[]::new);
+
+                Array statusArray = connection.createArrayOf("varchar", statusStr);
+                statement.setArray(parameterIndex++, statusArray);
+            }
+
             if (shouldPaginate) {
-                statement.setInt(1, paginationDto.limit());
-                statement.setInt(2, paginationDto.offset());
+                statement.setInt(parameterIndex++, filter.paginationDto().limit());
+                statement.setInt(parameterIndex, filter.paginationDto().offset());
             } else {
                 connection.setAutoCommit(false);
                 statement.setFetchSize(500);

@@ -3,9 +3,9 @@ package org.libraryexpress.infrastructure.api.e2e;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.*;
-import org.libraryexpress.application.book.dto.response.BookDto;
-import org.libraryexpress.application.customer.dto.response.CustomerDto;
-import org.libraryexpress.application.loan.dto.response.LoanDto;
+import org.libraryexpress.application.book.dto.response.BookDTO;
+import org.libraryexpress.application.customer.dto.response.CustomerDTO;
+import org.libraryexpress.application.loan.dto.response.LoanDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.E2ETest;
 
@@ -155,18 +155,18 @@ public class LoanE2ETest extends E2EBaseConfig {
         String firstPayload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "invalid-isbn"
+                    "ISBN": "204-15-82822-80-5"
                 }
                 """.formatted(customer.id());
 
         given()
-                .contentType(ContentType.JSON)
-                .body(firstPayload)
-                .when()
-                .post("/loans")
-                .then()
-                .statusCode(404)
-                .body("message", equalTo("Book not Found!"));
+            .contentType(ContentType.JSON)
+            .body(firstPayload)
+        .when()
+            .post("/loans")
+        .then()
+            .statusCode(404)
+            .body("message", equalTo("Book not Found!"));
 
         String secondPayload = """
                 {
@@ -349,8 +349,13 @@ public class LoanE2ETest extends E2EBaseConfig {
                 .statusCode(201);
         }
 
-        static CustomerDto getCustomer(String email) {
-            return get("/customers/search?email=" + email).as(CustomerDto.class);
+        static CustomerDTO getCustomer(String email) {
+            var result = get("/customers?email=" + email).as(new TypeRef<OutputPaginationDto<CustomerDTO>>() {
+            });
+
+            assertNotNull(result.items());
+
+            return result.items().getFirst();
         }
 
         static void createBook(String isbn) {
@@ -374,11 +379,11 @@ public class LoanE2ETest extends E2EBaseConfig {
                 .statusCode(201);
         }
 
-        static BookDto getBook(String isbn) {
-            return get("books/{isbn}", isbn).as(BookDto.class);
+        static BookDTO getBook(String isbn) {
+            return get("books/{isbn}", isbn).as(BookDTO.class);
         }
 
-        static OutputPaginationDto<LoanDto> getPagedLoans(String... parameterValues) {
+        static OutputPaginationDto<LoanDTO> getPagedLoans(String... parameterValues) {
             String[] parameterNames = {"ISBN", "customerId", "statuses"};
 
             var request = given()
@@ -395,7 +400,7 @@ public class LoanE2ETest extends E2EBaseConfig {
             .then()
                 .statusCode(200)
                 .extract()
-                .body().as(new TypeRef<OutputPaginationDto<LoanDto>>() {});
+                .body().as(new TypeRef<OutputPaginationDto<LoanDTO>>() {});
         }
 
         static void createOverdueLoan(String loanId, String customerId, String isbn) {

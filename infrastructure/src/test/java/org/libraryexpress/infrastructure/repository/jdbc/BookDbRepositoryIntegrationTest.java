@@ -5,9 +5,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
+import org.libraryexpress.domain.core.repository.QueryResult;
+import org.libraryexpress.domain.book.repository.BookFilter;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -96,8 +99,12 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book2);
         bookRepository.create(book3);
 
+
         // Act - Searching using your awesome high-performance ANY arrays filter implementation
-        Set<Book> foundBooks = bookRepository.search(null, Set.of(BookStatus.AVAILABLE));
+        BookFilter filter = new BookFilter(null, null, null, null, Set.of(BookStatus.AVAILABLE), null);
+        QueryResult<Book> result = bookRepository.search(filter);
+
+        List<Book> foundBooks = result.items();
 
         // Assert
         assertNotNull(foundBooks);
@@ -109,7 +116,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @Test
     @DisplayName("Should successfully scan and retrieve the entire catalog collection payload without criteria constraints")
     void shouldReturnFindAllPersistedBooks_whenTriggeringUnrestrictedCatalogScan() {
-        // Arrange (Testing findAll)
+        // Arrange (Testing search)
         Book book1 = createSampleBook("978-44-44444-40-4", "Domain-Driven Design", BookStatus.AVAILABLE);
         Book book2 = createSampleBook("978-55-55555-50-5", "Implementing Domain-Driven Design", BookStatus.AVAILABLE);
 
@@ -117,11 +124,12 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book2);
 
         // Act
-        Set<Book> allBooks = bookRepository.findAll(null).items();
+        BookFilter filter = new BookFilter(null, null, null, null, null, null);
+        List<Book> allBooks = bookRepository.search(filter).items();
 
         // Assert
         assertNotNull(allBooks);
-        assertTrue(allBooks.size() >= 2, "Catalog set must retrieve findAll entries currently matching isolation scopes");
+        assertTrue(allBooks.size() >= 2, "Catalog set must retrieve search entries currently matching isolation scopes");
     }
 
     /**

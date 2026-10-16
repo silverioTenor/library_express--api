@@ -2,9 +2,9 @@ package org.libraryexpress.application.loan.usecase;
 
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.exception.BookNotFoundException;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
-import org.libraryexpress.domain.loan.exception.InvalidLoanStatusException;
 import org.libraryexpress.domain.loan.exception.LoanNotFoundException;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.book.enums.BookStatus;
@@ -42,7 +42,7 @@ public class ReturnLoan {
 
         if (!ALLOWED_STATUSES.contains(loan.getStatus())) {
             logger.warn("ABORTED: Loan status not allowed. Loan ID: [{}]", loan.getStatus());
-            throw new InvalidLoanStatusException("The Loan cannot be completed with the current status.");
+            throw new InvalidArgumentException("The Loan cannot be completed with the current status.");
         }
 
         Book book = this.bookRepository.getByIsbn(loan.getISBN().value())
