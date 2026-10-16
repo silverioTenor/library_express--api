@@ -1,9 +1,8 @@
 package org.libraryexpress.application.customer.usecase;
 
 import org.libraryexpress.application.customer.dto.request.CustomerFilterDTO;
-import org.libraryexpress.application.customer.dto.response.CustomerDto;
+import org.libraryexpress.application.customer.dto.response.CustomerDTO;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
-import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
@@ -19,10 +18,10 @@ public class SearchCustomers {
         this.mapper = mapper;
     }
 
-    public OutputPaginationDto<CustomerDto> execute(CustomerFilterDTO filterDto) {
+    public OutputPaginationDto<CustomerDTO> execute(CustomerFilterDTO filterDto) {
         var result = this.customerRepository.search(filterDto.toCustomerFilter());
 
-        List<CustomerDto> customersDto = mapper.toResponseListDto(result.items());
+        List<CustomerDTO> customersDto = mapper.toResponseListDto(result.items());
 
         if  (filterDto.paginationDto() == null || !filterDto.paginationDto().isPaginated()) {
             return OutputPaginationDto.unpaginated(customersDto);

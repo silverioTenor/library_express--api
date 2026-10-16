@@ -1,7 +1,7 @@
 package org.libraryexpress.application.customer.mapper;
 
-import org.libraryexpress.application.customer.dto.request.CreateCustomerDto;
-import org.libraryexpress.application.customer.dto.response.CustomerDto;
+import org.libraryexpress.application.customer.dto.request.CreateCustomerDTO;
+import org.libraryexpress.application.customer.dto.response.CustomerDTO;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.valueobject.Email;
 import org.mapstruct.Mapper;
@@ -17,12 +17,12 @@ public interface CustomerMapper {
 
     CustomerMapper INSTANCE = Mappers.getMapper(CustomerMapper.class);
 
-    CustomerDto toResponseDto(Customer customer);
+    CustomerDTO toResponseDto(Customer customer);
 
-    List<CustomerDto> toResponseListDto(List<Customer> customers);
+    List<CustomerDTO> toResponseListDto(List<Customer> customers);
 
     @Mapping(target = "email", source = "email", qualifiedByName = "stringToEmail")
-    Customer.Builder toEntity(CreateCustomerDto dto);
+    Customer.Builder toEntity(CreateCustomerDTO dto);
 
     @Named("stringToEmail")
     default Email mapStringToEmail(String value) {

@@ -1,6 +1,6 @@
 package org.libraryexpress.application.customer.usecase;
 
-import org.libraryexpress.application.customer.dto.request.UpdateCustomerEmailDto;
+import org.libraryexpress.application.customer.dto.request.UpdateCustomerEmailDTO;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
@@ -8,8 +8,6 @@ import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
-
-import java.util.Optional;
 
 public class UpdateCustomerEmail {
 
@@ -23,7 +21,7 @@ public class UpdateCustomerEmail {
         this.mapper = mapper;
     }
 
-    public void execute(UpdateCustomerEmailDto updateCustomerEmailDto) {
+    public void execute(UpdateCustomerEmailDTO updateCustomerEmailDto) {
         logger.info("Initiating Update Customer Email Flow");
 
         Customer customer = this.customerRepository.getById(updateCustomerEmailDto.id())

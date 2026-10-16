@@ -1,14 +1,10 @@
 package org.libraryexpress.application.loan.usecase;
 
 import org.libraryexpress.domain.book.entity.Book;
-import org.libraryexpress.domain.book.exception.BookNotFoundException;
-import org.libraryexpress.domain.book.exception.BookUnavailableException;
 import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
-import org.libraryexpress.application.loan.dto.request.CreateLoanDto;
+import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
-import org.libraryexpress.domain.loan.exception.LoanLimitReachedException;
-import org.libraryexpress.domain.loan.exception.OverdueLoanException;
 import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.book.enums.BookStatus;
@@ -40,7 +36,7 @@ public class CreateLoan {
         this.bookAvailabilityValidator = bookAvailabilityValidator;
     }
 
-    public void execute(CreateLoanDto createLoanDto) {
+    public void execute(CreateLoanDTO createLoanDto) {
         logger.info("Initiating loan creation. loan DTO: [{}]", createLoanDto);
 
         this.loanEligibilityValidator.validate(createLoanDto.customerId());

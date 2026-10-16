@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
-import org.libraryexpress.application.loan.dto.request.CreateLoanDto;
+import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.exception.BookUnavailableException;
@@ -49,7 +49,7 @@ class CreateLoanTest {
     @DisplayName("Should create loan successfully when customer is eligible and book is available")
     void shouldCreateLoan_whenCustomerIsEligibleAndBookIsAvailable() {
         // Arrange
-        CreateLoanDto requestDto = new CreateLoanDto(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
 
         Book availableBook = new Book.Builder()
                 .setISBN(ISBN_STR)
@@ -76,7 +76,7 @@ class CreateLoanTest {
     @DisplayName("Should throw LoanLimitReachedException and abort execution when customer reaches active loan limit")
     void shouldThrowLoanLimitReachedException_whenCustomerReachesActiveLoanLimit() {
         // Arrange
-        CreateLoanDto requestDto = new CreateLoanDto(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
 
         // Simulating domain validator blocking the customer
         doThrow(new LoanLimitReachedException("Customer has reached the maximum limit of active loans."))
@@ -95,7 +95,7 @@ class CreateLoanTest {
     @DisplayName("Should throw OverdueLoanException and abort execution when customer has a pending overdue loan")
     void shouldThrowOverdueLoanException_whenCustomerHasOverdueLoan() {
         // Arrange
-        CreateLoanDto requestDto = new CreateLoanDto(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
 
         doThrow(new OverdueLoanException("Customer has a pending overdue return."))
                 .when(loanEligibilityValidator).validate(CUSTOMER_ID);
@@ -112,7 +112,7 @@ class CreateLoanTest {
     @DisplayName("Should throw BookUnavailableException and prevent loan creation when book is not available")
     void shouldThrowBookUnavailableException_whenBookIsUnavailable() {
         // Arrange
-        CreateLoanDto requestDto = new CreateLoanDto(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
 
         doNothing().when(loanEligibilityValidator).validate(CUSTOMER_ID);
 

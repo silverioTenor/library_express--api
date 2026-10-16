@@ -1,6 +1,6 @@
 package org.libraryexpress.application.customer.usecase;
 
-import org.libraryexpress.application.customer.dto.request.CreateCustomerDto;
+import org.libraryexpress.application.customer.dto.request.CreateCustomerDTO;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
@@ -22,7 +22,7 @@ public class CreateCustomer {
         this.mapper = mapper;
     }
 
-    public void execute(CreateCustomerDto createCustomerDto) {
+    public void execute(CreateCustomerDTO createCustomerDto) {
         logger.info("Starting customer registration...");
 
         Optional<Customer> hasClient = this.customerRepository.getByEmail(createCustomerDto.email());

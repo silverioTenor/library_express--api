@@ -13,11 +13,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import org.libraryexpress.application.customer.dto.request.CreateCustomerDto;
+import org.libraryexpress.application.customer.dto.request.CreateCustomerDTO;
 import org.libraryexpress.application.customer.dto.request.CustomerFilterDTO;
-import org.libraryexpress.application.customer.dto.request.UpdateCustomerEmailDto;
-import org.libraryexpress.application.customer.dto.response.CustomerDto;
-import org.libraryexpress.domain.core.dto.InputPaginationDto;
+import org.libraryexpress.application.customer.dto.request.UpdateCustomerEmailDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
@@ -43,7 +41,7 @@ public final class CustomerController {
             summary = "Create a customer",
             requestBody = @RequestBody(content =  @Content(
                     mediaType =  MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = CreateCustomerDto.class)
+                    schema = @Schema(implementation = CreateCustomerDTO.class)
             ))
     )
     @Parameters({
@@ -68,7 +66,7 @@ public final class CustomerController {
             )
     })
     public void create(HttpContextRequest request, HttpContextResponse response) throws Exception {
-        CreateCustomerDto inputDto = request.parseBody(CreateCustomerDto.class);
+        CreateCustomerDTO inputDto = request.parseBody(CreateCustomerDTO.class);
         context.getCreateCustomer().execute(inputDto);
 
         response.status(CREATED).sendEmpty();
@@ -110,9 +108,9 @@ public final class CustomerController {
     })
     public void updateEmail(HttpContextRequest request, HttpContextResponse response) throws Exception {
         String customerId = request.getRouteParam("id");
-        String email = request.parseBody(UpdateCustomerEmailDto.class).email();
+        String email = request.parseBody(UpdateCustomerEmailDTO.class).email();
 
-        var inputDto = new UpdateCustomerEmailDto(customerId, email);
+        var inputDto = new UpdateCustomerEmailDTO(customerId, email);
         context.getUpdateCustomerEmail().execute(inputDto);
 
         response.status(NO_CONTENT).sendEmpty();

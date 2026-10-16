@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.repository.CustomerFilter;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
 
@@ -109,7 +110,8 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         customerRepository.create(customer2);
 
         // Act
-        var allCustomers = customerRepository.search(null, null, null);
+        var filter = new CustomerFilter(null, null, null, null);
+        var allCustomers = customerRepository.search(filter);
 
         // Assert
         assertNotNull(allCustomers.items());

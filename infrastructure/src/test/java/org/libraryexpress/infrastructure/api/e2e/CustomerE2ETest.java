@@ -3,7 +3,7 @@ package org.libraryexpress.infrastructure.api.e2e;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.*;
-import org.libraryexpress.application.customer.dto.response.CustomerDto;
+import org.libraryexpress.application.customer.dto.response.CustomerDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.E2ETest;
 
@@ -62,10 +62,10 @@ class CustomerE2ETest extends E2EBaseConfig {
                 .contentType(ContentType.JSON)
                 .queryParam("email", "j.doe@test.com")
                 .when()
-                .get("/customers").as(new TypeRef<OutputPaginationDto<CustomerDto>>() {});
+                .get("/customers").as(new TypeRef<OutputPaginationDto<CustomerDTO>>() {});
 
         assertNotNull(result.items());
-        CustomerDto customerDto = result.items().getFirst();
+        CustomerDTO customerDto = result.items().getFirst();
 
         String payload = """
                     {
@@ -183,8 +183,8 @@ class CustomerE2ETest extends E2EBaseConfig {
         .when()
             .get("/customers")
         .then()
-            .statusCode(404)
-            .body("message", is("Customer not found!"));
+            .statusCode(200)
+            .body("items.size()", is(0));
     }
 
     @Test
@@ -211,10 +211,10 @@ class CustomerE2ETest extends E2EBaseConfig {
             .contentType(ContentType.JSON)
             .queryParam("email", "another@test.com")
         .when()
-            .get("/customers").as(new TypeRef<OutputPaginationDto<CustomerDto>>() {});
+            .get("/customers").as(new TypeRef<OutputPaginationDto<CustomerDTO>>() {});
 
         assertNotNull(result.items());
-        CustomerDto customerDto = result.items().getFirst();
+        CustomerDTO customerDto = result.items().getFirst();
 
         String payload = """
                     {

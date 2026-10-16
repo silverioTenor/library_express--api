@@ -1,7 +1,7 @@
 package org.libraryexpress.application.loan.usecase;
 
 import org.libraryexpress.application.loan.dto.request.LoanFilterDTO;
-import org.libraryexpress.application.loan.dto.response.LoanDto;
+import org.libraryexpress.application.loan.dto.response.LoanDTO;
 import org.libraryexpress.application.loan.mapper.LoanMapper;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
@@ -21,11 +21,11 @@ public class SearchLoans {
         this.mapper = mapper;
     }
 
-    public OutputPaginationDto<LoanDto> execute(LoanFilterDTO filterDto) {
+    public OutputPaginationDto<LoanDTO> execute(LoanFilterDTO filterDto) {
 
         QueryResult<Loan> result = this.loanRepository.search(filterDto.toLoanFilter());
 
-        List<LoanDto> loansDto =  result.items().stream()
+        List<LoanDTO> loansDto =  result.items().stream()
                 .map(mapper::toResponseDto)
                 .collect(Collectors.toList());
 

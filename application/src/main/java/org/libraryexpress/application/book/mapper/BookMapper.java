@@ -1,7 +1,7 @@
 package org.libraryexpress.application.book.mapper;
 
-import org.libraryexpress.application.book.dto.request.RegisterBookDto;
-import org.libraryexpress.application.book.dto.response.BookDto;
+import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
+import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.mapstruct.Mapper;
@@ -17,12 +17,12 @@ public interface BookMapper {
 
     BookMapper INSTANCE = Mappers.getMapper(BookMapper.class);
 
-    BookDto toResponseDto(Book book);
+    BookDTO toResponseDto(Book book);
 
-    List<BookDto> toResponseListDto(List<Book> books);
+    List<BookDTO> toResponseListDto(List<Book> books);
 
     @Mapping(target = "ISBN", source = "ISBN", qualifiedByName = "stringToIsbn")
-    Book.Builder toEntity(RegisterBookDto dto);
+    Book.Builder toEntity(RegisterBookDTO dto);
 
     @Named("stringToIsbn")
     default Isbn mapStringToIsbn(String value) {

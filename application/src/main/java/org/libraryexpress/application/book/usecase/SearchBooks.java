@@ -1,7 +1,7 @@
 package org.libraryexpress.application.book.usecase;
 
 import org.libraryexpress.application.book.dto.request.BookFilterDTO;
-import org.libraryexpress.application.book.dto.response.BookDto;
+import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.repository.BookRepository;
@@ -20,10 +20,10 @@ public class SearchBooks {
         this.mapper = mapper;
     }
 
-    public OutputPaginationDto<BookDto> execute(BookFilterDTO bookFilterDto) {
+    public OutputPaginationDto<BookDTO> execute(BookFilterDTO bookFilterDto) {
         QueryResult<Book> result = this.bookRepository.search(bookFilterDto.toBookFilter());
 
-        List<BookDto> booksDto = mapper.toResponseListDto(result.items());
+        List<BookDTO> booksDto = mapper.toResponseListDto(result.items());
 
         if  (bookFilterDto.paginationDto() == null || !bookFilterDto.paginationDto().isPaginated()) {
             return OutputPaginationDto.unpaginated(booksDto);

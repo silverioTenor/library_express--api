@@ -9,6 +9,7 @@ import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.exception.LoanLimitReachedException;
 import org.libraryexpress.domain.loan.exception.OverdueLoanException;
+import org.libraryexpress.domain.loan.repository.LoanFilter;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.mockito.InjectMocks;
@@ -41,14 +42,16 @@ class LoanEligibilityValidatorTest {
     @DisplayName("Should validate successfully when the customer has no active or overdue loans")
     void shouldValidateSuccessfully_whenCustomerHasNoLoans() {
         // Arrange
-        when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
+        var filter = new LoanFilter(
+                null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
+        );
+        when(loanRepository.search(filter))
                 .thenReturn(new QueryResult<>(Collections.emptyList(), 0));
 
         // Act & Assert
         // assertDoesNotThrow ensures the flow runs cleanly without triggering business exceptions
         assertDoesNotThrow(() -> validator.validate(CUSTOMER_ID));
-        verify(loanRepository, times(1))
-                .search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null);
+        verify(loanRepository, times(1)).search(filter);
     }
 
     @Test
@@ -63,7 +66,10 @@ class LoanEligibilityValidatorTest {
                 .setStartDate(LocalDate.now().minusDays(20))
                 .build();
 
-        when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
+        var filter = new LoanFilter(
+                null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
+        );
+        when(loanRepository.search(filter))
                 .thenReturn(new QueryResult<>(List.of(overdueLoan), 1));
 
         // Act & Assert
@@ -94,7 +100,10 @@ class LoanEligibilityValidatorTest {
                 .setStartDate(LocalDate.now())
                 .build();
 
-        when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
+        var filter = new LoanFilter(
+                null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
+        );
+        when(loanRepository.search(filter))
                 .thenReturn(new QueryResult<>(List.of(activeLoan1, activeLoan2), 1));
 
         // Act & Assert
@@ -117,7 +126,10 @@ class LoanEligibilityValidatorTest {
                 .setStartDate(LocalDate.now())
                 .build();
 
-        when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
+        var filter = new LoanFilter(
+                null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
+        );
+        when(loanRepository.search(filter))
                 .thenReturn(new QueryResult<>(List.of(activeLoan), 1));
 
         // Act & Assert
