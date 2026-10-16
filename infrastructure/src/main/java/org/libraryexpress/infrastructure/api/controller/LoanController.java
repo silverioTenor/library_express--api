@@ -73,9 +73,10 @@ public final class LoanController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Search loans (paginated)", requestBody =  @RequestBody(content = @Content()))
     @Parameters({
+            @Parameter(name = "id", in = ParameterIn.QUERY),
             @Parameter(name = "customerId", in = ParameterIn.QUERY),
-            @Parameter(name = "ISBN", in = ParameterIn.QUERY),
-            @Parameter(name = "statuses", in = ParameterIn.QUERY, example = "ACTIVE, OVERDUE, FINISHED"),
+            @Parameter(name = "isbn", in = ParameterIn.QUERY),
+            @Parameter(name = "statuses", in = ParameterIn.QUERY, example = "active, overdue, finished"),
             @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
@@ -95,7 +96,7 @@ public final class LoanController {
 
         String id = request.getQueryParam("id");
         String customerId = request.getQueryParam("customerId");
-        String ISBN = request.getQueryParam("ISBN");
+        String ISBN = request.getQueryParam("isbn");
         String statuses = request.getQueryParam("statuses");
 
         var filterDTO = new LoanFilterDTO(id, customerId, ISBN, statuses, pageRequest.page(),  pageRequest.size());

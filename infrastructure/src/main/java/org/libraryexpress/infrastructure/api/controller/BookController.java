@@ -100,7 +100,7 @@ public final class BookController {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List books", requestBody = @RequestBody(content = @Content()))
+    @Operation(summary = "Search books (paginated)", requestBody = @RequestBody(content = @Content()))
     @Parameters({
             @Parameter(name = "isbn", in = ParameterIn.QUERY),
             @Parameter(name = "title", in = ParameterIn.QUERY),

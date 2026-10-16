@@ -118,7 +118,7 @@ public final class CustomerController {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Search customers", requestBody =  @RequestBody(content = @Content()))
+    @Operation(summary = "Search customers (paginated)", requestBody =  @RequestBody(content = @Content()))
     @Parameters({
             @Parameter(name = "id", in = ParameterIn.QUERY),
             @Parameter(name = "email", in = ParameterIn.QUERY),
