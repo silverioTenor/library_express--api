@@ -1,6 +1,6 @@
 package org.libraryexpress.application.book.usecase;
 
-import org.libraryexpress.application.book.dto.response.BookDto;
+import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
@@ -18,7 +18,7 @@ public class FindBook {
         this.mapper = mapper;
     }
 
-    public BookDto execute(String ISBN) {
+    public BookDTO execute(String ISBN) {
 
         Optional<Book> book = this.bookRepository.getByIsbn(ISBN);
 

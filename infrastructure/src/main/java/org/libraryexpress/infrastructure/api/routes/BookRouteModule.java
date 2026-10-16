@@ -18,6 +18,6 @@ public final class BookRouteModule implements HttpRouteModule {
     public void register(Router router) {
         router.register(POST, "/books", controller::register);
         router.register(GET, "/books/{isbn}", controller::get);
-        router.register(GET, "/books", controller::list);
+        router.register(GET, "/books", controller::search);
     }
 }

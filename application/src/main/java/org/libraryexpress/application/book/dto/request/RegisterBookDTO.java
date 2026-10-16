@@ -1,8 +1,8 @@
-package org.libraryexpress.application.book.dto.response;
+package org.libraryexpress.application.book.dto.request;
 
 import org.libraryexpress.domain.book.enums.BookStatus;
 
-public record BookDto(
+public record RegisterBookDTO(
         String ISBN,
         String title,
         String author,

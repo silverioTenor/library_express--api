@@ -1,6 +1,6 @@
 package org.libraryexpress.application.customer.usecase;
 
-import org.libraryexpress.application.customer.dto.response.CustomerDto;
+import org.libraryexpress.application.customer.dto.response.CustomerDTO;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
@@ -14,12 +14,15 @@ public class FindCustomer {
     private final CustomerRepository customerRepository;
     private final CustomerMapper mapper;
 
+    /**
+     * Deprecated
+     * */
     public FindCustomer(CustomerRepository customerRepository, CustomerMapper mapper) {
         this.customerRepository = customerRepository;
         this.mapper = mapper;
     }
 
-    public CustomerDto execute(String criteria) {
+    public CustomerDTO execute(String criteria) {
 
         if (criteria == null || criteria.isBlank()) throw new InvalidEmailException("Provide at least one parameter");
 

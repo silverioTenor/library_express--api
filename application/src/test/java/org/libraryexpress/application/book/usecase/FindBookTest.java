@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
-import org.libraryexpress.application.book.dto.response.BookDto;
+import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
@@ -45,14 +45,14 @@ class FindBookTest {
                 .setStatus(BookStatus.AVAILABLE)
                 .build();
 
-        BookDto expectedDto = new BookDto(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
+        BookDTO expectedDto = new BookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
 
         // Stubbing repository query and mapper layer conversion
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(foundBook));
         when(mapper.toResponseDto(foundBook)).thenReturn(expectedDto);
 
         // Act
-        BookDto result = findBook.execute(ISBN_STR);
+        BookDTO result = findBook.execute(ISBN_STR);
 
         // Assert
         assertNotNull(result);

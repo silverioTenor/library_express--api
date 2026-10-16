@@ -12,5 +12,5 @@ public interface LoanRepository {
     void create(Loan loan);
     void update(Loan loanToUpdate);
     Optional<Loan> findById(String loanId);
-    QueryResult<Loan> search(String customerId, String ISBN, Set<LoanStatus> statuses, InputPaginationDto paginationDto);
+    QueryResult<Loan> search(LoanFilter filter);
 }

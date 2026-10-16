@@ -12,9 +12,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import org.libraryexpress.application.loan.dto.request.CreateLoanDto;
-import org.libraryexpress.application.loan.dto.request.FilterLoansDto;
-import org.libraryexpress.application.loan.dto.response.LoanDto;
+import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
+import org.libraryexpress.application.loan.dto.request.LoanFilterDTO;
+import org.libraryexpress.application.loan.dto.response.LoanDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
@@ -39,7 +39,7 @@ public final class LoanController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Create a loan",
-            requestBody = @RequestBody(content =  @Content(schema = @Schema(implementation = CreateLoanDto.class)))
+            requestBody = @RequestBody(content =  @Content(schema = @Schema(implementation = CreateLoanDTO.class)))
     )
     @Parameters({
             @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
@@ -63,7 +63,7 @@ public final class LoanController {
             )
     })
     public void create(HttpContextRequest request, HttpContextResponse response) throws Exception {
-        var inputDto = request.parseBody(CreateLoanDto.class);
+        var inputDto = request.parseBody(CreateLoanDTO.class);
         context.getCreateLoan().execute(inputDto);
 
         response.status(CREATED).sendEmpty();
@@ -73,9 +73,10 @@ public final class LoanController {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Search loans (paginated)", requestBody =  @RequestBody(content = @Content()))
     @Parameters({
+            @Parameter(name = "id", in = ParameterIn.QUERY),
             @Parameter(name = "customerId", in = ParameterIn.QUERY),
-            @Parameter(name = "ISBN", in = ParameterIn.QUERY),
-            @Parameter(name = "statuses", in = ParameterIn.QUERY, example = "ACTIVE, OVERDUE, FINISHED"),
+            @Parameter(name = "isbn", in = ParameterIn.QUERY),
+            @Parameter(name = "statuses", in = ParameterIn.QUERY, example = "active, overdue, finished"),
             @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
@@ -93,14 +94,13 @@ public final class LoanController {
     public void search(HttpContextRequest request, HttpContextResponse response) throws Exception {
         Pagination.PageRequest pageRequest = request.getPageRequest();
 
-        var inputDto = new FilterLoansDto(
-                request.getQueryParam("customerId"),
-                request.getQueryParam("ISBN"),
-                request.getQueryParam("statuses"),
-                pageRequest.page(),
-                pageRequest.size()
-        );
-        OutputPaginationDto<LoanDto> outputDto = context.getSearchLoans().execute(inputDto);
+        String id = request.getQueryParam("id");
+        String customerId = request.getQueryParam("customerId");
+        String ISBN = request.getQueryParam("isbn");
+        String statuses = request.getQueryParam("statuses");
+
+        var filterDTO = new LoanFilterDTO(id, customerId, ISBN, statuses, pageRequest.page(),  pageRequest.size());
+        OutputPaginationDto<LoanDTO> outputDto = context.getSearchLoans().execute(filterDTO);
 
         response.status(SUCCESS).json(outputDto);
     }
