@@ -66,15 +66,19 @@ public final class ConfigRegistry {
     }
 
     public static int getMinimumIdle() {
-        return Integer.parseInt(resolve("hikari.minimum-idle", "2"));
+        return Integer.parseInt(resolve("hikari.minimum-idle", "0"));
     }
 
     public static long getIdleTimeout() {
-        return Long.parseLong(resolve("hikari.idle-timeout", "600000"));
+        return Long.parseLong(resolve("hikari.idle-timeout", "30000"));
     }
 
     public static long getConnectionTimeout() {
         return Long.parseLong(resolve("hikari.connection-timeout", "30000"));
+    }
+
+    public static long getMaxLifetime() {
+        return Long.parseLong(resolve("hikari.max-lifetime", "900000"));
     }
 
     public static String getAppEnv() {

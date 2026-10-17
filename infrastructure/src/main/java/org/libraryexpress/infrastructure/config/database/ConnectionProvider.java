@@ -11,7 +11,6 @@ public class ConnectionProvider implements AutoCloseable {
     private final HikariDataSource dataSource;
 
     public ConnectionProvider() {
-        // Building the official non-pooled PostgreSQL connection string
         String jdbcUrl = String.format(
                 "jdbc:postgresql://%s:%s/%s",
                 ConfigRegistry.getDbHost(),
@@ -29,14 +28,12 @@ public class ConnectionProvider implements AutoCloseable {
             config.addDataSourceProperty("channelBinding", "require");
         }
 
-        // Binding variables using safe configuration loaders
         config.setMaximumPoolSize(ConfigRegistry.getMaximumPoolSize());
         config.setMinimumIdle(ConfigRegistry.getMinimumIdle());
         config.setIdleTimeout(ConfigRegistry.getIdleTimeout());
         config.setConnectionTimeout(ConfigRegistry.getConnectionTimeout());
+        config.setMaxLifetime(ConfigRegistry.getMaxLifetime());
 
-
-        // Initialization of the concurrent data source manager
         this.dataSource = new HikariDataSource(config);
     }
 
