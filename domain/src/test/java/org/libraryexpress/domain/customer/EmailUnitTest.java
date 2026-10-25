@@ -11,7 +11,7 @@ import org.libraryexpress.domain.customer.valueobject.Email;
 import static org.junit.jupiter.api.Assertions.*;
 
 @UnitTest
-@DisplayName("E-mail Value Object - Unit Test")
+@DisplayName("Email Value Object - Unit Test")
 public class EmailUnitTest {
 
     @Test
@@ -26,27 +26,36 @@ public class EmailUnitTest {
     }
 
     @Test
-    @DisplayName("Should throw an exception when e-mail provided is null or blank")
+    @DisplayName("Should throw an exception when email provided is null or blank")
     void shouldThrowException_whenEmailProvidedIsNullOrBlank() {
 
         InvalidEmailException exception1 = assertThrows(InvalidEmailException.class, () -> new Email(null));
         InvalidEmailException exception2 = assertThrows(InvalidEmailException.class, () -> new Email(""));
         InvalidEmailException exception3 = assertThrows(InvalidEmailException.class, () -> new Email("  "));
 
-        assertEquals("The email cannot be null or empty.", exception1.getMessage());
-        assertEquals("The email cannot be null or empty.", exception2.getMessage());
-        assertEquals("The email cannot be null or empty.", exception3.getMessage());
+        assertEquals("Email cannot be null or empty", exception1.getMessage());
+        assertEquals("Email cannot be null or empty", exception2.getMessage());
+        assertEquals("Email cannot be null or empty", exception3.getMessage());
+    }
+
+    @Test
+    @DisplayName("Should throw an exception when email size is greater than 254 characters")
+    void shouldThrowException_whenEmailSizeIsGreaterThan254Characters() {
+        String valueGreaterThan254 =  "test".repeat(255);
+        InvalidEmailException exception1 = assertThrows(InvalidEmailException.class, () -> new Email(valueGreaterThan254));
+
+        assertEquals("Email exceeds maximum allowed length", exception1.getMessage());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {
             "invalidFormat",
-            "12another@invalid",
+            "invalid.@test.com",
             "t12child@.er",
             "@t12child"
     })
-    @DisplayName("Should throw an exception when e-mail format provided is invalid")
-    void shouldThrowException_whenEmailFormatProvideIsInvalid(String invalidEmail) {
+    @DisplayName("Should throw an exception when email format provided is invalid")
+    void shouldThrowException_whenEmailFormatProvidedIsInvalid(String invalidEmail) {
 
         InvalidEmailException exception1 = assertThrows(InvalidEmailException.class, () -> new Email(invalidEmail));
 

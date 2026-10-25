@@ -18,6 +18,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.libraryexpress.application.book.dto.request.BookFilterDTO;
 import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
 import org.libraryexpress.application.book.dto.response.BookDTO;
+import org.libraryexpress.application.book.dto.response.RegisterBookResponseDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
@@ -66,9 +67,9 @@ public final class BookController {
     })
     public void register(HttpContextRequest request, HttpContextResponse response) throws Exception {
         RegisterBookDTO inputDto = request.parseBody(RegisterBookDTO.class);
-        context.getRegisterBook().execute(inputDto);
+        RegisterBookResponseDTO responseDTO = context.getRegisterBook().execute(inputDto);
 
-        response.status(CREATED).sendEmpty();
+        response.status(CREATED).json(responseDTO);
     }
 
     @GET

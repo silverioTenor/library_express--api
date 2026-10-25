@@ -1,6 +1,7 @@
 package org.libraryexpress.application.customer.usecase;
 
 import org.libraryexpress.application.customer.dto.request.CreateCustomerDTO;
+import org.libraryexpress.application.customer.dto.response.CreateCustomerResponseDTO;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
@@ -22,10 +23,10 @@ public class CreateCustomer {
         this.mapper = mapper;
     }
 
-    public void execute(CreateCustomerDTO createCustomerDto) {
+    public CreateCustomerResponseDTO execute(CreateCustomerDTO createCustomerDto) {
         logger.info("Starting customer registration...");
 
-        Optional<Customer> hasClient = this.customerRepository.getByEmail(createCustomerDto.email());
+        Optional<Customer> hasClient = this.customerRepository.getByEmail(createCustomerDto.email().value());
 
         if (hasClient.isPresent()) {
             logger.warn("ABORTED: Customer with email [{}] already exists", createCustomerDto.email());
@@ -33,9 +34,10 @@ public class CreateCustomer {
         }
 
         Customer customer = mapper.toEntity(createCustomerDto).build();
-
         this.customerRepository.create(customer);
 
         logger.info("Customer successfully registered! Customer ID: [{}]", customer.getId());
+
+        return new CreateCustomerResponseDTO(customer.getId());
     }
 }

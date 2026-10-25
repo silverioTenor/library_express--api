@@ -10,6 +10,8 @@ import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.exception.BookUnavailableException;
 import org.libraryexpress.domain.book.repository.BookRepository;
 import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
+import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.repository.CustomerRepository;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.exception.LoanLimitReachedException;
 import org.libraryexpress.domain.loan.exception.OverdueLoanException;
@@ -18,6 +20,8 @@ import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,6 +36,9 @@ class CreateLoanTest {
 
     @Mock
     private BookRepository bookRepository;
+
+    @Mock
+    private CustomerRepository customerRepository;
 
     @Mock
     private LoanEligibilityValidator loanEligibilityValidator;
@@ -57,9 +64,16 @@ class CreateLoanTest {
                 .setStatus(BookStatus.AVAILABLE)
                 .build();
 
+        Customer customer = new Customer.Builder()
+                .setName("John Doe")
+                .setEmail("test@test.com")
+                .setId(CUSTOMER_ID)
+                .build();
+
         // Stubbing validators behavior for the happy path (void methods do nothing by default)
         doNothing().when(loanEligibilityValidator).validate(CUSTOMER_ID);
         when(bookAvailabilityValidator.validate(ISBN_STR)).thenReturn(availableBook);
+        when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.ofNullable(customer));
 
         // Act
         createLoan.execute(requestDto);

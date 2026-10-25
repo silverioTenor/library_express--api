@@ -76,7 +76,7 @@ public class AppContext {
         LoanDbRepository loanRepository = new LoanDbRepository(dataSource);
         LoanEligibilityValidator loanEligibilityValidator = new LoanEligibilityValidator(loanRepository);
 
-        this.createLoan = new CreateLoan(loanRepository, bookRepository, loanEligibilityValidator, bookAvailabilityValidator);
+        this.createLoan = new CreateLoan(loanRepository, bookRepository, customerRepository, loanEligibilityValidator, bookAvailabilityValidator);
         this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE);
         this.returnLoan = new ReturnLoan(loanRepository, bookRepository, Clock.systemDefaultZone());
         this.closeOverdueLoan = new CloseOverdueLoan(loanRepository);

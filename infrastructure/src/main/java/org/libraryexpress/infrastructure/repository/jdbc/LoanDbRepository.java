@@ -122,6 +122,7 @@ public class LoanDbRepository implements LoanRepository {
         ) {
             int parameterIndex = 1;
 
+            if (hasId) statement.setString(parameterIndex++, filter.id());
             if (hasCustomerId) statement.setString(parameterIndex++, filter.customerId());
             if (hasISBN) statement.setString(parameterIndex++, filter.ISBN().value());
 

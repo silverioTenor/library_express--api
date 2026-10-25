@@ -39,7 +39,7 @@ class RegisterBookTest {
     @DisplayName("Should successfully register a book when the ISBN does not exist in database")
     void shouldRegisterBook_whenIsbnIsUnique() {
         // Arrange
-        RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
+        RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, String.valueOf(BookStatus.AVAILABLE));
 
         // Setting up a Book.Builder mock since mapper returns a Builder instance chain
         Book.Builder mockBuilder = mock(Book.Builder.class);
@@ -65,7 +65,7 @@ class RegisterBookTest {
     @DisplayName("Should throw UniqueIsbnViolationException and abort persistence when ISBN already exists")
     void shouldThrowUniqueIsbnViolationException_whenIsbnAlreadyExists() {
         // Arrange
-        RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
+        RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, String.valueOf(BookStatus.AVAILABLE));
 
         Book existingBook = new Book.Builder()
                 .setISBN(ISBN_STR)

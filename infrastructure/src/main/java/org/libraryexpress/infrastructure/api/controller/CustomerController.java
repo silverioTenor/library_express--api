@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.libraryexpress.application.customer.dto.request.CreateCustomerDTO;
 import org.libraryexpress.application.customer.dto.request.CustomerFilterDTO;
 import org.libraryexpress.application.customer.dto.request.UpdateCustomerEmailDTO;
+import org.libraryexpress.application.customer.dto.response.CreateCustomerResponseDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
@@ -67,9 +68,9 @@ public final class CustomerController {
     })
     public void create(HttpContextRequest request, HttpContextResponse response) throws Exception {
         CreateCustomerDTO inputDto = request.parseBody(CreateCustomerDTO.class);
-        context.getCreateCustomer().execute(inputDto);
+        CreateCustomerResponseDTO responseDTO = context.getCreateCustomer().execute(inputDto);
 
-        response.status(CREATED).sendEmpty();
+        response.status(CREATED).json(responseDTO);
     }
 
     @PATCH
