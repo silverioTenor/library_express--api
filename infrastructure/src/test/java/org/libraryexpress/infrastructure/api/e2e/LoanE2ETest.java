@@ -181,7 +181,8 @@ public class LoanE2ETest extends E2EBaseConfig {
         .when()
             .post("/loans")
         .then()
-            .statusCode(500); // TODO: No have customer validation yet
+            .statusCode(404)
+            .body("message", equalTo("Customer not found!"));
     }
 
     @Test

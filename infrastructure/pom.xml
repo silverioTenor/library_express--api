@@ -218,10 +218,9 @@
                             </includes>
 
                             <excludes>
-                                <exclude>**/cli/**/*</exclude>
                                 <exclude>**/config/**/*</exclude>
                                 <exclude>**/util/*</exclude>
-                                <exclude>**/InMemory/*</exclude>
+                                <exclude>**/openApi/*</exclude>
                                 <exclude>**/*.class</exclude>
                             </excludes>
 
