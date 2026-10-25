@@ -21,7 +21,7 @@ public interface BookMapper {
 
     List<BookDTO> toResponseListDto(List<Book> books);
 
-    @Mapping(target = "ISBN", source = "ISBN", qualifiedByName = "stringToIsbn")
+//    @Mapping(target = "ISBN", source = "ISBN", qualifiedByName = "stringToIsbn")
     Book.Builder toEntity(RegisterBookDTO dto);
 
     @Named("stringToIsbn")

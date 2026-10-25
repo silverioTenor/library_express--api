@@ -14,6 +14,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
 import org.libraryexpress.application.loan.dto.request.LoanFilterDTO;
+import org.libraryexpress.application.loan.dto.response.CreateLoanResponseDTO;
 import org.libraryexpress.application.loan.dto.response.LoanDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
@@ -64,9 +65,9 @@ public final class LoanController {
     })
     public void create(HttpContextRequest request, HttpContextResponse response) throws Exception {
         var inputDto = request.parseBody(CreateLoanDTO.class);
-        context.getCreateLoan().execute(inputDto);
+        CreateLoanResponseDTO responseDTO = context.getCreateLoan().execute(inputDto);
 
-        response.status(CREATED).sendEmpty();
+        response.status(CREATED).json(responseDTO);
     }
 
     @GET
@@ -99,7 +100,7 @@ public final class LoanController {
         String ISBN = request.getQueryParam("isbn");
         String statuses = request.getQueryParam("statuses");
 
-        var filterDTO = new LoanFilterDTO(id, customerId, ISBN, statuses, pageRequest.page(),  pageRequest.size());
+        var filterDTO = new LoanFilterDTO(id, customerId, ISBN, statuses, pageRequest.page(), pageRequest.size());
         OutputPaginationDto<LoanDTO> outputDto = context.getSearchLoans().execute(filterDTO);
 
         response.status(SUCCESS).json(outputDto);

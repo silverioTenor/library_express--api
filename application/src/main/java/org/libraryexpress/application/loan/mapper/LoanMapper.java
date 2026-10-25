@@ -15,9 +15,9 @@ public interface LoanMapper {
 
     Loan.Builder toEntity(LoanDTO dto);
 
-    default Isbn mapStringToIsbn(String value) {
-        return value != null ? new Isbn(value) : null;
-    }
+//    default Isbn mapStringToIsbn(String value) {
+//        return value != null ? new Isbn(value) : null;
+//    }
 
     default String mapIsbnToString(Isbn isbn) {
         return isbn != null ? isbn.value() : null;

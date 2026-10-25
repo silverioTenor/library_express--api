@@ -1,6 +1,7 @@
 package org.libraryexpress.application.book.usecase;
 
 import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
+import org.libraryexpress.application.book.dto.response.RegisterBookResponseDTO;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.exception.UniqueIsbnViolationException;
@@ -20,10 +21,10 @@ public class RegisterBook {
         this.mapper = mapper;
     }
 
-    public void execute(RegisterBookDTO registerBookDto) {
+    public RegisterBookResponseDTO execute(RegisterBookDTO registerBookDto) {
         logger.info("Starting book registration...");
 
-        var hasRegistered = this.bookRepository.getByIsbn(registerBookDto.ISBN());
+        var hasRegistered = this.bookRepository.getByIsbn(registerBookDto.ISBN().value());
 
         if (hasRegistered.isPresent()) {
             logger.warn("ABORTED: Book already exists. ISBN: [{}]", registerBookDto.ISBN());
@@ -35,5 +36,7 @@ public class RegisterBook {
         this.bookRepository.create(book);
 
         logger.info("Book successfully registered!");
+
+        return new RegisterBookResponseDTO(book.getISBN().value());
     }
 }

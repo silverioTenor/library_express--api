@@ -21,6 +21,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
         <org.jackson.version>2.22.1</org.jackson.version>
+        <org.jackson-annotations.version>2.22</org.jackson-annotations.version>
         <junit.version>5.10.2</junit.version>
         <mockito.version>5.23.0</mockito.version>
         <maven-dependency-plugin>3.6.1</maven-dependency-plugin>
@@ -92,6 +93,12 @@
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${org.jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${org.jackson-annotations.version}</version>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
