@@ -21,13 +21,13 @@ public interface CustomerMapper {
 
     List<CustomerDTO> toResponseListDto(List<Customer> customers);
 
-    @Mapping(target = "email", source = "email", qualifiedByName = "stringToEmail")
+//    @Mapping(target = "email", source = "email", qualifiedByName = "stringToEmail")
     Customer.Builder toEntity(CreateCustomerDTO dto);
 
-    @Named("stringToEmail")
-    default Email mapStringToEmail(String value) {
-        return value != null ? new Email(value) : null;
-    }
+//    @Named("stringToEmail")
+//    default Email mapStringToEmail(String value) {
+//        return value != null ? new Email(value) : null;
+//    }
 
     default String mapEmailToString(Email email) {
         return email != null ? email.value() : null;
