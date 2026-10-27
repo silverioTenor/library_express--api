@@ -37,7 +37,7 @@ public class BookAvailabilityValidatorUnitTest {
     @DisplayName("Should return the book when its found and status is available")
     void shouldReturnBook_whenBookIsFoundAndAvailable() {
         // Arrange
-        String isbnStr = Isbn.generate().value();
+        String isbnStr = new Isbn("978-85-209-2325-2").value();
 
         Book book = new Book.Builder()
                 .setISBN(isbnStr)
@@ -85,7 +85,7 @@ public class BookAvailabilityValidatorUnitTest {
     @DisplayName("Should throw BookUnavailableException when the book is found but its status is not available")
     void shouldThrowBookUnavailableException_whenBookIsFoundButNotAvailable() {
         // Arrange
-        String isbnStr = Isbn.generate().value();
+        String isbnStr = new Isbn("978-65-86015-01-0").value();
 
         Book borrowedBook = new Book.Builder()
                 .setISBN(isbnStr)
