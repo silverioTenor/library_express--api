@@ -112,14 +112,14 @@ class BookE2ETest extends E2EBaseConfig {
 
     @Test
     @Order(5)
-    @DisplayName("Should throw an error with status code 404 when provide an invalid ISBN")
+    @DisplayName("Should throw an error with status code 400 when provide an invalid ISBN")
     void shouldThrowError_whenProvideAnInvalidIsbn() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
-                .get("/books/995-29-6XL0-22-4")
+                .get("/books/995-29-6XL01-22-4")
                 .then()
-                .statusCode(404)
-                .body("message", equalTo("Book not Found!"));
+                .statusCode(400)
+                .body("message", containsString("Invalid ISBN format provided:"));
     }
 }
