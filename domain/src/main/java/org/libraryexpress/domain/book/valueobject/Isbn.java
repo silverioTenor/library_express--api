@@ -66,7 +66,7 @@ public record Isbn(String value) {
 
         // If the remainder of the division by 11 is not zero, the ISBN-10 is false/invalid.
         if (sum % 11 != 0) {
-            throw new IllegalArgumentException("Dígito verificador do ISBN-10 original é inválido.");
+            throw new InvalidArgumentException("Invalid ISBN format provided: " + isbn);
         }
     }
 }

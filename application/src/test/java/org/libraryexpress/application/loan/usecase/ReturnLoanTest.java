@@ -41,7 +41,7 @@ class ReturnLoanTest {
     private ReturnLoan returnLoan;
 
     private static final String LOAN_ID = "loan-uuid-123";
-    private static final String ISBN_STR = "978-43-12345-67-8";
+    private static final String ISBN_STR = "9788535902778";
     private static final String CUSTOMER_ID = "customer-uuid-123";
 
     @Test

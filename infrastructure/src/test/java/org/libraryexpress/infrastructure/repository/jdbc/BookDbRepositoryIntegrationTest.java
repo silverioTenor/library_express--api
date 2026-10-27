@@ -31,7 +31,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should successfully persist a new book and retrieve it back by its ISBN identity descriptor")
     void shouldPersistAndRetrieveBook_whenPayloadIsValid() {
         // Arrange (Testing create and getByIsbn)
-        String isbn = "978-16-14841-20-0";
+        String isbn = "9788535902778";
         Book newBook = createSampleBook(isbn, "Continuous Delivery", BookStatus.AVAILABLE);
 
         // Act
@@ -48,7 +48,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should throw RuntimeException when trying to insert an identical ISBN business key")
     void shouldThrowRuntimeException_whenIsbnConstraintIsViolatedAtDatabaseLevel() {
         // Arrange (Testing validation exception translation mapping)
-        String duplicatedIsbn = "978-13-23590-88-4";
+        String duplicatedIsbn = "9788573021936";
         Book baseBook = createSampleBook(duplicatedIsbn, "Clean Code Core", BookStatus.AVAILABLE);
         bookRepository.create(baseBook);
 
@@ -64,7 +64,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should successfully modify book fields and reflect state changes inside database during record updates")
     void shouldUpdateBookState_whenModifyingExistingRecord() {
         // Arrange (Testing update)
-        String isbn = "978-13-44941-06-6";
+        String isbn = "9788525034151";
         Book book = createSampleBook(isbn, "Clean Architecture Early Draft", BookStatus.AVAILABLE);
         bookRepository.create(book);
 
