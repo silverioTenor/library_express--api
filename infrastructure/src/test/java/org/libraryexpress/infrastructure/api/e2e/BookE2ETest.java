@@ -19,7 +19,7 @@ class BookE2ETest extends E2EBaseConfig {
     void shouldRegisterBook_whenExecutingFullHappyPath() {
         String bookPayload = """
             {
-                "ISBN": "995-29-66530-22-4",
+                "ISBN": "9788520923580",
                 "title": "Clean Architecture Modern Java",
                 "author": "John Doe",
                 "year": 2026,
@@ -44,7 +44,7 @@ class BookE2ETest extends E2EBaseConfig {
         given()
                 .contentType(ContentType.JSON)
         .when()
-                .get("/books/995-29-66530-22-4")
+                .get("/books/9788520923580")
         .then()
                 .statusCode(200)
                 .body("title", equalTo("Clean Architecture Modern Java"))
@@ -57,7 +57,7 @@ class BookE2ETest extends E2EBaseConfig {
     @Order(3)
     @DisplayName("Should get a book by ISBN when the data provided is valid")
     void shouldSuccessfullyListBooks_whenCallEndpoint() {
-        BookDTO bookDto = get("/books/995-29-66530-22-4").as(BookDTO.class);
+        BookDTO bookDto = get("/books/9788520923580").as(BookDTO.class);
 
         given()
                 .contentType(ContentType.JSON)
@@ -92,7 +92,7 @@ class BookE2ETest extends E2EBaseConfig {
     void shouldThrowConflictError_whenTryingRegisterNewBookWithISBNPreviousRegistered() {
         String bookPayload = """
             {
-                "ISBN": "995-29-66530-22-4",
+                "ISBN": "9788520923580",
                 "title": "New Book",
                 "author": "Another Author",
                 "year": 1999,

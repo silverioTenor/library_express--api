@@ -28,10 +28,10 @@ public class LoanE2ETest extends E2EBaseConfig {
     @DisplayName("Should create a new loan when all data provided is valid")
     void shouldCreateLoanSuccessfully_whenProvideValidData() {
         TestDataFactory.createCustomer("j.doe@test.com");
-        TestDataFactory.createBook("408-36-74383-60-6");
+        TestDataFactory.createBook("9788535902778");
 
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
-        var book = TestDataFactory.getBook("408-36-74383-60-6");
+        var book = TestDataFactory.getBook("9788535902778");
 
         String payload = """
                 {
@@ -54,7 +54,7 @@ public class LoanE2ETest extends E2EBaseConfig {
     @DisplayName("Should search loans when provide a valid parameters")
     void shouldSearchLoansSuccessfully_whenProvideValidParameters() {
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
-        var book = TestDataFactory.getBook("408-36-74383-60-6");
+        var book = TestDataFactory.getBook("9788535902778");
 
         given()
             .contentType(ContentType.JSON)
@@ -85,10 +85,10 @@ public class LoanE2ETest extends E2EBaseConfig {
     @Order(3)
     @DisplayName("Should list all loans when no provide parameters")
     void shouldListAllLoansSuccessfully_whenNoProvideParameters() {
-        TestDataFactory.createBook("498-15-66626-60-5");
+        TestDataFactory.createBook("9780306406157");
 
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
-        var book = TestDataFactory.getBook("498-15-66626-60-5");
+        var book = TestDataFactory.getBook("9780306406157");
 
         String payload = """
                 {
@@ -127,7 +127,7 @@ public class LoanE2ETest extends E2EBaseConfig {
     @DisplayName("Should close a loan successfully when the status is overdue")
     void shouldCloseLoanSuccessfully_whenStatusIsOverdue() {
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
-        var book = TestDataFactory.getBook("408-36-74383-60-6");
+        var book = TestDataFactory.getBook("9788535902778");
 
         String loanId = UUID.randomUUID().toString();
         TestDataFactory.createOverdueLoan(loanId, customer.id(), book.ISBN());
@@ -148,14 +148,14 @@ public class LoanE2ETest extends E2EBaseConfig {
     @DisplayName("Should throw an error when trying to create a loan without customer or book")
     void shouldThrowError_whenTryingCreateLoanWithoutCustomerOrBook() {
         TestDataFactory.createCustomer("hellen.doe@test.com");
-        TestDataFactory.createBook("344-89-27240-40-1");
+        TestDataFactory.createBook("9788520921579");
 
         var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
 
         String firstPayload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "204-15-82822-80-5"
+                    "ISBN": "9780140283334"
                 }
                 """.formatted(customer.id());
 
@@ -171,7 +171,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         String secondPayload = """
                 {
                     "customerId": "invalid-customer-id",
-                    "ISBN": "344-89-27240-40-1"
+                    "ISBN": "9788520921579"
                 }
                 """;
 
@@ -189,7 +189,7 @@ public class LoanE2ETest extends E2EBaseConfig {
     @Order(6)
     @DisplayName("Should throw an error when trying to create a loan with a book unavailable")
     void shouldThrowError_whenTryingCreateLoanWithBookUnavailable() {
-        var book = TestDataFactory.getBook("408-36-74383-60-6");
+        var book = TestDataFactory.getBook("9788535902778");
         var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
 
         String firstPayload = """
@@ -213,9 +213,9 @@ public class LoanE2ETest extends E2EBaseConfig {
     @Order(7)
     @DisplayName("Should throw an error when trying to create a loan for a customer who has another overdue loan")
     void shouldThrowError_whenTryingCreateLoanForCustomerWhichHasAnotherOverdue() {
-        TestDataFactory.createBook("551-67-24636-52-4");
+        TestDataFactory.createBook("9780307277671");
 
-        var book = TestDataFactory.getBook("551-67-24636-52-4");
+        var book = TestDataFactory.getBook("9780307277671");
         var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
 
         String loanId = UUID.randomUUID().toString();
@@ -242,9 +242,9 @@ public class LoanE2ETest extends E2EBaseConfig {
     @Order(8)
     @DisplayName("Should throw an error when trying to create a loan for a customer has reached the maximum limit of active loans")
     void shouldThrowError_whenTryingCreateLoanForCustomerHasReachedTheMaximumLimitOfActiveLoans() {
-        TestDataFactory.createBook("145-25-89157-94-8");
+        TestDataFactory.createBook("9788571641693");
 
-        var book = TestDataFactory.getBook("145-25-89157-94-8");
+        var book = TestDataFactory.getBook("9788571641693");
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
 
         String payload = """
