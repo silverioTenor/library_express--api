@@ -33,7 +33,7 @@ class FindBookTest {
     @InjectMocks
     private FindBook findBook;
 
-    private static final String ISBN_STR = "978-43-12345-67-8";
+    private static final String ISBN_STR = "9780140283292";
 
     @Test
     @DisplayName("Should successfully return the mapped DTO when the book is found by ISBN")
