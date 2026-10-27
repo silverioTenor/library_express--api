@@ -50,7 +50,7 @@ class CreateLoanTest {
     private CreateLoan createLoan;
 
     private static final String CUSTOMER_ID = "customer-uuid-123";
-    private static final String ISBN_STR = "978-43-12345-67-8";
+    private static final String ISBN_STR = "9788535902778";
 
     @Test
     @DisplayName("Should create loan successfully when customer is eligible and book is available")

@@ -33,7 +33,7 @@ class RegisterBookTest {
     @InjectMocks
     private RegisterBook registerBook;
 
-    private static final String ISBN_STR = "978-43-12345-67-8";
+    private static final String ISBN_STR = "9788535902778";
 
     @Test
     @DisplayName("Should successfully register a book when the ISBN does not exist in database")

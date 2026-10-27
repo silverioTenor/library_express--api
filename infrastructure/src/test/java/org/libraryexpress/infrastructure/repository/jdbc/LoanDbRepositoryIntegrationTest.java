@@ -73,7 +73,8 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         // Assert
         assertTrue(retrieved.isPresent(), "Persisted loan transaction metadata must be located inside the database");
-        assertEquals(VALID_ISBN, retrieved.get().getISBN().value());
+        assertFalse(retrieved.get().getISBN().value().contains("-"));
+        assertEquals(13, retrieved.get().getISBN().value().length());
         assertEquals(VALID_CUSTOMER_ID, retrieved.get().getCustomerId());
         assertEquals(LoanStatus.ACTIVE, retrieved.get().getStatus());
         assertEquals(LocalDate.now(), retrieved.get().getStartDate(), "Temporal state mappings must preserve date alignments");

@@ -3,7 +3,7 @@ package org.libraryexpress.domain.loan;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
-import org.libraryexpress.domain.book.exception.InvalidIsbnException;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
@@ -144,7 +144,7 @@ public class LoanUnitTest {
         );
 
         // 4. Validating Book ISBN (Null)
-        assertThrows(InvalidIsbnException.class, () ->
+        assertThrows(InvalidArgumentException.class, () ->
                         new Loan.Builder()
                                 .setId("loan-1")
                                 .setISBN(null)
