@@ -1,19 +1,17 @@
 package org.libraryexpress.domain.loan.entity;
 
 import org.libraryexpress.domain.book.valueobject.Isbn;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 public class Loan implements Comparable<Loan> {
 
     public static final int MAX_ACTIVE_LOANS = 2;
-
-    private static final int MAX_DAY_TO_RETURN = 15;
 
     private final String id;
 
@@ -38,18 +36,21 @@ public class Loan implements Comparable<Loan> {
         Objects.requireNonNull(ISBN, "Book ISBN cannot be null");
         Objects.requireNonNull(status, "Loan status cannot be null");
         Objects.requireNonNull(startDate, "Start date cannot be null");
+        Objects.requireNonNull(endDate, "End date cannot be null");
 
         if (id == null || id.isBlank())
-            throw new IllegalArgumentException("Loan ID cannot be null or empty");
+            throw new InvalidArgumentException("Loan ID cannot be null or empty");
         if (customerId == null || customerId.isBlank())
-            throw new IllegalArgumentException("Customer ID cannot be null or empty");
+            throw new InvalidArgumentException("Customer ID cannot be null or empty");
+        if (endDate.isBefore(startDate))
+            throw new DateOutOfBoundException("End date cannot be before start date");
 
         this.id = id;
         this.ISBN = ISBN;
         this.customerId = customerId;
         this.status = status;
         this.startDate = startDate;
-        this.endDate = validateAndReturnDueDate(endDate);
+        this.endDate = endDate;
     }
 
     public String getId() {
@@ -81,24 +82,7 @@ public class Loan implements Comparable<Loan> {
     }
 
     public boolean isOverdue(Clock clock) {
-        return ChronoUnit.DAYS.between(startDate, LocalDate.now(clock)) > MAX_DAY_TO_RETURN;
-    }
-
-    private LocalDate validateAndReturnDueDate(LocalDate dueDate) {
-        LocalDate maxDateLimit = startDate.plusDays(MAX_DAY_TO_RETURN);
-
-        if (dueDate != null) {
-            if (dueDate.isBefore(startDate))
-                throw new DateOutOfBoundException("End date cannot be before start date");
-
-//            TODO: Move logic to create loan use case
-            if (dueDate.isAfter(maxDateLimit))
-                throw new DateOutOfBoundException("End date cannot exceed the 15-day limit from start date");
-
-            return dueDate;
-        }
-
-        return maxDateLimit;
+        return LocalDate.now(clock).isAfter(endDate);
     }
 
     @Override

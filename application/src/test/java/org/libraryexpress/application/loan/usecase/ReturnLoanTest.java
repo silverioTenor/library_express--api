@@ -55,6 +55,7 @@ class ReturnLoanTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.ACTIVE)
                 .setStartDate(startDate)
+                .setEndDate(startDate.plusDays(15))
                 .build();
 
         Book borrowedBook = new Book.Builder()
@@ -93,6 +94,7 @@ class ReturnLoanTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.ACTIVE)
                 .setStartDate(startDate)
+                .setEndDate(startDate.plusDays(15))
                 .build();
 
         Book borrowedBook = new Book.Builder()
@@ -144,6 +146,7 @@ class ReturnLoanTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.FINISHED) // Forbidden status in the Use Case's Set.of
                 .setStartDate(LocalDate.now())
+                .setEndDate(LocalDate.now().plusDays(15))
                 .build();
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(finishedLoan));
@@ -166,6 +169,7 @@ class ReturnLoanTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.ACTIVE)
                 .setStartDate(LocalDate.now())
+                .setEndDate(LocalDate.now().plusDays(15))
                 .build();
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));

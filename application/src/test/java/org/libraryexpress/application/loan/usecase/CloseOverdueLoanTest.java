@@ -44,6 +44,7 @@ class CloseOverdueLoanTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.OVERDUE) // Valid state for this palliative operational flow
                 .setStartDate(LocalDate.now().minusDays(20))
+                .setEndDate(LocalDate.now().minusDays(5))
                 .build();
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(overdueLoan));
@@ -81,6 +82,7 @@ class CloseOverdueLoanTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.ACTIVE) // Invalid state: this usecase is exclusively restricted to OVERDUE
                 .setStartDate(LocalDate.now())
+                .setEndDate(LocalDate.now().plusDays(15))
                 .build();
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
