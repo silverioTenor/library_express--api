@@ -135,9 +135,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         given()
             .contentType(ContentType.JSON)
             .header("X-Trace-Id", "08004816-4be3-4d5f-96b8-119c78db1e52")
-            .param("loanId", loanId)
+            .pathParam("loanId", loanId)
         .when()
-            .patch("/loans/" + loanId + "/close-overdue")
+            .patch("/loans/{loanId}/close-overdue")
         .then()
             .statusCode(204);
 
@@ -408,7 +408,7 @@ public class LoanE2ETest extends E2EBaseConfig {
             String sql = """
                 INSERT INTO tb_loan (id, customer_id, isbn, status, start_date, end_date) 
                 VALUES (?, ?, ?, 'OVERDUE', NOW() - INTERVAL '20 days', NOW() - INTERVAL '5 days')
-                """;
+            """;
 
             String jdbcUrl = postgres.getJdbcUrl();
             String dbUser = postgres.getUsername();

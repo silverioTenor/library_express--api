@@ -28,8 +28,8 @@ import static org.mockito.Mockito.*;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ReturnLoan UseCase - Unit Test (Mockito)")
-class ReturnLoanTest {
+@DisplayName("LoanReturn UseCase - Unit Test (Mockito)")
+class LoanReturnTest {
 
     @Mock
     private LoanRepository loanRepository;
@@ -38,7 +38,7 @@ class ReturnLoanTest {
     private BookRepository bookRepository;
 
     @InjectMocks
-    private ReturnLoan returnLoan;
+    private LoanReturn loanReturn;
 
     private static final String LOAN_ID = "loan-uuid-123";
     private static final String ISBN_STR = "9788535902778";
@@ -66,7 +66,7 @@ class ReturnLoanTest {
 
         // Clock paused within the 15-day period (Day 10)
         Clock fixedClock = Clock.fixed(Instant.parse("2026-08-10T12:00:00Z"), ZoneId.of("UTC"));
-        ReturnLoan useCaseOnTime = new ReturnLoan(loanRepository, bookRepository, fixedClock);
+        LoanReturn useCaseOnTime = new LoanReturn(loanRepository, bookRepository, fixedClock);
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(borrowedBook));
@@ -105,7 +105,7 @@ class ReturnLoanTest {
 
         // Clock frozen past the deadline (Day 20 -> 19 days later)
         Clock fixedClock = Clock.fixed(Instant.parse("2026-08-20T12:00:00Z"), ZoneId.of("UTC"));
-        ReturnLoan useCaseOverdue = new ReturnLoan(loanRepository, bookRepository, fixedClock);
+        LoanReturn useCaseOverdue = new LoanReturn(loanRepository, bookRepository, fixedClock);
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(borrowedBook));
@@ -128,7 +128,7 @@ class ReturnLoanTest {
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(LoanNotFoundException.class, () -> returnLoan.execute(LOAN_ID));
+        assertThrows(LoanNotFoundException.class, () -> loanReturn.execute(LOAN_ID));
 
         // Style rule: Ensuring secure orchestration behavior
         verifyNoInteractions(bookRepository);
@@ -152,7 +152,7 @@ class ReturnLoanTest {
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(finishedLoan));
 
         // Act & Assert
-        assertThrows(InvalidArgumentException.class, () -> returnLoan.execute(LOAN_ID));
+        assertThrows(InvalidArgumentException.class, () -> loanReturn.execute(LOAN_ID));
 
         verifyNoInteractions(bookRepository);
         verify(loanRepository, never()).update(any());
@@ -176,7 +176,7 @@ class ReturnLoanTest {
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.empty()); // Livro sumiu da base externa
 
         // Act & Assert
-        assertThrows(BookNotFoundException.class, () -> returnLoan.execute(LOAN_ID));
+        assertThrows(BookNotFoundException.class, () -> loanReturn.execute(LOAN_ID));
 
         // Garante a atomicidade do fluxo de aplicação: se falhar no livro, nada é persistido parcial/indevidamente
         verify(loanRepository, never()).update(any());

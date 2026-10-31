@@ -8,9 +8,12 @@ import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 
+import java.time.Clock;
+import java.time.Instant;
+
 /**
  * TODO - Temporary/palliative use case.
- * Once fine calculation and score adjustment are implemented directly in ReturnLoan,
+ * Once fine calculation and score adjustment are implemented directly in LoanReturn,
  * this use case should become obsolete — OVERDUE loans should transition to FINISHED
  * automatically at return time, not via manual intervention.
  */
@@ -20,8 +23,11 @@ public class CloseOverdueLoan {
 
     private final LoanRepository loanRepository;
 
-    public CloseOverdueLoan(LoanRepository loanRepository) {
+    private final Clock clock;
+
+    public CloseOverdueLoan(LoanRepository loanRepository, Clock clock) {
         this.loanRepository = loanRepository;
+        this.clock = clock;
     }
 
     public void execute(String loanId) {
@@ -38,7 +44,7 @@ public class CloseOverdueLoan {
             throw new OverdueLoanException();
         }
 
-        loan.changeStatus(LoanStatus.FINISHED);
+        loan.processReturn(clock, true);
         this.loanRepository.update(loan);
 
         logger.info("Loan successfully completed! Loan ID: [{}]", loanId);
