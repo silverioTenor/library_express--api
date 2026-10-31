@@ -13,6 +13,7 @@ import org.libraryexpress.application.customer.usecase.UpdateCustomerEmail;
 import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.libraryexpress.application.loan.mapper.LoanMapper;
 import org.libraryexpress.application.loan.usecase.*;
+import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.api.controller.CustomerController;
 import org.libraryexpress.infrastructure.api.controller.LoanController;
@@ -75,8 +76,16 @@ public class AppContext {
         // LOAN
         LoanDbRepository loanRepository = new LoanDbRepository(dataSource);
         LoanEligibilityValidator loanEligibilityValidator = new LoanEligibilityValidator(loanRepository);
+        LoanPeriodValidator loanPeriodValidator = new LoanPeriodValidator();
 
-        this.createLoan = new CreateLoan(loanRepository, bookRepository, customerRepository, loanEligibilityValidator, bookAvailabilityValidator);
+        this.createLoan = new CreateLoan(
+                loanRepository,
+                bookRepository,
+                customerRepository,
+                loanEligibilityValidator,
+                bookAvailabilityValidator,
+                loanPeriodValidator
+        );
         this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE);
         this.returnLoan = new ReturnLoan(loanRepository, bookRepository, Clock.systemDefaultZone());
         this.closeOverdueLoan = new CloseOverdueLoan(loanRepository);

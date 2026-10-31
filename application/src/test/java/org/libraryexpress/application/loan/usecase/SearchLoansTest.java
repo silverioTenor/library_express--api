@@ -53,6 +53,7 @@ class SearchLoansTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.ACTIVE)
                 .setStartDate(LocalDate.now())
+                .setEndDate(LocalDate.now().plusDays(15))
                 .build();
 
         LoanDTO expectedDto = new LoanDTO("loan-1", CUSTOMER_ID, ISBN_STR, LoanStatus.ACTIVE, LocalDate.now(), LocalDate.now().plusDays(15));
@@ -68,5 +69,40 @@ class SearchLoansTest {
         assertNotNull(results.items());
         assertEquals(1, results.total(), "Result set should contain exactly 1 mapped DTO");
         assertTrue(results.items().contains(expectedDto));
+    }
+
+    @Test
+    @DisplayName("Should retrieve an overdue loan whose period has already elapsed without policy errors")
+    void shouldRetrieveOverdueLoan_whenPersistedPeriodHasElapsed() {
+        LocalDate startDate = LocalDate.now().minusDays(20);
+        LocalDate endDate = startDate.plusDays(15);
+        var overdueFilter = new LoanFilterDTO(null, CUSTOMER_ID, ISBN_STR, "overdue", 0, 0);
+
+        Loan overdueLoan = new Loan.Builder()
+                .setId("loan-overdue-1")
+                .setISBN(ISBN_STR)
+                .setCustomerId(CUSTOMER_ID)
+                .setStatus(LoanStatus.OVERDUE)
+                .setStartDate(startDate)
+                .setEndDate(endDate)
+                .build();
+
+        LoanDTO expectedDto = new LoanDTO(
+                "loan-overdue-1",
+                CUSTOMER_ID,
+                ISBN_STR,
+                LoanStatus.OVERDUE,
+                startDate,
+                endDate
+        );
+
+        when(loanRepository.search(overdueFilter.toLoanFilter())).thenReturn(new QueryResult<>(List.of(overdueLoan), 1));
+        when(mapper.toResponseDto(overdueLoan)).thenReturn(expectedDto);
+
+        OutputPaginationDto<LoanDTO> results = searchLoans.execute(overdueFilter);
+
+        assertEquals(1, results.total());
+        assertTrue(results.items().contains(expectedDto));
+        assertDoesNotThrow(() -> searchLoans.execute(overdueFilter));
     }
 }

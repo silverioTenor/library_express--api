@@ -64,6 +64,7 @@ class LoanEligibilityValidatorTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.OVERDUE) // Status that triggers the blocking mechanism
                 .setStartDate(LocalDate.now().minusDays(20))
+                .setEndDate(LocalDate.now().minusDays(5))
                 .build();
 
         var filter = new LoanFilter(
@@ -90,6 +91,7 @@ class LoanEligibilityValidatorTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.ACTIVE)
                 .setStartDate(LocalDate.now())
+                .setEndDate(LocalDate.now().plusDays(15))
                 .build();
 
         Loan activeLoan2 = new Loan.Builder()
@@ -98,6 +100,7 @@ class LoanEligibilityValidatorTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.ACTIVE)
                 .setStartDate(LocalDate.now())
+                .setEndDate(LocalDate.now().plusDays(15))
                 .build();
 
         var filter = new LoanFilter(
@@ -124,6 +127,7 @@ class LoanEligibilityValidatorTest {
                 .setCustomerId(CUSTOMER_ID)
                 .setStatus(LoanStatus.ACTIVE)
                 .setStartDate(LocalDate.now())
+                .setEndDate(LocalDate.now().plusDays(15))
                 .build();
 
         var filter = new LoanFilter(
