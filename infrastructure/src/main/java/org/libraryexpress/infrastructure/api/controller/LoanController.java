@@ -121,7 +121,11 @@ public final class LoanController {
             @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Book returned"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Book returned",
+                    content = @Content(schema = @Schema(implementation = LoanReturnResponseDTO.class))
+            ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Loan not found",
