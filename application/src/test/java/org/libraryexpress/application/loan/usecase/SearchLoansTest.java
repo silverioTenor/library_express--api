@@ -56,7 +56,15 @@ class SearchLoansTest {
                 .setEndDate(LocalDate.now().plusDays(15))
                 .build();
 
-        LoanDTO expectedDto = new LoanDTO("loan-1", CUSTOMER_ID, ISBN_STR, LoanStatus.ACTIVE, LocalDate.now(), LocalDate.now().plusDays(15));
+        LoanDTO expectedDto = new LoanDTO(
+                "loan-1",
+                CUSTOMER_ID,
+                ISBN_STR,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                mockLoan.getClosedAt()
+        );
 
         // Stubbing repository query and mapper conversion layers
         when(loanRepository.search(validFilter.toLoanFilter())).thenReturn(new QueryResult<>(List.of(mockLoan), 1));
@@ -93,7 +101,8 @@ class SearchLoansTest {
                 ISBN_STR,
                 LoanStatus.OVERDUE,
                 startDate,
-                endDate
+                endDate,
+                overdueLoan.getClosedAt()
         );
 
         when(loanRepository.search(overdueFilter.toLoanFilter())).thenReturn(new QueryResult<>(List.of(overdueLoan), 1));

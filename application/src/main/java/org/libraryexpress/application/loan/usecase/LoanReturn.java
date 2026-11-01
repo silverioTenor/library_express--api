@@ -1,5 +1,6 @@
 package org.libraryexpress.application.loan.usecase;
 
+import org.libraryexpress.application.loan.dto.response.LoanReturnResponseDTO;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
@@ -15,23 +16,21 @@ import org.libraryexpress.domain.loan.repository.LoanRepository;
 import java.time.Clock;
 import java.util.Set;
 
-public class ReturnLoan {
+public class LoanReturn {
 
-    private static final Set<LoanStatus> ALLOWED_STATUSES = Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE);
-
-    private static final CustomLogger logger = CustomLoggerFactory.getLogger(ReturnLoan.class);
+    private static final CustomLogger logger = CustomLoggerFactory.getLogger(LoanReturn.class);
 
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
     private final Clock clock;
 
-    public ReturnLoan(LoanRepository loanRepository, BookRepository bookRepository, Clock clock) {
+    public LoanReturn(LoanRepository loanRepository, BookRepository bookRepository, Clock clock) {
         this.loanRepository = loanRepository;
         this.bookRepository = bookRepository;
         this.clock = clock;
     }
 
-    public void execute(String loanId) {
+    public LoanReturnResponseDTO execute(String loanId) {
         logger.info("Starting loan return. Loan ID: [{}]", loanId);
 
         Loan loan = this.loanRepository.findById(loanId)
@@ -40,7 +39,7 @@ public class ReturnLoan {
                     return new LoanNotFoundException("No loan found matching the provided parameters.");
                 });
 
-        if (!ALLOWED_STATUSES.contains(loan.getStatus())) {
+        if (!loan.getStatus().equals(LoanStatus.ACTIVE)) {
             logger.warn("ABORTED: Loan status not allowed. Loan ID: [{}]", loan.getStatus());
             throw new InvalidArgumentException("The Loan cannot be completed with the current status.");
         }
@@ -54,16 +53,18 @@ public class ReturnLoan {
                 });
 
         // TODO - v2 - use JOB to change LOAN status and then send e-mail/notification
-        LoanStatus updatedStatus = loan.isOverdue(this.clock)
-                ? LoanStatus.OVERDUE
-                : LoanStatus.FINISHED;
-
-        loan.changeStatus(updatedStatus);
+        loan.processReturn(this.clock, false);
         book.changeStatus(BookStatus.AVAILABLE);
 
         this.loanRepository.update(loan);
         this.bookRepository.update(book);
 
-        logger.info("Loan successfully completed!. Loan ID: [{}], final status: [{}]", loanId, updatedStatus);
+        if (loan.getStatus() == LoanStatus.OVERDUE) {
+            logger.info("Book returned with outstanding late fees. Loan ID: [{}]", loanId);
+            return new LoanReturnResponseDTO("warning", "Book returned, but a late fee is pending.");
+        }
+
+        logger.info("Loan successfully completed!. Loan ID: [{}]", loanId);
+        return new LoanReturnResponseDTO("success", "Book returned.");
     }
 }

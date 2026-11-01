@@ -45,7 +45,7 @@ public class AppContext {
     // LOAN
     private final CreateLoan createLoan;
     private final SearchLoans searchLoans;
-    private final ReturnLoan returnLoan;
+    private final LoanReturn loanReturn;
     private final CloseOverdueLoan closeOverdueLoan;
     private final LoanController loanController;
 
@@ -87,8 +87,8 @@ public class AppContext {
                 loanPeriodValidator
         );
         this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE);
-        this.returnLoan = new ReturnLoan(loanRepository, bookRepository, Clock.systemDefaultZone());
-        this.closeOverdueLoan = new CloseOverdueLoan(loanRepository);
+        this.loanReturn = new LoanReturn(loanRepository, bookRepository, Clock.systemDefaultZone());
+        this.closeOverdueLoan = new CloseOverdueLoan(loanRepository, Clock.systemDefaultZone());
         this.loanController = new LoanController(this);
 
         this.openApiContractHandler = new OpenApiContractHandler();
@@ -131,8 +131,8 @@ public class AppContext {
         return searchLoans;
     }
 
-    public ReturnLoan getReturnLoan() {
-        return returnLoan;
+    public LoanReturn getLoanReturn() {
+        return loanReturn;
     }
 
     public CloseOverdueLoan getCloseOverdueLoan() {

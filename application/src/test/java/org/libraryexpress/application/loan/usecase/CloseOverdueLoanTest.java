@@ -1,5 +1,6 @@
 package org.libraryexpress.application.loan.usecase;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +14,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,6 +39,9 @@ class CloseOverdueLoanTest {
     private static final String ISBN_STR = "978-43-12345-67-8";
     private static final String CUSTOMER_ID = "customer-uuid-123";
 
+    @BeforeEach
+    void setUp() {}
+
     @Test
     @DisplayName("Should successfully transition status to FINISHED when loan is OVERDUE")
     void shouldCloseLoan_whenLoanStatusIsOverdue() {
@@ -47,10 +55,13 @@ class CloseOverdueLoanTest {
                 .setEndDate(LocalDate.now().minusDays(5))
                 .build();
 
+        Clock clock = Clock.fixed(Instant.now().minus(20, ChronoUnit.DAYS), ZoneId.of("UTC"));
+        CloseOverdueLoan closeOverdueLoan1 = new CloseOverdueLoan(loanRepository, clock);
+
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(overdueLoan));
 
         // Act
-        closeOverdueLoan.execute(LOAN_ID);
+        closeOverdueLoan1.execute(LOAN_ID);
 
         // Assert
         assertEquals(LoanStatus.FINISHED, overdueLoan.getStatus(), "Loan status should transition from OVERDUE to FINISHED");

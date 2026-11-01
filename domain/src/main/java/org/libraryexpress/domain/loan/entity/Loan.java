@@ -1,11 +1,15 @@
 package org.libraryexpress.domain.loan.entity;
 
 import org.libraryexpress.domain.book.valueobject.Isbn;
+import org.libraryexpress.domain.core.exception.DomainErrorType;
+import org.libraryexpress.domain.core.exception.DomainException;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
+import org.libraryexpress.domain.loan.exception.OverdueLoanException;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -25,13 +29,16 @@ public class Loan implements Comparable<Loan> {
 
     private final LocalDate endDate;
 
+    private Instant closedAt;
+
     private Loan(
             String id,
             Isbn ISBN,
             String customerId,
             LoanStatus status,
             LocalDate startDate,
-            LocalDate endDate
+            LocalDate endDate,
+            Instant closedAt
     ) {
         Objects.requireNonNull(ISBN, "Book ISBN cannot be null");
         Objects.requireNonNull(status, "Loan status cannot be null");
@@ -51,6 +58,30 @@ public class Loan implements Comparable<Loan> {
         this.status = status;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.closedAt = closedAt;
+    }
+
+    public void processReturn(Clock clock, boolean isOverdueFlow) {
+        if (this.closedAt != null && this.status.equals(LoanStatus.FINISHED)) {
+            throw new DomainException(DomainErrorType.DATA_CONFLICT, "Loan already returned");
+        }
+
+        // TODO: Apply a late fee if the loan is returned overdue.
+        if (this.isOverdue(clock) && !isOverdueFlow) {
+            this.changeStatus(LoanStatus.OVERDUE);
+            return;
+        }
+
+        this.changeStatus(LoanStatus.FINISHED);
+        this.closedAt = Instant.now();
+    }
+
+    public void changeStatus(LoanStatus status) {
+        this.status = status;
+    }
+
+    public boolean isOverdue(Clock clock) {
+        return LocalDate.now(clock).isAfter(endDate);
     }
 
     public String getId() {
@@ -69,10 +100,6 @@ public class Loan implements Comparable<Loan> {
         return status;
     }
 
-    public void changeStatus(LoanStatus status) {
-        this.status = status;
-    }
-
     public LocalDate getStartDate() {
         return startDate;
     }
@@ -81,8 +108,8 @@ public class Loan implements Comparable<Loan> {
         return endDate;
     }
 
-    public boolean isOverdue(Clock clock) {
-        return LocalDate.now(clock).isAfter(endDate);
+    public Instant getClosedAt() {
+        return closedAt;
     }
 
     @Override
@@ -127,6 +154,8 @@ public class Loan implements Comparable<Loan> {
 
         private LocalDate endDate;
 
+        private Instant closedAt;
+
         public Builder setId(String id) {
             this.id = id;
             return this;
@@ -157,8 +186,13 @@ public class Loan implements Comparable<Loan> {
             return this;
         }
 
+        public Builder setClosedAt(Instant closedAt) {
+            this.closedAt = closedAt;
+            return this;
+        }
+
         public Loan build() {
-            return new Loan(id, new Isbn(ISBN), customerId, status, startDate, endDate);
+            return new Loan(id, new Isbn(ISBN), customerId, status, startDate, endDate, closedAt);
         }
     }
 }

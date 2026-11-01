@@ -16,6 +16,7 @@ import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
 import org.libraryexpress.application.loan.dto.request.LoanFilterDTO;
 import org.libraryexpress.application.loan.dto.response.CreateLoanResponseDTO;
 import org.libraryexpress.application.loan.dto.response.LoanDTO;
+import org.libraryexpress.application.loan.dto.response.LoanReturnResponseDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
@@ -120,23 +121,27 @@ public final class LoanController {
             @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Loan returned successfully"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Book returned",
+                    content = @Content(schema = @Schema(implementation = LoanReturnResponseDTO.class))
+            ),
             @ApiResponse(
                     responseCode = "404",
                     description = "Loan not found",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public void returnLoan(HttpContextRequest request, HttpContextResponse response) throws Exception {
+    public void loanReturn(HttpContextRequest request, HttpContextResponse response) throws Exception {
         String loanId = request.getRouteParam("loanId");
-        context.getReturnLoan().execute(loanId);
+        LoanReturnResponseDTO responseDTO = context.getLoanReturn().execute(loanId);
 
-        response.status(NO_CONTENT).sendEmpty();
+        response.status(SUCCESS).json(responseDTO);
     }
 
     /**
      * TODO - Temporary/palliative flow.
-     * Once fine calculation and score adjustment are implemented directly in ReturnLoan,
+     * Once fine calculation and score adjustment are implemented directly in LoanReturn,
      * this flow should become obsolete — OVERDUE loans should transition to FINISHED
      * automatically at return time, not via manual intervention.
      */
@@ -147,7 +152,7 @@ public final class LoanController {
     @Operation(
             summary = "Close an overdue loan (temporary/palliative flow)",
             description = "Manually changes the status of an overdue loan (OVERDUE) to completed (FINISHED). " +
-                    "This functionality will be replaced once the fine calculation is performed directly by the ReturnLoan function.",
+                    "This functionality will be replaced once the fine calculation is performed directly by the LoanReturn function.",
             requestBody =  @RequestBody(content = @Content())
     )
     @Parameters({
