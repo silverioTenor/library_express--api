@@ -3,6 +3,7 @@ package org.libraryexpress.domain.loan;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
+import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
@@ -12,6 +13,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -57,11 +59,11 @@ public class LoanUnitTest {
     }
 
     @Test
-    @DisplayName("Should throw IllegalArgumentException when mandatory fields are missing, empty, or blank")
+    @DisplayName("Should throw InvalidArgumentException when mandatory fields are missing, empty, or blank")
     void shouldThrowException_whenMandatoryFieldsAreInvalid() {
         LocalDate now = LocalDate.of(2026, 8, 12);
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(InvalidArgumentException.class, () ->
                         new Loan.Builder()
                                 .setId(null)
                                 .setISBN(VALID_ISBN)
@@ -72,7 +74,7 @@ public class LoanUnitTest {
                                 .build(),
                 "Should throw exception for null Loan ID"
         );
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(InvalidArgumentException.class, () ->
                         new Loan.Builder()
                                 .setId("").setISBN(VALID_ISBN)
                                 .setCustomerId(CUSTOMER_ID)
@@ -82,7 +84,7 @@ public class LoanUnitTest {
                                 .build(),
                 "Should throw exception for empty Loan ID"
         );
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(InvalidArgumentException.class, () ->
                         new Loan.Builder()
                                 .setId("   ")
                                 .setISBN(VALID_ISBN)
@@ -94,7 +96,7 @@ public class LoanUnitTest {
                 "Should throw exception for blank Loan ID"
         );
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(InvalidArgumentException.class, () ->
                         new Loan.Builder()
                                 .setId("loan-1")
                                 .setISBN(VALID_ISBN)
@@ -105,7 +107,7 @@ public class LoanUnitTest {
                                 .build(),
                 "Should throw exception for null Customer ID"
         );
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(InvalidArgumentException.class, () ->
                         new Loan.Builder()
                                 .setId("loan-1")
                                 .setISBN(VALID_ISBN)
@@ -116,7 +118,7 @@ public class LoanUnitTest {
                                 .build(),
                 "Should throw exception for empty Customer ID"
         );
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(InvalidArgumentException.class, () ->
                         new Loan.Builder()
                                 .setId("loan-1")
                                 .setISBN(VALID_ISBN)
@@ -288,5 +290,83 @@ public class LoanUnitTest {
 
         assertEquals(endDate, loan.getEndDate());
         assertTrue(loan.isOverdue(afterDueDate));
+    }
+
+    @Test
+    @DisplayName("Should set closedAt to current timestamp when loan is returned on time")
+    void shouldSetClosedAt_whenLoanIsReturnedOnTime() {
+        LocalDate timestamp = LocalDate.now();
+
+        Loan loan = new Loan.Builder()
+                .setId("sdasdasdasd")
+                .setISBN(VALID_ISBN)
+                .setCustomerId(CUSTOMER_ID)
+                .setStatus(LoanStatus.ACTIVE)
+                .setStartDate(timestamp)
+                .setEndDate(timestamp.plusDays(15))
+                .build();
+
+        Clock clock = Clock.fixed(Instant.now().plus(5, ChronoUnit.DAYS), ZoneId.of("UTC"));
+        loan.processReturn(clock, false);
+
+        assertFalse(loan.isOverdue(clock));
+        assertEquals(timestamp, loan.getStartDate());
+        assertEquals(timestamp.plusDays(15), loan.getEndDate());
+        assertEquals(LoanStatus.FINISHED, loan.getStatus());
+        assertNotNull(loan.getClosedAt());
+    }
+
+    @Test
+    @DisplayName("Should set closedAt to current timestamp when loan is returned overdue")
+    void shouldSetClosedAt_whenLoanIsReturnedOverdue() {
+        LocalDate timestamp = LocalDate.now();
+        LocalDate startDate = timestamp.minusDays(20);
+        LocalDate endDate = startDate.plusDays(15);
+        Instant instant = Instant.now().plus(20, ChronoUnit.DAYS);
+
+        Loan loan = new Loan.Builder()
+                .setId("sdasdasdasd")
+                .setISBN(VALID_ISBN)
+                .setCustomerId(CUSTOMER_ID)
+                .setStatus(LoanStatus.OVERDUE)
+                .setStartDate(startDate)
+                .setEndDate(endDate)
+                .build();
+
+        Clock clock = Clock.fixed(instant, ZoneId.of("UTC"));
+        loan.processReturn(clock, true);
+
+        assertTrue(loan.isOverdue(clock));
+        assertEquals(startDate, loan.getStartDate());
+        assertEquals(endDate, loan.getEndDate());
+        assertEquals(LoanStatus.FINISHED, loan.getStatus());
+        assertNotNull(loan.getClosedAt());
+    }
+
+    @Test
+    @DisplayName("Should not set closedAt to current timestamp when loan is returned overdue")
+    void shouldNotSetClosedAt_whenLoanIsReturnedOverdue() {
+        LocalDate timestamp = LocalDate.now();
+        LocalDate startDate = timestamp.minusDays(20);
+        LocalDate endDate = startDate.plusDays(15);
+        Instant instant = Instant.now().plus(20, ChronoUnit.DAYS);
+
+        Loan loan = new Loan.Builder()
+                .setId("sdasdasdasd")
+                .setISBN(VALID_ISBN)
+                .setCustomerId(CUSTOMER_ID)
+                .setStatus(LoanStatus.OVERDUE)
+                .setStartDate(startDate)
+                .setEndDate(endDate)
+                .build();
+
+        Clock clock = Clock.fixed(instant, ZoneId.of("UTC"));
+        loan.processReturn(clock, false);
+
+        assertTrue(loan.isOverdue(clock));
+        assertEquals(startDate, loan.getStartDate());
+        assertEquals(endDate, loan.getEndDate());
+        assertEquals(LoanStatus.OVERDUE, loan.getStatus());
+        assertNull(loan.getClosedAt());
     }
 }

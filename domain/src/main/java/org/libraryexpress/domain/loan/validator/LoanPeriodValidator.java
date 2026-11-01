@@ -14,6 +14,7 @@ public class LoanPeriodValidator {
         Objects.requireNonNull(dueDate, "Due date cannot be null");
 
         LocalDate maxDateLimit = startDate.plusDays(MAX_LOAN_DAYS);
+
         if (dueDate.isAfter(maxDateLimit)) {
             throw new DateOutOfBoundException("End date cannot exceed the 15-day limit from start date");
         }

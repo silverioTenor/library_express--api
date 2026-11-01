@@ -1,8 +1,8 @@
-package org.libraryexpress.application.loan.validator;
+package org.libraryexpress.domain.loan.validator;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.libraryexpress.application.UnitTest;
+import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
 import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 
