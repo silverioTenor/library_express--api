@@ -24,7 +24,7 @@ public class RegisterBook {
     public RegisterBookResponseDTO execute(RegisterBookDTO registerBookDto) {
         logger.info("Starting book registration...");
 
-        var hasRegistered = this.bookRepository.getByIsbn(registerBookDto.isbn().value());
+        var hasRegistered = this.bookRepository.getByIsbn(registerBookDto.isbn());
 
         if (hasRegistered.isPresent()) {
             logger.warn("ABORTED: Book already exists. isbn: [{}]", registerBookDto.isbn());
