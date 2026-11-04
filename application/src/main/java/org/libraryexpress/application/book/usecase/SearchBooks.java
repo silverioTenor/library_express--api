@@ -22,17 +22,16 @@ public class SearchBooks {
 
     public OutputPaginationDto<BookDTO> execute(BookFilterDTO bookFilterDto) {
         QueryResult<Book> result = this.bookRepository.search(bookFilterDto.toBookFilter());
-
-        List<BookDTO> booksDto = mapper.toResponseListDto(result.items());
+        List<BookDTO> books = mapper.toResponseListDto(result.items());
 
         if  (bookFilterDto.paginationDto() == null || !bookFilterDto.paginationDto().isPaginated()) {
-            return OutputPaginationDto.unpaginated(booksDto);
+            return OutputPaginationDto.unpaginated(books);
         }
 
         int totalPages = Math.toIntExact(result.total() / bookFilterDto.paginationDto().limit());
 
         return new OutputPaginationDto<>(
-                booksDto,
+                books,
                 bookFilterDto.paginationDto().page(),
                 bookFilterDto.paginationDto().limit(),
                 totalPages,

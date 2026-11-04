@@ -36,23 +36,14 @@ class RegisterBookTest {
     private static final String ISBN_STR = "9788535902778";
 
     @Test
-    @DisplayName("Should successfully register a book when the ISBN does not exist in database")
+    @DisplayName("Should successfully register a book when the isbn does not exist in database")
     void shouldRegisterBook_whenIsbnIsUnique() {
         // Arrange
         RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, String.valueOf(BookStatus.AVAILABLE));
 
-        // Setting up a Book.Builder mock since mapper returns a Builder instance chain
-        Book.Builder mockBuilder = mock(Book.Builder.class);
-        Book targetBook = new Book.Builder()
-                .setISBN(ISBN_STR)
-                .setTitle("Clean Code")
-                .setStatus(BookStatus.AVAILABLE)
-                .build();
+        Book targetBook = Book.create(ISBN_STR, "Clean Code", "", 0, "AVAILABLE");
 
-        // Stubbing repository to simulate an empty database slot and configuring builder fluid chain
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.empty());
-        when(mapper.toEntity(requestDto)).thenReturn(mockBuilder);
-        when(mockBuilder.build()).thenReturn(targetBook);
 
         // Act
         registerBook.execute(requestDto);
@@ -62,15 +53,12 @@ class RegisterBookTest {
     }
 
     @Test
-    @DisplayName("Should throw UniqueIsbnViolationException and abort persistence when ISBN already exists")
+    @DisplayName("Should throw UniqueIsbnViolationException and abort persistence when isbn already exists")
     void shouldThrowUniqueIsbnViolationException_whenIsbnAlreadyExists() {
         // Arrange
         RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, String.valueOf(BookStatus.AVAILABLE));
 
-        Book existingBook = new Book.Builder()
-                .setISBN(ISBN_STR)
-                .setTitle("Duplicate Book Entry")
-                .build();
+        Book existingBook = Book.create(ISBN_STR, "Duplicate Book Entry", "", 0, "AVAILABLE");
 
         // Stubbing repository query to simulate an existing identifier conflict
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(existingBook));

@@ -47,7 +47,7 @@ public class LoanReturn {
         Book book = this.bookRepository.getByIsbn(loan.getISBN().value())
                 .orElseThrow(() -> {
                     logger.error(
-                            "CRITICAL: Book record missing for an active loan. ISBN: [{}], Loan ID: [{}]",
+                            "CRITICAL: Book record missing for an active loan. isbn: [{}], Loan ID: [{}]",
                             loan.getISBN().value(), loanId);
                     return new BookNotFoundException();
                 });

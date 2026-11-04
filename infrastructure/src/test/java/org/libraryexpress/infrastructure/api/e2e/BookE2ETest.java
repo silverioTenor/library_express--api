@@ -19,10 +19,10 @@ class BookE2ETest extends E2EBaseConfig {
     void shouldRegisterBook_whenExecutingFullHappyPath() {
         String bookPayload = """
             {
-                "ISBN": "9788520923580",
+                "isbn": "9788520923580",
                 "title": "Clean Architecture Modern Java",
                 "author": "John Doe",
-                "year": 2026,
+                "publicationYear": 2026,
                 "status": "AVAILABLE"
             }
             """;
@@ -39,7 +39,7 @@ class BookE2ETest extends E2EBaseConfig {
 
     @Test
     @Order(2)
-    @DisplayName("Should get a book by ISBN when the data provided is valid")
+    @DisplayName("Should get a book by isbn when the data provided is valid")
     void shouldGetBookPreviouslySaved_whenProvideValidIsbn() {
         given()
                 .contentType(ContentType.JSON)
@@ -49,13 +49,13 @@ class BookE2ETest extends E2EBaseConfig {
                 .statusCode(200)
                 .body("title", equalTo("Clean Architecture Modern Java"))
                 .body("author", equalTo("John Doe"))
-                .body("year", equalTo(2026))
+                .body("publicationYear", equalTo(2026))
                 .body("status", equalTo("AVAILABLE"));
     }
 
     @Test
     @Order(3)
-    @DisplayName("Should get a book by ISBN when the data provided is valid")
+    @DisplayName("Should get a book by isbn when the data provided is valid")
     void shouldSuccessfullyListBooks_whenCallEndpoint() {
         BookDTO bookDto = get("/books/9788520923580").as(BookDTO.class);
 
@@ -70,7 +70,7 @@ class BookE2ETest extends E2EBaseConfig {
                 .body("limit", is(1))
                 .body("totalPages", is(1))
                 .body("total", is(1))
-                .body("items[0].ISBN", is(bookDto.ISBN()));
+                .body("items[0].isbn", is(bookDto.isbn()));
 
         given()
                 .contentType(ContentType.JSON)
@@ -88,14 +88,14 @@ class BookE2ETest extends E2EBaseConfig {
 
     @Test
     @Order(4)
-    @DisplayName("Should throw an error with status code 409 when trying register a new book with ISBN previous registered")
+    @DisplayName("Should throw an error with status code 409 when trying register a new book with isbn previous registered")
     void shouldThrowConflictError_whenTryingRegisterNewBookWithISBNPreviousRegistered() {
         String bookPayload = """
             {
-                "ISBN": "9788520923580",
+                "isbn": "9788520923580",
                 "title": "New Book",
                 "author": "Another Author",
-                "year": 1999,
+                "publicationYear": 1999,
                 "status": "AVAILABLE"
             }
             """;
@@ -107,12 +107,12 @@ class BookE2ETest extends E2EBaseConfig {
                 .post("/books")
                 .then()
                 .statusCode(409)
-                .body("message", equalTo("It is not permitted to register a book with an ISBN that is already in use."));
+                .body("message", equalTo("It is not permitted to register a book with an isbn that is already in use."));
     }
 
     @Test
     @Order(5)
-    @DisplayName("Should throw an error with status code 400 when provide an invalid ISBN")
+    @DisplayName("Should throw an error with status code 400 when provide an invalid isbn")
     void shouldThrowError_whenProvideAnInvalidIsbn() {
         given()
                 .contentType(ContentType.JSON)
@@ -120,6 +120,6 @@ class BookE2ETest extends E2EBaseConfig {
                 .get("/books/995-29-6XL01-22-4")
                 .then()
                 .statusCode(400)
-                .body("message", containsString("Invalid ISBN format provided:"));
+                .body("message", containsString("Invalid isbn format provided:"));
     }
 }

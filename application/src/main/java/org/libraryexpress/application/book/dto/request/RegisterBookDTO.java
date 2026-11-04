@@ -2,6 +2,7 @@ package org.libraryexpress.application.book.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
@@ -9,26 +10,36 @@ import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import java.security.InvalidParameterException;
 
 public record RegisterBookDTO(
-        Isbn ISBN,
+        Isbn isbn,
         String title,
         String author,
-        int year,
+        int publicationYear,
         BookStatus status
 ) {
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public RegisterBookDTO(
-            @JsonProperty("ISBN") String ISBN,
+            @JsonProperty("isbn") String isbn,
             @JsonProperty("title") String title,
             @JsonProperty("author") String author,
-            @JsonProperty("year") int year,
+            @JsonProperty("publicationYear") int publicationYear,
             @JsonProperty("status") String status
     ) {
         this(
-            new Isbn(ISBN),
+            new Isbn(isbn),
             validateField("title", title),
             validateField("author", author),
-            year,
+            publicationYear,
             parseStatus(status)
+        );
+    }
+
+    public Book toEntity() {
+        return Book.create(
+                this.isbn().value(),
+                this.title(),
+                this.author(),
+                this.publicationYear(),
+                this.status().name()
         );
     }
 

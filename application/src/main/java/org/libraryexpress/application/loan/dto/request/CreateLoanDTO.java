@@ -21,7 +21,7 @@ public record CreateLoanDTO(String customerId, Isbn ISBN, LocalDate dueDate) {
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public CreateLoanDTO(
             @JsonProperty("customerId") String customerId,
-            @JsonProperty("ISBN") String ISBN,
+            @JsonProperty("isbn") String ISBN,
             @JsonProperty("dueDate") LocalDate dueDate
     ) {
         this(customerId, new Isbn(ISBN), dueDate);
