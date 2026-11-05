@@ -4,7 +4,6 @@ import org.libraryexpress.domain.core.util.RandomGenerator;
 import org.libraryexpress.domain.customer.valueobject.Email;
 
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 public class Customer implements Comparable<Customer> {
 
@@ -15,9 +14,17 @@ public class Customer implements Comparable<Customer> {
     private Email email;
 
     private Customer(String id, String name, Email email) {
-        this.id = id != null ? id : RandomGenerator.UUID();
+        this.id = id;
         this.name = name;
         this.email = email;
+    }
+
+    public static Customer create(String name, String email) {
+        return new Customer(RandomGenerator.UUID(), name, new Email(email));
+    }
+
+    public static Customer restore(String id, String name, String email) {
+        return new Customer(id, name, new Email(email));
     }
 
     public String getId() {
@@ -61,31 +68,4 @@ public class Customer implements Comparable<Customer> {
         return Objects.compare(this.name, otherCustomer.getName(), String::compareTo);
     }
 
-    public static class Builder {
-
-        private String id;
-
-        private String name;
-
-        private String email;
-
-        public Builder setId(String id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder setName(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder setEmail(String email) {
-            this.email = email;
-            return this;
-        }
-
-        public Customer build() {
-            return new Customer(id, name, new Email(email));
-        }
-    }
 }

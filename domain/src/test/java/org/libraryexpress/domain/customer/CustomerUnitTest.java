@@ -16,10 +16,7 @@ public class CustomerUnitTest {
     @DisplayName("Should register a customer when no ID is provided.")
     void shouldRegisterCustomer_whenNoIdIsProvided() {
 
-        Customer customer = new Customer.Builder()
-                .setName("John Doe")
-                .setEmail("j.doe@test.com")
-                .build();
+        Customer customer = Customer.create("John Doe", "j.doe@test.com");
 
         assertNotNull(customer.getId());
         assertFalse(customer.getId().isBlank());
@@ -33,11 +30,7 @@ public class CustomerUnitTest {
 
         String customId = "custom-uuid-123";
 
-        Customer customer = new Customer.Builder()
-                .setId(customId)
-                .setName("John Doe")
-                .setEmail("j.doe@test.com")
-                .build();
+        Customer customer = Customer.restore(customId, "John Doe", "j.doe@test.com");
 
         assertNotNull(customer.getId());
         assertFalse(customer.getId().isBlank());
@@ -50,17 +43,9 @@ public class CustomerUnitTest {
 
         String customId = "custom-uuid-123";
 
-        Customer firstCustomer = new Customer.Builder()
-                .setId(customId)
-                .setName("John Doe")
-                .setEmail("j.doe@test.com")
-                .build();
+        Customer firstCustomer = Customer.restore(customId, "John Doe", "j.doe@test.com");
 
-        Customer secondCustomer = new Customer.Builder()
-                .setId(customId)
-                .setName("Jane Doe")
-                .setEmail("jane.28@test.com")
-                .build();
+        Customer secondCustomer = Customer.restore(customId, "Jane Doe", "jane.28@test.com");
 
         assertEquals(firstCustomer, secondCustomer);
         assertEquals(firstCustomer.hashCode(), secondCustomer.hashCode());
@@ -70,15 +55,9 @@ public class CustomerUnitTest {
     @DisplayName("Should sort customers by name when the order is alphabetical.")
     void shouldSortCustomersByName_WhenOrderIsAlphabetical() {
 
-        Customer firstCustomer = new Customer.Builder()
-                .setName("Samantha Smith")
-                .setEmail("s.s@test.com")
-                .build();
+        Customer firstCustomer = Customer.create("Samantha Smith", "s.s@test.com");
 
-        Customer secondCustomer = new Customer.Builder()
-                .setName("David Parker")
-                .setEmail("dp.25@test.com")
-                .build();
+        Customer secondCustomer = Customer.create("David Parker", "dp.25@test.com");
 
         assertFalse(firstCustomer.compareTo(secondCustomer) < 0); // Samantha comes after David (D...S)
         assertFalse(secondCustomer.compareTo(firstCustomer) > 0); // Samantha comes after David (D...S)

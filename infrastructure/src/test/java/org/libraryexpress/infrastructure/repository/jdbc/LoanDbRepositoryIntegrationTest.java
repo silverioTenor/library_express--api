@@ -36,11 +36,11 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         CustomerDbRepository customerRepository = new CustomerDbRepository(dataSource);
 
         // Task Solution: Seed structural parent records into the isolated database to prevent FK violations
-        Customer parentCustomer = new Customer.Builder()
-                .setId(VALID_CUSTOMER_ID)
-                .setName("Loan Tester Customer")
-                .setEmail("loan.tester@libraryexpress.com")
-                .build();
+        Customer parentCustomer = Customer.restore(
+                VALID_CUSTOMER_ID,
+                "Loan Tester Customer",
+                "loan.tester@libraryexpress.com"
+        );
         customerRepository.create(parentCustomer);
 
         Book parentBook = Book.create(VALID_ISBN, "Continuous Delivery Baseline", "Jez Humble", 2010, "AVAILABLE");
