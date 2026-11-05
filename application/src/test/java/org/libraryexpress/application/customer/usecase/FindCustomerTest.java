@@ -40,11 +40,7 @@ class FindCustomerTest {
     @DisplayName("Should successfully return mapped DTO when customer is queried by a valid email string")
     void shouldReturnCustomerDto_whenCustomerExistsAndQueriedByEmail() {
         // Arrange
-        Customer foundCustomer = new Customer.Builder()
-                .setId(VALID_ID)
-                .setName(CUSTOMER_NAME)
-                .setEmail(VALID_EMAIL)
-                .build();
+        Customer foundCustomer = Customer.restore(VALID_ID, CUSTOMER_NAME, VALID_EMAIL);
 
         CustomerDTO expectedDto = new CustomerDTO(VALID_ID, CUSTOMER_NAME, VALID_EMAIL);
 
@@ -68,11 +64,7 @@ class FindCustomerTest {
     @DisplayName("Should successfully return mapped DTO when customer is queried by a valid ID string")
     void shouldReturnCustomerDto_whenCustomerExistsAndQueriedById() {
         // Arrange
-        Customer foundCustomer = new Customer.Builder()
-                .setId(VALID_ID)
-                .setName(CUSTOMER_NAME)
-                .setEmail(VALID_EMAIL)
-                .build();
+        Customer foundCustomer = Customer.restore(VALID_ID, CUSTOMER_NAME, VALID_EMAIL);
 
         CustomerDTO expectedDto = new CustomerDTO(VALID_ID, CUSTOMER_NAME, VALID_EMAIL);
 

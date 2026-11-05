@@ -1,13 +1,25 @@
 package org.libraryexpress.application.customer.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.libraryexpress.domain.customer.valueobject.Email;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 
-public record CreateCustomerDTO(String name, Email email) {
+import java.util.ArrayList;
+import java.util.List;
 
-    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public CreateCustomerDTO(@JsonProperty("name") String name, @JsonProperty("email") String email) {
-        this(name, new Email(email));
+public record CreateCustomerDTO(String name, String email) {
+
+    public CreateCustomerDTO {
+        List<String> errors = new ArrayList<>(2);
+
+        if (name == null || name.isBlank()) {
+            errors.add("The 'name' field cannot be null or empty");
+        }
+
+        if (email == null || email.isBlank()) {
+            errors.add("The 'email' field cannot be null or empty");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new InvalidArgumentException(errors.toString());
+        }
     }
 }

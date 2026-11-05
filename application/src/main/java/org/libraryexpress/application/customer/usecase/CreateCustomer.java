@@ -26,14 +26,14 @@ public class CreateCustomer {
     public CreateCustomerResponseDTO execute(CreateCustomerDTO createCustomerDto) {
         logger.info("Starting customer registration...");
 
-        Optional<Customer> hasClient = this.customerRepository.getByEmail(createCustomerDto.email().value());
+        Optional<Customer> hasClient = this.customerRepository.getByEmail(createCustomerDto.email());
 
         if (hasClient.isPresent()) {
             logger.warn("ABORTED: Customer with email [{}] already exists", createCustomerDto.email());
             throw new UniqueEmailViolationException();
         }
 
-        Customer customer = mapper.toEntity(createCustomerDto).build();
+        Customer customer = mapper.toEntity(createCustomerDto);
         this.customerRepository.create(customer);
 
         logger.info("Customer successfully registered! Customer ID: [{}]", customer.getId());
