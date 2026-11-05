@@ -47,14 +47,15 @@ class SearchLoansTest {
         Set<LoanStatus> statuses = Set.of(LoanStatus.ACTIVE);
         var validFilter = new LoanFilterDTO(null, CUSTOMER_ID, ISBN_STR, "active", 0, 0);
 
-        Loan mockLoan = new Loan.Builder()
-                .setId("loan-1")
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(15))
-                .build();
+        Loan mockLoan = Loan.restore(
+                "loan-1",
+                ISBN_STR,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
         LoanDTO expectedDto = new LoanDTO(
                 "loan-1",
@@ -86,14 +87,15 @@ class SearchLoansTest {
         LocalDate endDate = startDate.plusDays(15);
         var overdueFilter = new LoanFilterDTO(null, CUSTOMER_ID, ISBN_STR, "overdue", 0, 0);
 
-        Loan overdueLoan = new Loan.Builder()
-                .setId("loan-overdue-1")
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.OVERDUE)
-                .setStartDate(startDate)
-                .setEndDate(endDate)
-                .build();
+        Loan overdueLoan = Loan.restore(
+                "loan-overdue-1",
+                ISBN_STR,
+                CUSTOMER_ID,
+                LoanStatus.OVERDUE,
+                startDate,
+                endDate,
+                null
+        );
 
         LoanDTO expectedDto = new LoanDTO(
                 "loan-overdue-1",

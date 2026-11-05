@@ -71,7 +71,7 @@ class CreateLoanTest {
     @Test
     @DisplayName("Should create loan successfully when customer is eligible and book is available")
     void shouldCreateLoan_whenCustomerIsEligibleAndBookIsAvailable() {
-        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR, null);
         Book availableBook = availableBook();
         stubHappyPath(availableBook);
 
@@ -85,7 +85,7 @@ class CreateLoanTest {
     @Test
     @DisplayName("Should default due date to start date plus 15 days when due date is missing")
     void shouldDefaultDueDate_whenDueDateIsMissing() {
-        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR, null);
         stubHappyPath(availableBook());
 
         createLoan.execute(requestDto);
@@ -121,7 +121,7 @@ class CreateLoanTest {
     @Test
     @DisplayName("Should throw CustomerNotFoundException when the customer does not exist")
     void shouldThrowCustomerNotFoundException_whenCustomerIsUnknown() {
-        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR, null);
         doNothing().when(loanEligibilityValidator).validate(CUSTOMER_ID);
         when(bookAvailabilityValidator.validate(ISBN_STR)).thenReturn(availableBook());
         when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.empty());
@@ -135,7 +135,7 @@ class CreateLoanTest {
     @Test
     @DisplayName("Should throw LoanLimitReachedException and abort execution when customer reaches active loan limit")
     void shouldThrowLoanLimitReachedException_whenCustomerReachesActiveLoanLimit() {
-        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR, null);
 
         doThrow(new LoanLimitReachedException("Customer has reached the maximum limit of active loans."))
                 .when(loanEligibilityValidator).validate(CUSTOMER_ID);
@@ -150,7 +150,7 @@ class CreateLoanTest {
     @Test
     @DisplayName("Should throw OverdueLoanException and abort execution when customer has a pending overdue loan")
     void shouldThrowOverdueLoanException_whenCustomerHasOverdueLoan() {
-        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR, null);
 
         doThrow(new OverdueLoanException("Customer has a pending overdue return."))
                 .when(loanEligibilityValidator).validate(CUSTOMER_ID);
@@ -165,7 +165,7 @@ class CreateLoanTest {
     @Test
     @DisplayName("Should throw BookUnavailableException and prevent loan creation when book is not available")
     void shouldThrowBookUnavailableException_whenBookIsUnavailable() {
-        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR);
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, ISBN_STR, null);
 
         doNothing().when(loanEligibilityValidator).validate(CUSTOMER_ID);
         when(bookAvailabilityValidator.validate(ISBN_STR)).thenThrow(new BookUnavailableException());

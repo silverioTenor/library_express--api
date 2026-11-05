@@ -49,14 +49,15 @@ class LoanReturnTest {
     void shouldFinishLoan_whenLoanIsActiveAndWithinDeadline() {
         // Arrange
         LocalDate startDate = LocalDate.of(2026, 8, 1);
-        Loan activeLoan = new Loan.Builder()
-                .setId(LOAN_ID)
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(startDate)
-                .setEndDate(startDate.plusDays(15))
-                .build();
+        Loan activeLoan = Loan.restore(
+                LOAN_ID,
+                ISBN_STR,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                startDate,
+                startDate.plusDays(15),
+                null
+        );
 
         Book borrowedBook = Book.create(ISBN_STR, "Clean Architecture", "", 0, "BORROWED");
 
@@ -84,14 +85,15 @@ class LoanReturnTest {
     void shouldMarkAsOverdue_whenCurrentDateExceedsDeadline() {
         // Arrange
         LocalDate startDate = LocalDate.of(2026, 8, 1);
-        Loan activeLoan = new Loan.Builder()
-                .setId(LOAN_ID)
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(startDate)
-                .setEndDate(startDate.plusDays(15))
-                .build();
+        Loan activeLoan = Loan.restore(
+                LOAN_ID,
+                ISBN_STR,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                startDate,
+                startDate.plusDays(15),
+                null
+        );
 
         Book borrowedBook = Book.create(ISBN_STR, "Clean Architecture", "", 0, "BORROWED");
 
@@ -132,14 +134,16 @@ class LoanReturnTest {
     @DisplayName("Should throw InvalidArgumentException when trying to return a loan that is already finished")
     void shouldThrowInvalidLoanStatusException_whenLoanStatusIsNotAllowed() {
         // Arrange
-        Loan finishedLoan = new Loan.Builder()
-                .setId(LOAN_ID)
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.FINISHED) // Forbidden status in the Use Case's Set.of
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(15))
-                .build();
+        Loan finishedLoan = Loan.restore(
+                LOAN_ID,
+                ISBN_STR,
+                CUSTOMER_ID,
+                LoanStatus.FINISHED,
+                // Forbidden status in the Use Case's Set.of
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(finishedLoan));
 
@@ -155,14 +159,15 @@ class LoanReturnTest {
     @DisplayName("Should throw BookNotFoundException and abort persistence when the registered book is missing from database")
     void shouldThrowBookNotFoundException_whenBookIsMissing() {
         // Arrange
-        Loan activeLoan = new Loan.Builder()
-                .setId(LOAN_ID)
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(15))
-                .build();
+        Loan activeLoan = Loan.restore(
+                LOAN_ID,
+                ISBN_STR,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.empty()); // Livro sumiu da base externa
