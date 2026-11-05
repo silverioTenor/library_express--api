@@ -190,14 +190,14 @@ public class LoanDbRepository implements LoanRepository {
         OffsetDateTime closedAtOffset = resultSet.getObject("closed_at", OffsetDateTime.class);
         Instant closedAtInstant = (closedAtOffset != null) ? closedAtOffset.toInstant() : null;
 
-        return new Loan.Builder()
-                .setId(resultSet.getString("id"))
-                .setISBN(resultSet.getString("isbn"))
-                .setCustomerId(resultSet.getString("customer_id"))
-                .setStatus(LoanStatus.valueOf(resultSet.getString("status")))
-                .setStartDate(resultSet.getObject("start_date", LocalDate.class))
-                .setEndDate(resultSet.getObject("end_date", LocalDate.class))
-                .setClosedAt(closedAtInstant)
-                .build();
+        return Loan.restore(
+                resultSet.getString("id"),
+                resultSet.getString("isbn"),
+                resultSet.getString("customer_id"),
+                LoanStatus.valueOf(resultSet.getString("status")),
+                resultSet.getObject("start_date", LocalDate.class),
+                resultSet.getObject("end_date", LocalDate.class),
+                closedAtInstant
+        );
     }
 }

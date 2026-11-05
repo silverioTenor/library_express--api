@@ -58,14 +58,16 @@ class LoanEligibilityValidatorTest {
     @DisplayName("Should throw OverdueLoanException when the customer has at least one overdue loan")
     void shouldThrowOverdueLoanException_whenCustomerHasOverdueLoan() {
         // Arrange
-        Loan overdueLoan = new Loan.Builder()
-                .setId("loan-1")
-                .setISBN(VALID_ISBN)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.OVERDUE) // Status that triggers the blocking mechanism
-                .setStartDate(LocalDate.now().minusDays(20))
-                .setEndDate(LocalDate.now().minusDays(5))
-                .build();
+        Loan overdueLoan = Loan.restore(
+                "loan-1",
+                VALID_ISBN,
+                CUSTOMER_ID,
+                LoanStatus.OVERDUE,
+                // Status that triggers the blocking mechanism
+                LocalDate.now().minusDays(20),
+                LocalDate.now().minusDays(5),
+                null
+        );
 
         var filter = new LoanFilter(
                 null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
@@ -85,23 +87,25 @@ class LoanEligibilityValidatorTest {
     @DisplayName("Should throw LoanLimitReachedException when active loans count reaches maximum allowed limit")
     void shouldThrowLoanLimitReachedException_whenActiveLoansCountReachesMaxLimit() {
         // Arrange
-        Loan activeLoan1 = new Loan.Builder()
-                .setId("loan-1")
-                .setISBN(VALID_ISBN)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(15))
-                .build();
+        Loan activeLoan1 = Loan.restore(
+                "loan-1",
+                VALID_ISBN,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
-        Loan activeLoan2 = new Loan.Builder()
-                .setId("loan-2")
-                .setISBN("111-22-33333-44-5")
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(15))
-                .build();
+        Loan activeLoan2 = Loan.restore(
+                "loan-2",
+                "111-22-33333-44-5",
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
         var filter = new LoanFilter(
                 null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
@@ -121,14 +125,15 @@ class LoanEligibilityValidatorTest {
     @DisplayName("Should validate successfully when active loans count is strictly below the limit")
     void shouldValidateSuccessfully_whenActiveLoansCountIsBelowLimit() {
         // Arrange
-        Loan activeLoan = new Loan.Builder()
-                .setId("loan-1")
-                .setISBN(VALID_ISBN)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(15))
-                .build();
+        Loan activeLoan = Loan.restore(
+                "loan-1",
+                VALID_ISBN,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
         var filter = new LoanFilter(
                 null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null

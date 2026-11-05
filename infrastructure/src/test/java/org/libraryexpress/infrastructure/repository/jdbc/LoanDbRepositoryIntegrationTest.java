@@ -52,14 +52,15 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     void shouldPersistAndRetrieveLoan_whenPayloadIsValidAndFkConstraintsAreMet() {
         // Arrange (Testing create and findById)
         String loanId = "loan-uuid-active-789";
-        Loan newLoan = new Loan.Builder()
-                .setId(loanId)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(14))
-                .build();
+        Loan newLoan = Loan.restore(
+                loanId,
+                VALID_ISBN,
+                VALID_CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(14),
+                null
+        );
 
         // Act
         loanRepository.create(newLoan);
@@ -79,25 +80,29 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     void shouldUpdateLoanState_whenModifyingExistingRecord() {
         // Arrange (Testing update)
         String loanId = "loan-uuid-updt-555";
-        Loan loan = new Loan.Builder()
-                .setId(loanId)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now().minusDays(5))
-                .setEndDate(LocalDate.now().plusDays(9))
-                .build();
+        Loan loan = Loan.restore(
+                loanId,
+                VALID_ISBN,
+                VALID_CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now().minusDays(5),
+                LocalDate.now().plusDays(9),
+                null
+        );
         loanRepository.create(loan);
 
         // Reconstructing entity representing a standard business return execution lifecycle
-        Loan returnedLoan = new Loan.Builder()
-                .setId(loanId)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.FINISHED) // Mutating business state
-                .setStartDate(LocalDate.now().minusDays(5))
-                .setEndDate(LocalDate.now()) // Modifying temporal fields
-                .build();
+        Loan returnedLoan = Loan.restore(
+                loanId,
+                VALID_ISBN,
+                VALID_CUSTOMER_ID,
+                LoanStatus.FINISHED,
+                // Mutating business state
+                LocalDate.now().minusDays(5),
+                LocalDate.now(),
+                // Modifying temporal fields
+                null
+        );
 
         // Act
         loanRepository.update(returnedLoan);
@@ -116,23 +121,25 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         String loanId1 = "loan-search-1";
         String loanId2 = "loan-search-2";
 
-        Loan activeLoan = new Loan.Builder()
-                .setId(loanId1)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(14))
-                .build();
+        Loan activeLoan = Loan.restore(
+                loanId1,
+                VALID_ISBN,
+                VALID_CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(14),
+                null
+        );
 
-        Loan overdueLoan = new Loan.Builder()
-                .setId(loanId2)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.OVERDUE)
-                .setStartDate(LocalDate.now().minusDays(20))
-                .setEndDate(LocalDate.now().minusDays(6))
-                .build();
+        Loan overdueLoan = Loan.restore(
+                loanId2,
+                VALID_ISBN,
+                VALID_CUSTOMER_ID,
+                LoanStatus.OVERDUE,
+                LocalDate.now().minusDays(20),
+                LocalDate.now().minusDays(6),
+                null
+        );
 
         loanRepository.create(activeLoan);
         loanRepository.create(overdueLoan);

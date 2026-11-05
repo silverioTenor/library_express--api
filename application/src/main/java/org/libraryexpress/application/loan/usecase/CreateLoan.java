@@ -12,7 +12,6 @@ import org.libraryexpress.domain.customer.repository.CustomerRepository;
 import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.book.enums.BookStatus;
-import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.core.util.RandomGenerator;
 import org.libraryexpress.domain.book.repository.BookRepository;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
@@ -50,7 +49,7 @@ public class CreateLoan {
         logger.info("Initiating loan creation. loan DTO: [{}]", createLoanDto);
 
         this.loanEligibilityValidator.validate(createLoanDto.customerId());
-        Book book = this.bookAvailabilityValidator.validate(createLoanDto.ISBN().value());
+        Book book = this.bookAvailabilityValidator.validate(createLoanDto.isbn());
 
         this.customerRepository
                 .getById(createLoanDto.customerId())
@@ -64,14 +63,7 @@ public class CreateLoan {
 
         String id = RandomGenerator.UUID();
 
-        Loan loan = new Loan.Builder()
-                .setId(id)
-                .setISBN(createLoanDto.ISBN().value())
-                .setCustomerId(createLoanDto.customerId())
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(startDate)
-                .setEndDate(dueDate)
-                .build();
+        Loan loan = createLoanDto.toEntity(id, startDate, dueDate);
 
         book.changeStatus(BookStatus.BORROWED);
 

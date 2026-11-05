@@ -13,12 +13,6 @@ public interface LoanMapper {
 
     LoanDTO toResponseDto(Loan loan);
 
-    Loan.Builder toEntity(LoanDTO dto);
-
-//    default Isbn mapStringToIsbn(String value) {
-//        return value != null ? new Isbn(value) : null;
-//    }
-
     default String mapIsbnToString(Isbn isbn) {
         return isbn != null ? isbn.value() : null;
     }

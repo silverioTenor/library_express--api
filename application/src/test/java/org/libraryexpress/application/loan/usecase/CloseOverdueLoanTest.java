@@ -46,14 +46,16 @@ class CloseOverdueLoanTest {
     @DisplayName("Should successfully transition status to FINISHED when loan is OVERDUE")
     void shouldCloseLoan_whenLoanStatusIsOverdue() {
         // Arrange
-        Loan overdueLoan = new Loan.Builder()
-                .setId(LOAN_ID)
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.OVERDUE) // Valid state for this palliative operational flow
-                .setStartDate(LocalDate.now().minusDays(20))
-                .setEndDate(LocalDate.now().minusDays(5))
-                .build();
+        Loan overdueLoan = Loan.restore(
+                LOAN_ID,
+                ISBN_STR,
+                CUSTOMER_ID,
+                LoanStatus.OVERDUE,
+                // Valid state for this palliative operational flow
+                LocalDate.now().minusDays(20),
+                LocalDate.now().minusDays(5),
+                null
+        );
 
         Clock clock = Clock.fixed(Instant.now().minus(20, ChronoUnit.DAYS), ZoneId.of("UTC"));
         CloseOverdueLoan closeOverdueLoan1 = new CloseOverdueLoan(loanRepository, clock);
@@ -87,14 +89,16 @@ class CloseOverdueLoanTest {
     @DisplayName("Should throw OverdueLoanException and never update database when loan status is not OVERDUE")
     void shouldThrowOverdueLoanException_whenLoanStatusIsActive() {
         // Arrange
-        Loan activeLoan = new Loan.Builder()
-                .setId(LOAN_ID)
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE) // Invalid state: this usecase is exclusively restricted to OVERDUE
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(15))
-                .build();
+        Loan activeLoan = Loan.restore(
+                LOAN_ID,
+                ISBN_STR,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                // Invalid state: this usecase is exclusively restricted to OVERDUE
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
 

@@ -61,6 +61,28 @@ public class Loan implements Comparable<Loan> {
         this.closedAt = closedAt;
     }
 
+    public static Loan create(
+            String id,
+            String ISBN,
+            String customerId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        return new Loan(id, new Isbn(ISBN), customerId, LoanStatus.ACTIVE, startDate, endDate, null);
+    }
+
+    public static Loan restore(
+            String id,
+            String ISBN,
+            String customerId,
+            LoanStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Instant closedAt
+    ) {
+        return new Loan(id, new Isbn(ISBN), customerId, status, startDate, endDate, closedAt);
+    }
+
     public void processReturn(Clock clock, boolean isOverdueFlow) {
         if (this.closedAt != null && this.status.equals(LoanStatus.FINISHED)) {
             throw new DomainException(DomainErrorType.DATA_CONFLICT, "Loan already returned");
@@ -140,59 +162,4 @@ public class Loan implements Comparable<Loan> {
         return Objects.compare(startDate, o.getStartDate(), LocalDate::compareTo);
     }
 
-    public static class Builder {
-
-        private String id;
-
-        private String ISBN;
-
-        private String customerId;
-
-        private LoanStatus status;
-
-        private LocalDate startDate;
-
-        private LocalDate endDate;
-
-        private Instant closedAt;
-
-        public Builder setId(String id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder setISBN(String ISBN) {
-            this.ISBN = ISBN;
-            return this;
-        }
-
-        public Builder setCustomerId(String customerId) {
-            this.customerId = customerId;
-            return this;
-        }
-
-        public Builder setStatus(LoanStatus status) {
-            this.status = status;
-            return this;
-        }
-
-        public Builder setStartDate(LocalDate startDate) {
-            this.startDate = startDate;
-            return this;
-        }
-
-        public Builder setEndDate(LocalDate endDate) {
-            this.endDate = endDate;
-            return this;
-        }
-
-        public Builder setClosedAt(Instant closedAt) {
-            this.closedAt = closedAt;
-            return this;
-        }
-
-        public Loan build() {
-            return new Loan(id, new Isbn(ISBN), customerId, status, startDate, endDate, closedAt);
-        }
-    }
 }

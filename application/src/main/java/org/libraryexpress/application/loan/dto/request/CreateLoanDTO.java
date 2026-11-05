@@ -1,29 +1,31 @@
 package org.libraryexpress.application.loan.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
+import org.libraryexpress.domain.loan.entity.Loan;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
-public record CreateLoanDTO(String customerId, Isbn ISBN, LocalDate dueDate) {
+public record CreateLoanDTO(String customerId, String isbn, LocalDate dueDate) {
 
     public CreateLoanDTO {
-        if (customerId == null || customerId.isBlank())
-            throw new InvalidArgumentException("Customer ID cannot be null or blank");
+        List<String> errors = new ArrayList<>(2);
+
+        if (customerId == null || customerId.isBlank()) {
+            errors.add("The 'customerId' field cannot be null or empty");
+        }
+
+        if (isbn == null || isbn.isBlank()) {
+            errors.add("The 'isbn' field cannot be null or empty");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new InvalidArgumentException(errors.toString());
+        }
     }
 
-    public CreateLoanDTO(String customerId, String ISBN) {
-        this(customerId, ISBN, null);
-    }
-
-    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public CreateLoanDTO(
-            @JsonProperty("customerId") String customerId,
-            @JsonProperty("isbn") String ISBN,
-            @JsonProperty("dueDate") LocalDate dueDate
-    ) {
-        this(customerId, new Isbn(ISBN), dueDate);
+    public Loan toEntity(String id, LocalDate startDate, LocalDate endDate) {
+        return Loan.create(id, isbn, customerId, startDate, endDate);
     }
 }
