@@ -6,7 +6,7 @@ import org.libraryexpress.domain.core.exception.DomainException;
 public class UniqueIsbnViolationException extends DomainException {
 
     public UniqueIsbnViolationException() {
-        super(DomainErrorType.DATA_CONFLICT, "It is not permitted to register a book with an ISBN that is already in use.");
+        super(DomainErrorType.DATA_CONFLICT, "It is not permitted to register a book with an isbn that is already in use.");
     }
 
     public UniqueIsbnViolationException(String message) {

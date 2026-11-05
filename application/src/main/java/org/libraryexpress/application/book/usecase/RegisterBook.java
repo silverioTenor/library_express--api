@@ -24,19 +24,19 @@ public class RegisterBook {
     public RegisterBookResponseDTO execute(RegisterBookDTO registerBookDto) {
         logger.info("Starting book registration...");
 
-        var hasRegistered = this.bookRepository.getByIsbn(registerBookDto.ISBN().value());
+        var hasRegistered = this.bookRepository.getByIsbn(registerBookDto.isbn());
 
         if (hasRegistered.isPresent()) {
-            logger.warn("ABORTED: Book already exists. ISBN: [{}]", registerBookDto.ISBN());
+            logger.warn("ABORTED: Book already exists. isbn: [{}]", registerBookDto.isbn());
             throw new UniqueIsbnViolationException();
         }
 
-        Book book = this.mapper.toEntity(registerBookDto).build();
+        Book book = registerBookDto.toEntity();
 
         this.bookRepository.create(book);
 
         logger.info("Book successfully registered!");
 
-        return new RegisterBookResponseDTO(book.getISBN().value());
+        return new RegisterBookResponseDTO(book.getIsbn().value());
     }
 }

@@ -189,10 +189,6 @@ class CreateLoanTest {
     }
 
     private static Book availableBook() {
-        return new Book.Builder()
-                .setISBN(ISBN_STR)
-                .setTitle("Test-Driven Development")
-                .setStatus(BookStatus.AVAILABLE)
-                .build();
+        return Book.create(ISBN_STR, "Test-Driven Development", "", 0, "AVAILABLE");
     }
 }

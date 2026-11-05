@@ -43,13 +43,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 .build();
         customerRepository.create(parentCustomer);
 
-        Book parentBook = new Book.Builder()
-                .setISBN(VALID_ISBN)
-                .setTitle("Continuous Delivery Baseline")
-                .setAuthor("Jez Humble")
-                .setYear(2010)
-                .setStatus(BookStatus.AVAILABLE)
-                .build();
+        Book parentBook = Book.create(VALID_ISBN, "Continuous Delivery Baseline", "Jez Humble", 2010, "AVAILABLE");
         bookRepository.create(parentBook);
     }
 
