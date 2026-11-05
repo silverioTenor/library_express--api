@@ -28,7 +28,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     }
 
     @Test
-    @DisplayName("Should successfully persist a new book and retrieve it back by its ISBN identity descriptor")
+    @DisplayName("Should successfully persist a new book and retrieve it back by its isbn identity descriptor")
     void shouldPersistAndRetrieveBook_whenPayloadIsValid() {
         // Arrange (Testing create and getByIsbn)
         String isbn = "9788535902778";
@@ -45,7 +45,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     }
 
     @Test
-    @DisplayName("Should throw RuntimeException when trying to insert an identical ISBN business key")
+    @DisplayName("Should throw RuntimeException when trying to insert an identical isbn business key")
     void shouldThrowRuntimeException_whenIsbnConstraintIsViolatedAtDatabaseLevel() {
         // Arrange (Testing validation exception translation mapping)
         String duplicatedIsbn = "9788573021936";
@@ -69,13 +69,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book);
 
         // Modifying entity state via domain patterns (representing an internal update cycle)
-        Book updatedBook = new Book.Builder()
-                .setISBN(isbn)
-                .setTitle("Clean Architecture - Final Release")
-                .setAuthor("Robert C. Martin")
-                .setYear(2017)
-                .setStatus(BookStatus.BORROWED) // Triggering status change translation
-                .build();
+        Book updatedBook = Book.create(isbn, "Clean Architecture - Final Release", "Robert C. Martin", 2017, "BORROWED");
 
         // Act
         bookRepository.update(updatedBook);
@@ -136,12 +130,6 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
      * Clean helper method to encapsulate recurring builder initializations inside the test suite matrix.
      */
     private Book createSampleBook(String isbn, String title, BookStatus status) {
-        return new Book.Builder()
-                .setISBN(isbn)
-                .setTitle(title)
-                .setAuthor("Test Author Reference")
-                .setYear(2020)
-                .setStatus(status)
-                .build();
+        return Book.create(isbn, title, "Test Author Reference", 2020, status.name());
     }
 }

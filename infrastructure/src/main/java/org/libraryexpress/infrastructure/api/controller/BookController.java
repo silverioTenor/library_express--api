@@ -48,7 +48,11 @@ public final class BookController {
             @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Book created"),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Book created",
+                    content =  @Content(schema = @Schema(implementation = RegisterBookResponseDTO.class))
+            ),
             @ApiResponse(
                     responseCode = "400",
                     description = "Validation failure",
@@ -56,7 +60,7 @@ public final class BookController {
             ),
             @ApiResponse(
                     responseCode = "409",
-                    description = "Duplicate ISBN",
+                    description = "Duplicate isbn",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
@@ -75,7 +79,7 @@ public final class BookController {
     @GET
     @Path("/{isbn}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a book by ISBN", requestBody = @RequestBody(content = @Content()))
+    @Operation(summary = "Get a book by isbn", requestBody = @RequestBody(content = @Content()))
     @Parameters({
             @Parameter(name = "isbn", in = ParameterIn.PATH, required = true),
             @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)

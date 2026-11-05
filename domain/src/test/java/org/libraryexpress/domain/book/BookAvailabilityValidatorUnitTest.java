@@ -38,14 +38,7 @@ public class BookAvailabilityValidatorUnitTest {
     void shouldReturnBook_whenBookIsFoundAndAvailable() {
         // Arrange
         String isbnStr = new Isbn("978-85-209-2325-2").value();
-
-        Book book = new Book.Builder()
-                .setISBN(isbnStr)
-                .setTitle("Book Test")
-                .setAuthor("John Doe")
-                .setYear(2008)
-                .setStatus(BookStatus.AVAILABLE)
-                .build();
+        Book book = Book.create(isbnStr, "Book Test", "John Doe", 2008, "AVAILABLE");
 
         BookFilter filter = new BookFilter(new Isbn(isbnStr), null, null, null, null, null);
         QueryResult<Book> result = new QueryResult<>(List.of(book), 1);
@@ -57,10 +50,10 @@ public class BookAvailabilityValidatorUnitTest {
 
         // Assert
         assertNotNull(availableBook);
-        assertEquals(isbnStr, availableBook.getISBN().value());
+        assertEquals(isbnStr, availableBook.getIsbn().value());
         assertEquals("Book Test", availableBook.getTitle());
         assertEquals("John Doe", availableBook.getAuthor());
-        assertEquals(2008, availableBook.getYear());
+        assertEquals(2008, availableBook.getPublicationYear());
         assertEquals(BookStatus.AVAILABLE, availableBook.getStatus());
 
         verify(bookRepository, times(1)).search(filter);
@@ -86,14 +79,7 @@ public class BookAvailabilityValidatorUnitTest {
     void shouldThrowBookUnavailableException_whenBookIsFoundButNotAvailable() {
         // Arrange
         String isbnStr = new Isbn("978-65-86015-01-0").value();
-
-        Book borrowedBook = new Book.Builder()
-                .setISBN(isbnStr)
-                .setTitle("Book Test")
-                .setAuthor("John Doe")
-                .setYear(2008)
-                .setStatus(BookStatus.BORROWED)
-                .build();
+        Book borrowedBook = Book.create(isbnStr, "Book Test", "John Doe", 2008, "BORROWED");
 
         BookFilter filter = new BookFilter(new Isbn(isbnStr), null, null, null, null, null);
         QueryResult<Book> result = new QueryResult<>(List.of(borrowedBook), 0);

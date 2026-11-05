@@ -27,10 +27,10 @@ public class BookDbRepository implements BookRepository {
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)
         ) {
-            statement.setString(1, book.getISBN().value());
+            statement.setString(1, book.getIsbn().value());
             statement.setString(2, book.getTitle());
             statement.setString(3, book.getAuthor());
-            statement.setInt(4, book.getYear());
+            statement.setInt(4, book.getPublicationYear());
             statement.setString(5, book.getStatus().name());
             statement.execute();
 
@@ -49,9 +49,9 @@ public class BookDbRepository implements BookRepository {
         ) {
             statement.setString(1, book.getTitle());
             statement.setString(2, book.getAuthor());
-            statement.setInt(3, book.getYear());
+            statement.setInt(3, book.getPublicationYear());
             statement.setString(4, book.getStatus().name());
-            statement.setString(5, book.getISBN().value());
+            statement.setString(5, book.getIsbn().value());
 
             statement.executeUpdate();
 
@@ -78,7 +78,7 @@ public class BookDbRepository implements BookRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing book payload query by ISBN: " + e.getMessage(), e);
+            throw new RuntimeException("Fatal database error executing book payload query by isbn: " + e.getMessage(), e);
         }
 
         return Optional.empty();
@@ -160,12 +160,12 @@ public class BookDbRepository implements BookRepository {
      * Map a book tuple back into its respective clean domain model abstraction.
      */
     private Book mapRowToBook(ResultSet resultSet) throws SQLException {
-        return new Book.Builder()
-                .setISBN(resultSet.getString("isbn"))
-                .setTitle(resultSet.getString("title"))
-                .setAuthor(resultSet.getString("author"))
-                .setYear(resultSet.getInt("year_published"))
-                .setStatus(BookStatus.valueOf(resultSet.getString("status"))) // Parsing plain database VARCHAR back to rich enum
-                .build();
+        return Book.create(
+                resultSet.getString("isbn"),
+                resultSet.getString("title"),
+                resultSet.getString("author"),
+                resultSet.getInt("year_published"),
+                resultSet.getString("status")
+        );
     }
 }

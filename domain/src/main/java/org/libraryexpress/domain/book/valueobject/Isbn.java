@@ -51,7 +51,7 @@ public record Isbn(String value) {
     private static void validateIsbn10(String isbn) {
         // Validates if it matches the basic ISBN-10 format
         if (isbn.length() != 10 || !isbn.matches("\\d{9}[\\dX]")) {
-            throw new InvalidArgumentException("Invalid ISBN format provided: " + isbn);
+            throw new InvalidArgumentException("Invalid isbn format provided: " + isbn);
         }
 
         // Strict Validation of the Original Check Digit (Modulo 11)

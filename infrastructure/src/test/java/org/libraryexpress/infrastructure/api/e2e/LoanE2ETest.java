@@ -39,9 +39,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String payload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "isbn": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.isbn());
 
         given()
             .contentType(ContentType.JSON)
@@ -69,7 +69,7 @@ public class LoanE2ETest extends E2EBaseConfig {
 
         given()
             .contentType(ContentType.JSON)
-            .param("ISBN", book.ISBN())
+            .param("isbn", book.isbn())
         .when()
             .get("/loans")
         .then()
@@ -96,9 +96,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String payload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "isbn": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.isbn());
 
         // Create new loan
         given()
@@ -141,9 +141,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String payload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "isbn": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.isbn());
 
        var loanId = given()
                        .contentType(ContentType.JSON)
@@ -178,7 +178,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         var book = TestDataFactory.getBook("978-2-3885-1775-2");
 
         String loanId = UUID.randomUUID().toString();
-        TestDataFactory.createLoan(loanId, customer.id(), book.ISBN(), "ACTIVE");
+        TestDataFactory.createLoan(loanId, customer.id(), book.isbn(), "ACTIVE");
 
         assertNotNull(customer);
         assertNotNull(book);
@@ -204,7 +204,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         var book = TestDataFactory.getBook("9788535902778");
 
         String loanId = UUID.randomUUID().toString();
-        TestDataFactory.createLoan(loanId, customer.id(), book.ISBN(), "OVERDUE");
+        TestDataFactory.createLoan(loanId, customer.id(), book.isbn(), "OVERDUE");
 
         given()
                 .contentType(ContentType.JSON)
@@ -229,7 +229,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         String firstPayload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "9780140283334"
+                    "isbn": "9780140283334"
                 }
                 """.formatted(customer.id());
 
@@ -245,7 +245,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         String secondPayload = """
                 {
                     "customerId": "invalid-customer-id",
-                    "ISBN": "9788520921579"
+                    "isbn": "9788520921579"
                 }
                 """;
 
@@ -269,9 +269,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String firstPayload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "isbn": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.isbn());
 
         given()
             .contentType(ContentType.JSON)
@@ -293,14 +293,14 @@ public class LoanE2ETest extends E2EBaseConfig {
         var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
 
         String loanId = UUID.randomUUID().toString();
-        TestDataFactory.createLoan(loanId, customer.id(), book.ISBN(), "OVERDUE");
+        TestDataFactory.createLoan(loanId, customer.id(), book.isbn(), "OVERDUE");
 
         String payload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "isbn": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.isbn());
 
         given()
             .contentType(ContentType.JSON)
@@ -324,9 +324,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String payload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "isbn": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.isbn());
 
         given()
                 .contentType(ContentType.JSON)
@@ -436,10 +436,10 @@ public class LoanE2ETest extends E2EBaseConfig {
         static void createBook(String isbn) {
             String payload = """
                     {
-                        "ISBN": "%s",
+                        "isbn": "%s",
                         "title": "Clean Architecture Modern Java",
                         "author": "John Doe",
-                        "year": 2026,
+                        "publicationYear": 2026,
                         "status": "AVAILABLE"
                     }
                     """.formatted(isbn);
@@ -459,7 +459,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         }
 
         static OutputPaginationDto<LoanDTO> getPagedLoans(String... parameterValues) {
-            String[] parameterNames = {"ISBN", "customerId", "statuses"};
+            String[] parameterNames = {"isbn", "customerId", "statuses"};
 
             var request = given()
                 .contentType(ContentType.JSON);
