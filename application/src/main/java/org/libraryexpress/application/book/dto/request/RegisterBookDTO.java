@@ -4,8 +4,10 @@ import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 
-import java.security.InvalidParameterException;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public record RegisterBookDTO(
         String isbn,
@@ -15,10 +17,35 @@ public record RegisterBookDTO(
         String status
 ) {
     public RegisterBookDTO {
-        validateField("isbn", isbn);
-        validateField("title", title);
-        validateField("author", author);
-        parseStatus(status);
+        List<String> errors = new ArrayList<>();
+
+        if (
+                (isbn == null || isbn.isBlank()) ||
+                (title == null || title.isBlank()) ||
+                (author == null || author.isBlank())
+        ) {
+           errors.add("Isbn, title and author are mandatory");
+        }
+
+        if (publicationYear < 0 || publicationYear > LocalDate.now().getYear()) {
+            errors.add("Publication year is invalid");
+        }
+
+        if (status != null && !status.isBlank()) {
+            String strStatus = status.toUpperCase().trim();
+
+            var result = Arrays.stream(BookStatus.values())
+                    .filter(bookStatus -> bookStatus.name().equals(strStatus))
+                    .findFirst();
+
+            if (result.isEmpty()) {
+                errors.add("Invalid status provided");
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new InvalidArgumentException(errors.toString());
+        }
     }
 
     public Book toEntity() {
@@ -29,27 +56,5 @@ public record RegisterBookDTO(
                 this.publicationYear(),
                 this.status()
         );
-    }
-
-    private static String validateField(String key, String value) {
-        if (value == null || value.isBlank()) {
-            throw new InvalidParameterException("The field " + key + " is required");
-        }
-        return value;
-    }
-
-    private static String parseStatus(String strStatus) {
-        if (strStatus == null || strStatus.isBlank()) {
-            return BookStatus.AVAILABLE.name();
-        }
-
-        String srtStatusCleared = strStatus.trim().toUpperCase();
-        var result = Arrays.stream(BookStatus.values()).filter(status -> status.name().equals(srtStatusCleared));
-
-        if (result.findFirst().isEmpty()) {
-            throw new InvalidArgumentException("Invalid status value provided in query params.");
-        }
-
-        return srtStatusCleared;
     }
 }
