@@ -83,11 +83,11 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         Customer baseCustomer = createSampleCustomer(customerId, "Old Name", "old.email@libraryexpress.com");
         customerRepository.create(baseCustomer);
 
-        Customer updatedCustomer = new Customer.Builder()
-                .setId(customerId)
-                .setName("New Brand Identity Name")
-                .setEmail("new.email@libraryexpress.com")
-                .build();
+        Customer updatedCustomer = Customer.restore(
+                customerId,
+                "New Brand Identity Name",
+                "new.email@libraryexpress.com"
+        );
 
         // Act
         customerRepository.update(updatedCustomer);
@@ -119,13 +119,9 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     }
 
     /**
-     * Clean helper method to encapsulate recurring customer builder mappings inside the test suite matrix.
+     * Clean helper method to encapsulate recurring customer creation inside the test suite matrix.
      */
     private Customer createSampleCustomer(String id, String name, String email) {
-        return new Customer.Builder()
-                .setId(id)
-                .setName(name)
-                .setEmail(email)
-                .build();
+        return Customer.restore(id, name, email);
     }
 }

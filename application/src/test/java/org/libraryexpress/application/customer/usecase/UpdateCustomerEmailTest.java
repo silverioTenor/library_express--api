@@ -39,11 +39,7 @@ class UpdateCustomerEmailTest {
         // Arrange
         UpdateCustomerEmailDTO requestDto = new UpdateCustomerEmailDTO(VALID_ID, NEW_EMAIL);
 
-        Customer targetCustomer = new Customer.Builder()
-                .setId(VALID_ID)
-                .setName(CUSTOMER_NAME)
-                .setEmail(OLD_EMAIL)
-                .build();
+        Customer targetCustomer = Customer.restore(VALID_ID, CUSTOMER_NAME, OLD_EMAIL);
 
         // Stubbing repository to return our editable domain entity instance
         when(customerRepository.getById(VALID_ID)).thenReturn(Optional.of(targetCustomer));

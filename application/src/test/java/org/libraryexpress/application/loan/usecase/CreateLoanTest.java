@@ -177,11 +177,7 @@ class CreateLoanTest {
     }
 
     private void stubHappyPath(Book availableBook) {
-        Customer customer = new Customer.Builder()
-                .setName("John Doe")
-                .setEmail("test@test.com")
-                .setId(CUSTOMER_ID)
-                .build();
+        Customer customer = Customer.restore(CUSTOMER_ID, "John Doe", "test@test.com");
 
         doNothing().when(loanEligibilityValidator).validate(CUSTOMER_ID);
         when(bookAvailabilityValidator.validate(ISBN_STR)).thenReturn(availableBook);

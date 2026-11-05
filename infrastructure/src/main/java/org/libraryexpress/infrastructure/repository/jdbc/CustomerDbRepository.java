@@ -177,10 +177,10 @@ public class CustomerDbRepository implements CustomerRepository {
      * Map a customer tuple back into its respective clean domain model abstraction.
      */
     private Customer mapRowToCustomer(ResultSet resultSet) throws SQLException {
-        return new Customer.Builder()
-                .setId(resultSet.getString("id"))
-                .setName(resultSet.getString("name"))
-                .setEmail(resultSet.getString("email"))
-                .build();
+        return Customer.restore(
+                resultSet.getString("id"),
+                resultSet.getString("name"),
+                resultSet.getString("email")
+        );
     }
 }
