@@ -6,7 +6,6 @@ import org.libraryexpress.domain.book.exception.BookUnavailableException;
 import org.libraryexpress.infrastructure.UnitTest;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
-import org.libraryexpress.infrastructure.api.exception.GlobalExceptionHandler;
 import org.libraryexpress.infrastructure.api.routing.CustomHttpHandler;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;

@@ -2,7 +2,6 @@ package org.libraryexpress.infrastructure.api.routing;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import org.libraryexpress.infrastructure.api.exception.GlobalExceptionHandler;
 import org.libraryexpress.infrastructure.api.server.SunHttpServer;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
