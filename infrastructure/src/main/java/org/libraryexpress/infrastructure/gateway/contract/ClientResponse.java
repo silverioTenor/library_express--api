@@ -1,4 +1,4 @@
-package org.libraryexpress.infrastructure.api.contract;
+package org.libraryexpress.infrastructure.gateway.contract;
 
 public record ClientResponse(int statusCode, String body) {
 }

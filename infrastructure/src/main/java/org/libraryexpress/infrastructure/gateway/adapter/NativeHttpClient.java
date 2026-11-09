@@ -1,13 +1,13 @@
-package org.libraryexpress.infrastructure.api.adapter;
+package org.libraryexpress.infrastructure.gateway.adapter;
 
-import org.libraryexpress.infrastructure.api.contract.ClientResponse;
+import org.libraryexpress.infrastructure.gateway.contract.ClientResponse;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.*;
 import java.time.Duration;
 
-public class CustomHttpClient {
+public class NativeHttpClient implements CustomHttpClient {
     private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(3)) // To fail-fast use 2s
             .build();

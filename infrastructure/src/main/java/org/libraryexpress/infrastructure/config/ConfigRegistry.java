@@ -38,9 +38,7 @@ public final class ConfigRegistry {
 
     private ConfigRegistry() {}
 
-    /*
-    * In the future, consider using Lazy Initialization or caching for frequently called methods.
-    * */
+    // In the future, consider using Lazy Initialization or caching for frequently called methods.
 
     public static int getApiPort() {
         return Integer.parseInt(resolve("API_PORT", "3000"));
@@ -88,6 +86,10 @@ public final class ConfigRegistry {
 
     public static String getAppEnv() {
         return resolve("APP_ENV", "prod");
+    }
+
+    public static String getGoogleBooksApi() {
+        return resolve("GOOGLE_BOOKS_API", "optional");
     }
 
     private static String resolve(String key, String defaultValue) {

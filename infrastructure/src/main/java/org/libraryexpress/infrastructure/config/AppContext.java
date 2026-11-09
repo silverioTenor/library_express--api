@@ -20,6 +20,8 @@ import org.libraryexpress.infrastructure.api.controller.LoanController;
 import org.libraryexpress.infrastructure.api.routing.openApi.OpenApiContractHandler;
 import org.libraryexpress.infrastructure.api.routing.openApi.SwaggerUiHandler;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
+import org.libraryexpress.infrastructure.gateway.adapter.NativeHttpClient;
+import org.libraryexpress.infrastructure.gateway.googlebooks.GoogleBooksGateway;
 import org.libraryexpress.infrastructure.repository.jdbc.BookDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.CustomerDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.LoanDbRepository;
@@ -49,11 +51,20 @@ public class AppContext {
     private final CloseOverdueLoan closeOverdueLoan;
     private final LoanController loanController;
 
+    // DOCS
     private final OpenApiContractHandler  openApiContractHandler;
     private final SwaggerUiHandler swaggerUiHandler;
 
+    // GATEWAYS
+    private final NativeHttpClient nativeHttpClient;
+    private final GoogleBooksGateway googleBooksGateway;
+
     public AppContext(ConnectionProvider connectionProvider) {
         DataSource dataSource = connectionProvider.getDataSource();
+
+        // GATEWAYS
+        this.nativeHttpClient = new NativeHttpClient();
+        this.googleBooksGateway = new GoogleBooksGateway(this.nativeHttpClient);
 
         // CUSTOMER
         CustomerDbRepository customerRepository = new CustomerDbRepository(dataSource);
@@ -68,7 +79,7 @@ public class AppContext {
         BookDbRepository bookRepository = new BookDbRepository(dataSource);
         BookAvailabilityValidator bookAvailabilityValidator = new BookAvailabilityValidator(bookRepository);
 
-        this.registerBook = new RegisterBook(bookRepository, BookMapper.INSTANCE);
+        this.registerBook = new RegisterBook(bookRepository, googleBooksGateway, BookMapper.INSTANCE);
         this.findBook = new FindBook(bookRepository, BookMapper.INSTANCE);
         this.serchBooks = new SearchBooks(bookRepository, BookMapper.INSTANCE);
         this.bookController = new BookController(this);
@@ -91,6 +102,7 @@ public class AppContext {
         this.closeOverdueLoan = new CloseOverdueLoan(loanRepository, Clock.systemDefaultZone());
         this.loanController = new LoanController(this);
 
+        // DOCS
         this.openApiContractHandler = new OpenApiContractHandler();
         this.swaggerUiHandler = new SwaggerUiHandler();
     }
@@ -157,5 +169,9 @@ public class AppContext {
 
     public SwaggerUiHandler getSwaggerUiHandler() {
         return swaggerUiHandler;
+    }
+
+    public GoogleBooksGateway getGoogleBooksGateway() {
+        return googleBooksGateway;
     }
 }
