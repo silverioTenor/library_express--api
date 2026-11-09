@@ -19,12 +19,8 @@ public record RegisterBookDTO(
     public RegisterBookDTO {
         List<String> errors = new ArrayList<>();
 
-        if (
-                (isbn == null || isbn.isBlank()) ||
-                (title == null || title.isBlank()) ||
-                (author == null || author.isBlank())
-        ) {
-           errors.add("Isbn, title and author are mandatory");
+        if ((title == null || title.isBlank()) || (author == null || author.isBlank())) {
+           errors.add("Title and author are mandatory");
         }
 
         if (publicationYear < 0 || publicationYear > LocalDate.now().getYear()) {
@@ -46,6 +42,10 @@ public record RegisterBookDTO(
         if (!errors.isEmpty()) {
             throw new InvalidArgumentException(errors.toString());
         }
+    }
+
+    public boolean isManualRegistration() {
+        return (!this.isbn().isBlank() && !this.status().isBlank());
     }
 
     public Book toEntity() {

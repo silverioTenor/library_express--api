@@ -1,53 +1,60 @@
 package org.libraryexpress.infrastructure.gateway.googlebooks;
 
+import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
 import org.libraryexpress.domain.book.valueobject.BookMetadata;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
-import org.libraryexpress.infrastructure.api.adapter.CustomHttpClient;
-import org.libraryexpress.infrastructure.api.contract.ClientResponse;
+import org.libraryexpress.infrastructure.gateway.adapter.CustomHttpClient;
+import org.libraryexpress.infrastructure.gateway.contract.ClientResponse;
+import org.libraryexpress.infrastructure.config.ConfigRegistry;
 import org.libraryexpress.infrastructure.exception.InfrastructureException;
-import org.libraryexpress.infrastructure.util.JsonReader;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import static org.libraryexpress.infrastructure.exception.InfrastructureErrorType.*;
 
-final class GoogleBooksGateway {
+public final class GoogleBooksGateway implements BookMetadataGateway {
 
     private static final CustomLogger log = CustomLoggerFactory.getLogger(GoogleBooksGateway.class);
 
     private final CustomHttpClient customHttpClient;
 
-    public GoogleBooksGateway() {
-        customHttpClient = new CustomHttpClient();
+    public GoogleBooksGateway(CustomHttpClient customHttpClient) {
+        this.customHttpClient = customHttpClient;
     }
 
     public Optional<BookMetadata> fetch(String titleParam, String authorParam) {
-        log.info("Searching in Google Books registry...");
+        log.info("Searching in External Registry...");
 
         if ((titleParam == null || titleParam.isBlank()) || (authorParam == null || authorParam.isBlank())) {
-            log.error("Search failed. missing required parameters: Title: [{}], Author: [{}]", titleParam, authorParam);
+            log.error("Search failed. missing required parameters: Title: {}, Author: {}", titleParam, authorParam);
             throw new IllegalArgumentException("Title and author parameters cannot be null or empty");
         }
 
-        String title = titleParam.replace(" ", "+");
-        String author = authorParam.replace(" ", "+");
+        String encodedTitle = URLEncoder.encode(titleParam, StandardCharsets.UTF_8);
+        String encodedAuthor = URLEncoder.encode(authorParam, StandardCharsets.UTF_8);
 
-        String url = "https://openlibrary.org/search.json?title="
-                + title + "&author=" + author + "&fields=title,author_name,isbn,first_publish_year&limit=1";
+        String apiKey = ConfigRegistry.getGoogleBooksApi();
+
+        String secureUrl = "https://www.googleapis.com/books/v1/volumes?q=" +
+                encodedTitle + "&inauthor=" + encodedAuthor + "&key=" + apiKey;
+
+        log.error("Google API URL: {}", secureUrl.replace(apiKey, "*****"));
 
         try {
-            ClientResponse response = this.customHttpClient.get(url);
+            ClientResponse response = this.customHttpClient.get(secureUrl);
 
             return switch (response.statusCode()) {
                 case 200 -> {
-                    log.info("External search completed successfully");
-                    BookMetadata bookMetadata = JsonReader.read(response.body(), BookMetadata.class);
-                    yield Optional.of(bookMetadata);
+                    log.info("Search completed.");
+                    yield GoogleBookMetadataParser.parse(response.body());
                 }
                 case 404 -> {
-                    log.warn("The provided information does not match any book in our external registry. Please review the search data or fill in all required fields manually. HTTP response [{}]", response.body());
+                    log.warn("The provided information does not match any book in our external registry. "
+                            + "Please review the search data or fill in all required fields manually. HTTP response [{}]", response.body());
                     throw new InfrastructureException(RESOURCE_NOT_FOUND, response.body());
                 }
                 case 500, 502, 504, 503 -> {

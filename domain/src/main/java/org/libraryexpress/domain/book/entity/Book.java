@@ -26,8 +26,12 @@ public class Book implements Comparable<Book> {
         this.status = status;
     }
 
-    public static Book create(String isbn, String title, String author, int publicationYear, String status) {
-        return new Book(new Isbn(isbn), title, author, publicationYear, BookStatus.valueOf(status));
+    public static Book create(String isbn, String title, String author, int publicationYear, String strStatus) {
+        BookStatus status = (strStatus != null && !strStatus.isBlank())
+                ? BookStatus.valueOf(strStatus)
+                : BookStatus.AVAILABLE;
+
+        return new Book(new Isbn(isbn), title, author, publicationYear, status);
     }
 
     public void changeStatus(BookStatus newStatus) {

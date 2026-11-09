@@ -1,0 +1,3 @@
+-- LOAN
+ALTER TABLE tb_book
+    ADD COLUMN description VARCHAR(500) NULL;
