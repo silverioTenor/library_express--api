@@ -1,43 +1,106 @@
 package org.libraryexpress.domain.book.entity;
 
 import org.libraryexpress.domain.book.enums.BookStatus;
+import org.libraryexpress.domain.book.valueobject.Author;
+import org.libraryexpress.domain.book.valueobject.Category;
 import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
+import org.libraryexpress.domain.core.util.RandomGenerator;
 
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Predicate;
+
+import static java.util.function.Predicate.not;
 
 public class Book implements Comparable<Book> {
+
+    private final UUID id;
 
     private final Isbn isbn;
 
     private final String title;
 
-    private final String author;
+    private final List<Author> authors;
 
     private final int publicationYear;
 
+    private final List<Category> categories;
+
     private BookStatus status;
 
-    private Book(Isbn isbn, String title, String author, int publicationYear, BookStatus status) {
+    private final String description;
+
+    private Book(
+            UUID id,
+            Isbn isbn,
+            String title,
+            List<Author> author,
+            int publicationYear,
+            BookStatus status,
+            List<Category> category,
+            String description
+    ) {
+        this.id = id;
         this.isbn = isbn;
         this.title = title;
-        this.author = author;
+        this.authors = author;
         this.publicationYear = publicationYear;
+        this.categories = category;
         this.status = status;
+        this.description = description;
     }
 
-    public static Book create(String isbn, String title, String author, int publicationYear, String strStatus) {
-        BookStatus status = (strStatus != null && !strStatus.isBlank())
-                ? BookStatus.valueOf(strStatus)
-                : BookStatus.AVAILABLE;
+    public static Book create(
+            String isbn,
+            String title,
+            String strAuthor,
+            int publicationYear,
+            String strStatus,
+            String strCategory,
+            String description
+    ) {
+        return new Book(
+                UUID.randomUUID(),
+                new Isbn(isbn),
+                title,
+                Author.parseMany(strAuthor),
+                publicationYear,
+                BookStatus.from(strStatus),
+                Category.parseMany(strCategory),
+                description
+        );
+    }
 
-        return new Book(new Isbn(isbn), title, author, publicationYear, status);
+    public static Book restore(
+            String id,
+            String isbn,
+            String title,
+            String[] authorsArray,
+            int publicationYear,
+            String strStatus,
+            String[] categoryArray,
+            String description
+    ) {
+        return new Book(
+                UUID.fromString(id),
+                new Isbn(isbn),
+                title,
+                Author.parseMany(authorsArray),
+                publicationYear,
+                BookStatus.from(strStatus),
+                Category.parseMany(categoryArray),
+                description
+        );
     }
 
     public void changeStatus(BookStatus newStatus) {
         if (this.status == newStatus) return;
 
         this.status = newStatus;
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     public Isbn getIsbn() {
@@ -48,27 +111,36 @@ public class Book implements Comparable<Book> {
         return title;
     }
 
-    public String getAuthor() {
-        return author;
+    public List<Author> getAuthors() {
+        return authors;
+    }
+
+    public String[] getAuthorsAsArray() {
+        return this.authors.stream()
+                .map(Author::name)
+                .toArray(String[]::new);
     }
 
     public int getPublicationYear() {
         return publicationYear;
     }
 
+    public List<Category> getCategories() {
+        return categories;
+    }
+
+    public String[] getCategoriesAsArray() {
+        return this.categories.stream()
+                .map(Category::name)
+                .toArray(String[]::new);
+    }
+
     public BookStatus getStatus() {
         return status;
     }
 
-    @Override
-    public String toString() {
-        return "{\n" +
-                " isbn: " + isbn + ",\n" +
-                " title: " + title + ",\n" +
-                " author: " + author + ",\n" +
-                " publicationYear: " + publicationYear + ",\n" +
-                " statuses: " + status + ",\n" +
-                "}";
+    public String getDescription() {
+        return description;
     }
 
     @Override

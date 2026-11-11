@@ -39,7 +39,7 @@ class FindBookTest {
     @DisplayName("Should successfully return the mapped DTO when the book is found by isbn")
     void shouldReturnBookDto_whenBookExists() {
         // Arrange
-        Book foundBook = Book.create(ISBN_STR, "Clean Code", "", 0, "AVAILABLE");
+        Book foundBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 0, "AVAILABLE", "", "");
         BookDTO expectedDto = new BookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
 
         // Stubbing repository query and mapper layer conversion

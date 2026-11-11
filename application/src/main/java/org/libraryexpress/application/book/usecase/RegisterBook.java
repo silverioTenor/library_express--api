@@ -45,14 +45,9 @@ public class RegisterBook {
     }
 
     private Book processManualRegistration(RegisterBookDTO dto) {
-        var hasRegistered = this.bookRepository.getByIsbn(dto.isbn());
-
-        if (hasRegistered.isPresent()) {
-            log.warn("ABORTED: Book already exists. isbn: {}", dto.isbn());
-            throw new UniqueIsbnViolationException();
-        }
-
-        return dto.toEntity();
+        Book book = dto.toEntity();
+        ensureIsbnIsUnique(book);
+        return book;
     }
 
     private Book processExternalRegistration(RegisterBookDTO dto) {
@@ -65,6 +60,16 @@ public class RegisterBook {
             );
         }
 
-        return this.mapper.toEntity(bookMetadata.get());
+        Book book = this.mapper.toEntity(bookMetadata.get(), dto.status());
+        ensureIsbnIsUnique(book);
+        return book;
+    }
+
+    private void ensureIsbnIsUnique(Book book) {
+        String isbn = book.getIsbn().value();
+        if (this.bookRepository.getByIsbn(isbn).isPresent()) {
+            log.warn("ABORTED: Book already exists. isbn: {}", isbn);
+            throw new UniqueIsbnViolationException();
+        }
     }
 }

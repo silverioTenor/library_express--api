@@ -20,22 +20,24 @@ public class BookUnitTest {
     @DisplayName("Should build a book instance successfully with search provided attributes")
     void shouldBuildBook_whenAllAttributesAreProvided() {
         // Arrange & Act
-        Book book = Book.create(VALID_ISBN_1, "Book Test", "John Doe", 2008, "AVAILABLE");
+        Book book = Book.create(VALID_ISBN_1, "Book Test", "John Doe", 2008, "AVAILABLE", "Software", "A test description");
 
         // Assert
         assertNotNull(book);
         assertEquals(new Isbn(VALID_ISBN_1), book.getIsbn());
         assertEquals("Book Test", book.getTitle());
-        assertEquals("John Doe", book.getAuthor());
+        assertEquals("John Doe", book.getAuthors().getFirst().name());
         assertEquals(2008, book.getPublicationYear());
         assertEquals(BookStatus.AVAILABLE, book.getStatus());
+        assertEquals("Software", book.getCategories().getFirst().name());
+        assertEquals("A test description", book.getDescription());
     }
 
     @Test
     @DisplayName("Should change book status when a different status is provided")
     void shouldChangeStatus_whenNewStatusIsDifferent() {
         // Arrange
-        Book book = Book.create(VALID_ISBN_1, "Book Test", "", 0, "AVAILABLE");
+        Book book = Book.create(VALID_ISBN_1, "Book Test", "John Doe", 0, "AVAILABLE", "", "");
 
         // Act
         book.changeStatus(BookStatus.BORROWED);
@@ -48,7 +50,7 @@ public class BookUnitTest {
     @DisplayName("Should ignore status change when the new status is identical to the current one")
     void shouldIgnoreStatusChange_whenNewStatusIsTheSame() {
         // Arrange
-        Book book = Book.create(VALID_ISBN_1, "Book Test", "", 0, "AVAILABLE");
+        Book book = Book.create(VALID_ISBN_1, "Book Test", "John Doe", 0, "AVAILABLE", "", "");
 
         // Act
         book.changeStatus(BookStatus.AVAILABLE);
@@ -61,8 +63,8 @@ public class BookUnitTest {
     @DisplayName("Should consider two books equal when they share the same ISBN, regardless of other fields")
     void shouldConsiderTwoBooksEqual_whenTheyHaveTheSameIsbn() {
         // Arrange
-        Book firstBook = Book.create(VALID_ISBN_1, "Book Test", "", 2008, "AVAILABLE");
-        Book secondBook = Book.create(VALID_ISBN_1, "Book Test", "", 2008, "AVAILABLE");
+        Book firstBook = Book.create(VALID_ISBN_1, "Book Test", "John Doe", 2008, "AVAILABLE", "", "");
+        Book secondBook = Book.create(VALID_ISBN_1, "Book Test", "Jane Doe", 2008, "AVAILABLE", "", "");
 
         // Assert (DDD Identity Rule)
         assertEquals(firstBook, secondBook, "Books with identical ISBN must be equal");
@@ -73,8 +75,8 @@ public class BookUnitTest {
     @DisplayName("Should sort books alphabetically by title when compared")
     void shouldSortBooksByTitle_whenCompared() {
         // Arrange
-        Book bookA = Book.create(VALID_ISBN_1, "Architecture Patterns", "", 0, "AVAILABLE");
-        Book bookB = Book.create(VALID_ISBN_2, "Book Test", "", 0, "AVAILABLE");
+        Book bookA = Book.create(VALID_ISBN_1, "Architecture Patterns", "John Doe", 0, "AVAILABLE", "", "");
+        Book bookB = Book.create(VALID_ISBN_2, "Book Test", "Jane Doe", 0, "AVAILABLE", "", "");
 
         // Act & Assert
         assertTrue(bookA.compareTo(bookB) < 0, "'Architecture' should come before 'Book Test'");

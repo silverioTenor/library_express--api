@@ -40,11 +40,12 @@ final class GoogleBookMetadataParser {
         String title = extractTitle(item);
         String author = extractAuthor(item);
         int publicationYear = extractYear(item);
+        String category = extractCategory(item);
         String description = extractDescription(item);
 
         log.info("BookMetadata parse completed.");
 
-        return new BookMetadata(isbn, title, author, publicationYear, description);
+        return new BookMetadata(isbn, title, author, publicationYear, category, description);
     }
 
     private static String extractIsbn(JsonNode item) {
@@ -98,6 +99,21 @@ final class GoogleBookMetadataParser {
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    private static String extractCategory(JsonNode item) {
+        JsonNode categories = item.path("volumeInfo")
+                .path("categories");
+
+        if (!categories.isArray() || categories.isEmpty()) return "";
+
+        StringJoiner joiner = new StringJoiner(", ");
+
+        for (JsonNode category : categories) {
+            joiner.add(category.asText());
+        }
+
+        return joiner.toString();
     }
 
     private static String extractDescription(JsonNode item) {

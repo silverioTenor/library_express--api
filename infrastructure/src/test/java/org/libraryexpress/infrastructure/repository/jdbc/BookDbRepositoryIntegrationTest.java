@@ -42,6 +42,9 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         assertTrue(retrieved.isPresent(), "Persisted book must be found by identity inside the container");
         assertEquals("Continuous Delivery", retrieved.get().getTitle());
         assertEquals(BookStatus.AVAILABLE, retrieved.get().getStatus());
+        assertEquals(List.of("Test Author Reference"), List.of(retrieved.get().getAuthorsAsArray()));
+        assertEquals(List.of("Testing"), List.of(retrieved.get().getCategoriesAsArray()));
+        assertEquals("Integration test book", retrieved.get().getDescription());
     }
 
     @Test
@@ -69,7 +72,16 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book);
 
         // Modifying entity state via domain patterns (representing an internal update cycle)
-        Book updatedBook = Book.create(isbn, "Clean Architecture - Final Release", "Robert C. Martin", 2017, "BORROWED");
+        Book updatedBook = Book.restore(
+                book.getId().toString(),
+                isbn,
+                "Clean Architecture - Final Release",
+                new String[]{"Robert C. Martin"},
+                2017,
+                "BORROWED",
+                new String[]{"Software"},
+                "Updated description"
+        );
 
         // Act
         bookRepository.update(updatedBook);
@@ -79,6 +91,8 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         assertTrue(retrieved.isPresent());
         assertEquals("Clean Architecture - Final Release", retrieved.get().getTitle());
         assertEquals(BookStatus.BORROWED, retrieved.get().getStatus());
+        assertEquals("Updated description", retrieved.get().getDescription());
+        assertEquals(List.of("Software"), List.of(retrieved.get().getCategoriesAsArray()));
     }
 
     @Test
@@ -130,6 +144,6 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
      * Clean helper method to encapsulate recurring builder initializations inside the test suite matrix.
      */
     private Book createSampleBook(String isbn, String title, BookStatus status) {
-        return Book.create(isbn, title, "Test Author Reference", 2020, status.name());
+        return Book.create(isbn, title, "Test Author Reference", 2020, status.name(), "Testing", "Integration test book");
     }
 }

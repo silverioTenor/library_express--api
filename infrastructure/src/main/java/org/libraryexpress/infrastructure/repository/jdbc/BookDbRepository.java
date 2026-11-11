@@ -21,17 +21,26 @@ public class BookDbRepository implements BookRepository {
 
     @Override
     public void create(Book book) {
-        String query = "INSERT INTO tb_book (isbn, title, author, year_published, status) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO book (id, isbn, title, publication_year, status, description, author, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)
         ) {
-            statement.setString(1, book.getIsbn().value());
-            statement.setString(2, book.getTitle());
-            statement.setString(3, book.getAuthor());
-            statement.setInt(4, book.getPublicationYear());
-            statement.setString(5, book.getStatus().name());
+            Array authorSqlArray = connection.createArrayOf("text", book.getAuthorsAsArray());
+            Array categorySqlArray = connection.createArrayOf("text", book.getCategoriesAsArray());
+
+            int parameterIndex = 1;
+
+            statement.setObject(parameterIndex++, book.getId());
+            statement.setString(parameterIndex++, book.getIsbn().value());
+            statement.setString(parameterIndex++, book.getTitle());
+            statement.setInt(parameterIndex++, book.getPublicationYear());
+            statement.setString(parameterIndex++, book.getStatus().name());
+            statement.setString(parameterIndex++, book.getDescription());
+            statement.setArray(parameterIndex++, authorSqlArray);
+            statement.setArray(parameterIndex, categorySqlArray);
+
             statement.execute();
 
         } catch (SQLException e) {
@@ -41,17 +50,24 @@ public class BookDbRepository implements BookRepository {
 
     @Override
     public void update(Book book) {
-        String query = "UPDATE tb_book SET title = ?, author = ?, year_published = ?, status = ? WHERE isbn = ?";
+        String query = "UPDATE book SET title = ?, publication_year = ?, status = ?, description = ?, author = ?, category = ? WHERE id = ?";
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)
         ) {
-            statement.setString(1, book.getTitle());
-            statement.setString(2, book.getAuthor());
-            statement.setInt(3, book.getPublicationYear());
-            statement.setString(4, book.getStatus().name());
-            statement.setString(5, book.getIsbn().value());
+            Array authorSqlArray = connection.createArrayOf("text", book.getAuthorsAsArray());
+            Array categorySqlArray = connection.createArrayOf("text", book.getCategoriesAsArray());
+
+            int parameterIndex = 1;
+
+            statement.setString(parameterIndex++, book.getTitle());
+            statement.setInt(parameterIndex++, book.getPublicationYear());
+            statement.setString(parameterIndex++, book.getStatus().name());
+            statement.setString(parameterIndex++, book.getDescription());
+            statement.setArray(parameterIndex++, authorSqlArray);
+            statement.setArray(parameterIndex++, categorySqlArray);
+            statement.setObject(parameterIndex, book.getId());
 
             statement.executeUpdate();
 
@@ -62,7 +78,7 @@ public class BookDbRepository implements BookRepository {
 
     @Override
     public Optional<Book> getByIsbn(String ISBN) {
-        String query = "SELECT isbn, title, author, year_published, status FROM tb_book WHERE isbn = ?";
+        String query = "SELECT id, isbn, title, author, publication_year, status, category, description FROM book WHERE isbn = ?";
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -89,8 +105,8 @@ public class BookDbRepository implements BookRepository {
         boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
         var query = shouldPaginate
-                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_book WHERE 1=1")
-                : new StringBuilder("SELECT * FROM tb_book WHERE 1=1");
+                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM book WHERE 1=1")
+                : new StringBuilder("SELECT * FROM book WHERE 1=1");
 
         List<Book> books = new ArrayList<>();
         long totalElements;
@@ -160,12 +176,21 @@ public class BookDbRepository implements BookRepository {
      * Map a book tuple back into its respective clean domain model abstraction.
      */
     private Book mapRowToBook(ResultSet resultSet) throws SQLException {
-        return Book.create(
+        Array authorArray = resultSet.getArray("author");
+        String[] authors = (authorArray != null) ? (String[]) authorArray.getArray() : new String[0];
+
+        Array categoryArray = resultSet.getArray("category");
+        String[] categories = (categoryArray != null) ? (String[]) categoryArray.getArray() : new String[0];
+
+        return Book.restore(
+                resultSet.getString("id"),
                 resultSet.getString("isbn"),
                 resultSet.getString("title"),
-                resultSet.getString("author"),
-                resultSet.getInt("year_published"),
-                resultSet.getString("status")
+                authors,
+                resultSet.getInt("publication_year"),
+                resultSet.getString("status"),
+                categories,
+                resultSet.getString("description")
         );
     }
 }

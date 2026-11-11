@@ -122,4 +122,37 @@ class BookE2ETest extends E2EBaseConfig {
                 .statusCode(400)
                 .body("message", containsString("Invalid isbn format provided:"));
     }
+
+    @Test
+    @Order(6)
+    @DisplayName("Should register a book from the fake metadata gateway without calling the external service")
+    void shouldRegisterBookFromFakeGateway_whenIsbnIsOmittedInTestEnvironment() {
+        String bookPayload = """
+            {
+                "title": "E2E Fake Gateway Book",
+                "author": "Test Author",
+                "publicationYear": 2020,
+                "status": "AVAILABLE"
+            }
+            """;
+
+        String isbn = given()
+                .contentType(ContentType.JSON)
+                .body(bookPayload)
+        .when()
+                .post("/books")
+        .then()
+                .statusCode(201)
+                .extract()
+                .path("isbn");
+
+        given()
+                .contentType(ContentType.JSON)
+        .when()
+                .get("/books/{isbn}", isbn)
+        .then()
+                .statusCode(200)
+                .body("title", equalTo("E2E Fake Gateway Book"))
+                .body("author", equalTo("Test Author"));
+    }
 }

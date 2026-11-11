@@ -45,7 +45,7 @@ public record RegisterBookDTO(
     }
 
     public boolean isManualRegistration() {
-        return (!this.isbn().isBlank() && !this.status().isBlank());
+        return (this.isbn() != null && !this.isbn().isBlank());
     }
 
     public Book toEntity() {
@@ -54,7 +54,9 @@ public record RegisterBookDTO(
                 this.title(),
                 this.author(),
                 this.publicationYear(),
-                this.status()
+                this.status(),
+                "",
+                ""
         );
     }
 }

@@ -27,7 +27,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
     // Standard business entities required to fulfill foreign key constraints
     private static final String VALID_ISBN = "978-16-14841-20-0"; // Task Requirement: Matching your custom formatting rule
-    private static final String VALID_CUSTOMER_ID = "cust-loan-owner-123";
+    private static final String VALID_CUSTOMER_ID = "20000000-0000-4000-8000-000000000001";
 
     @BeforeEach
     void setUp() {
@@ -43,7 +43,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         );
         customerRepository.create(parentCustomer);
 
-        Book parentBook = Book.create(VALID_ISBN, "Continuous Delivery Baseline", "Jez Humble", 2010, "AVAILABLE");
+        Book parentBook = Book.create(VALID_ISBN, "Continuous Delivery Baseline", "Jez Humble", 2010, "AVAILABLE", "", "");
         bookRepository.create(parentBook);
     }
 
@@ -51,7 +51,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should successfully persist a new transactional loan and retrieve it back using its unique ID identity")
     void shouldPersistAndRetrieveLoan_whenPayloadIsValidAndFkConstraintsAreMet() {
         // Arrange (Testing create and findById)
-        String loanId = "loan-uuid-active-789";
+        String loanId = "30000000-0000-4000-8000-000000000001";
         Loan newLoan = Loan.restore(
                 loanId,
                 VALID_ISBN,
@@ -79,7 +79,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should successfully overwrite database transaction states when executing loan record modifications")
     void shouldUpdateLoanState_whenModifyingExistingRecord() {
         // Arrange (Testing update)
-        String loanId = "loan-uuid-updt-555";
+        String loanId = "30000000-0000-4000-8000-000000000002";
         Loan loan = Loan.restore(
                 loanId,
                 VALID_ISBN,
@@ -118,8 +118,8 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should fetch isolated multi-criteria results when utilizing high-performance array clauses")
     void shouldReturnFilteredSet_whenSearchingByJointRelationalKeysAndNativeStatusArrays() {
         // Arrange
-        String loanId1 = "loan-search-1";
-        String loanId2 = "loan-search-2";
+        String loanId1 = "30000000-0000-4000-8000-000000000003";
+        String loanId2 = "30000000-0000-4000-8000-000000000004";
 
         Loan activeLoan = Loan.restore(
                 loanId1,
