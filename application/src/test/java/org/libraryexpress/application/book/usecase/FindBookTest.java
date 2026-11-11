@@ -14,7 +14,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -35,12 +37,14 @@ class FindBookTest {
 
     private static final String ISBN_STR = "9780140283292";
 
+    private static final String UUID_STR = UUID.randomUUID().toString();
+
     @Test
     @DisplayName("Should successfully return the mapped DTO when the book is found by isbn")
     void shouldReturnBookDto_whenBookExists() {
         // Arrange
         Book foundBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 0, "AVAILABLE", "", "");
-        BookDTO expectedDto = new BookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
+        BookDTO expectedDto = new BookDTO(UUID_STR, ISBN_STR, "Clean Code", List.of("Robert C. Martin"), 2008, BookStatus.AVAILABLE, List.of(""), "");
 
         // Stubbing repository query and mapper layer conversion
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(foundBook));

@@ -5,6 +5,7 @@ import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.valueobject.Author;
 import org.libraryexpress.domain.book.valueobject.BookMetadata;
+import org.libraryexpress.domain.book.valueobject.Category;
 import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
@@ -17,7 +18,8 @@ public interface BookMapper {
 
     BookMapper INSTANCE = Mappers.getMapper(BookMapper.class);
 
-    @Mapping(target = "author", source = "authors")
+//    @Mapping(target = "authors", source = "author")
+//    @Mapping(target = "categories", source = "category")
     BookDTO toResponseDto(Book book);
 
     List<BookDTO> toResponseListDto(List<Book> books);
@@ -47,5 +49,13 @@ public interface BookMapper {
 
     default String mapIsbnToString(Isbn ISBN) {
         return ISBN != null ? ISBN.value() : null;
+    }
+
+    default String mapAuthorToString(Author author) {
+        return author != null ? author.name() : null;
+    }
+
+    default String mapCategoryToString(Category category) {
+        return category != null ? category.name() : null;
     }
 }

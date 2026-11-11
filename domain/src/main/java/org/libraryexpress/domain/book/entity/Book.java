@@ -34,18 +34,18 @@ public class Book implements Comparable<Book> {
             UUID id,
             Isbn isbn,
             String title,
-            List<Author> author,
+            List<Author> authors,
             int publicationYear,
             BookStatus status,
-            List<Category> category,
+            List<Category> categories,
             String description
     ) {
         this.id = id;
         this.isbn = isbn;
         this.title = title;
-        this.authors = author;
+        this.authors = authors;
         this.publicationYear = publicationYear;
-        this.categories = category;
+        this.categories = categories;
         this.status = status;
         this.description = description;
     }
@@ -53,20 +53,20 @@ public class Book implements Comparable<Book> {
     public static Book create(
             String isbn,
             String title,
-            String strAuthor,
+            String strAuthors,
             int publicationYear,
             String strStatus,
-            String strCategory,
+            String strCategories,
             String description
     ) {
         return new Book(
                 UUID.randomUUID(),
                 new Isbn(isbn),
                 title,
-                Author.parseMany(strAuthor),
+                Author.parseMany(strAuthors),
                 publicationYear,
                 BookStatus.from(strStatus),
-                Category.parseMany(strCategory),
+                Category.parseMany(strCategories),
                 description
         );
     }

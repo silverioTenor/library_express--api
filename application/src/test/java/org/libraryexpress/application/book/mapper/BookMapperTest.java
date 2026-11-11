@@ -6,6 +6,8 @@ import org.libraryexpress.application.UnitTest;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.valueobject.BookMetadata;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @UnitTest
@@ -19,7 +21,8 @@ class BookMapperTest {
 
         var response = BookMapper.INSTANCE.toResponseDto(book);
 
-        assertEquals("Robert C. Martin, Michael Feathers", response.author());
+        List<String> authors = List.of("Robert C. Martin", "Michael Feathers");
+        assertEquals(authors, response.authors());
     }
 
     @Test
