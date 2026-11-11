@@ -42,7 +42,7 @@ public final class GoogleBooksGateway implements BookMetadataGateway {
         String secureUrl = "https://www.googleapis.com/books/v1/volumes?q=" +
                 encodedTitle + "&inauthor=" + encodedAuthor + "&key=" + apiKey;
 
-        log.error("Google API URL: {}", secureUrl.replace(apiKey, "*****"));
+        log.info("Google API URL: {}", secureUrl.replace(apiKey, "*****"));
 
         try {
             ClientResponse response = this.customHttpClient.get(secureUrl);

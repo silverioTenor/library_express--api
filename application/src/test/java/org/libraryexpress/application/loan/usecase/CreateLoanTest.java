@@ -185,6 +185,6 @@ class CreateLoanTest {
     }
 
     private static Book availableBook() {
-        return Book.create(ISBN_STR, "Test-Driven Development", "", 0, "AVAILABLE");
+        return Book.create(ISBN_STR, "Test-Driven Development", "Kent Beck", 0, "AVAILABLE", "", "");
     }
 }

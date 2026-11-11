@@ -96,9 +96,9 @@ public final class ConfigRegistry {
         if (key == null || key.isBlank()) return defaultValue;
 
         return Stream.<Supplier<String>>of(
-                        () -> dotenv.get(key),
-                        () -> System.getenv(key),
                         () -> System.getProperty(key),
+                        () -> System.getenv(key),
+                        () -> dotenv.get(key),
                         () -> properties.getProperty(key)
                 )
                 .map(Supplier::get)
