@@ -59,7 +59,7 @@ class LoanReturnTest {
                 null
         );
 
-        Book borrowedBook = Book.create(ISBN_STR, "Clean Architecture", "", 0, "BORROWED");
+        Book borrowedBook = Book.create(ISBN_STR, "Clean Architecture", "Robert C. Martin", 0, "BORROWED", "", "");
 
         // Clock paused within the 15-day period (Day 10)
         Clock fixedClock = Clock.fixed(Instant.parse("2026-08-10T12:00:00Z"), ZoneId.of("UTC"));
@@ -95,7 +95,7 @@ class LoanReturnTest {
                 null
         );
 
-        Book borrowedBook = Book.create(ISBN_STR, "Clean Architecture", "", 0, "BORROWED");
+        Book borrowedBook = Book.create(ISBN_STR, "Clean Architecture", "Robert C. Martin", 0, "BORROWED", "", "");
 
         // Clock frozen past the deadline (Day 20 -> 19 days later)
         Clock fixedClock = Clock.fixed(Instant.parse("2026-08-20T12:00:00Z"), ZoneId.of("UTC"));

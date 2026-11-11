@@ -8,10 +8,13 @@ import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
 import org.libraryexpress.infrastructure.api.routing.CustomHttpHandler;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
+import org.libraryexpress.infrastructure.exception.InfrastructureErrorType;
+import org.libraryexpress.infrastructure.exception.InfrastructureException;
 
 import java.io.IOException;
 
 import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
+import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.BAD_GATEWAY;
 
 public class GlobalExceptionHandler implements CustomHttpHandler {
 
@@ -35,6 +38,7 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
     private void resolveException(Exception exception, HttpContextResponse response) throws IOException {
         HttpStatusCode statusCode = switch (exception) {
             case DomainException de -> getErrorType(de);
+            case InfrastructureException ie -> getInfrastructureErrorType(ie);
             default -> INTERNAL_SERVER_ERROR;
         };
 
@@ -55,6 +59,15 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
             case RESOURCE_NOT_FOUND -> NOT_FOUND;
             case DATA_CONFLICT -> CONFLICT;
             case BUSINESS_VIOLATION -> UNPROCESSABLE_ENTITY;
+        };
+    }
+
+    private HttpStatusCode getInfrastructureErrorType(InfrastructureException ie) {
+        return switch (ie.getErrorType()) {
+            case RESOURCE_NOT_FOUND -> NOT_FOUND;
+            case BAD_GATEWAY -> BAD_GATEWAY;
+            case GATEWAY_TIMEOUT -> GATEWAY_TIMEOUT;
+            case SERVICE_UNAVAILABLE -> SERVICE_UNAVAILABLE;
         };
     }
 }

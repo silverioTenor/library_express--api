@@ -38,7 +38,7 @@ public class BookAvailabilityValidatorUnitTest {
     void shouldReturnBook_whenBookIsFoundAndAvailable() {
         // Arrange
         String isbnStr = new Isbn("978-85-209-2325-2").value();
-        Book book = Book.create(isbnStr, "Book Test", "John Doe", 2008, "AVAILABLE");
+        Book book = Book.create(isbnStr, "Book Test", "John Doe", 2008, "AVAILABLE", "", "");
 
         BookFilter filter = new BookFilter(new Isbn(isbnStr), null, null, null, null, null);
         QueryResult<Book> result = new QueryResult<>(List.of(book), 1);
@@ -52,7 +52,7 @@ public class BookAvailabilityValidatorUnitTest {
         assertNotNull(availableBook);
         assertEquals(isbnStr, availableBook.getIsbn().value());
         assertEquals("Book Test", availableBook.getTitle());
-        assertEquals("John Doe", availableBook.getAuthor());
+        assertEquals("John Doe", availableBook.getAuthors().getFirst().name());
         assertEquals(2008, availableBook.getPublicationYear());
         assertEquals(BookStatus.AVAILABLE, availableBook.getStatus());
 
@@ -79,7 +79,7 @@ public class BookAvailabilityValidatorUnitTest {
     void shouldThrowBookUnavailableException_whenBookIsFoundButNotAvailable() {
         // Arrange
         String isbnStr = new Isbn("978-65-86015-01-0").value();
-        Book borrowedBook = Book.create(isbnStr, "Book Test", "John Doe", 2008, "BORROWED");
+        Book borrowedBook = Book.create(isbnStr, "Book Test", "John Doe", 2008, "BORROWED", "", "");
 
         BookFilter filter = new BookFilter(new Isbn(isbnStr), null, null, null, null, null);
         QueryResult<Book> result = new QueryResult<>(List.of(borrowedBook), 0);

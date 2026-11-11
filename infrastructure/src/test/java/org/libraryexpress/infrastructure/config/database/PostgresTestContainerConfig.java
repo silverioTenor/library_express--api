@@ -88,7 +88,7 @@ public abstract class PostgresTestContainerConfig {
 
     @AfterEach
     void tearDownDatabaseState() {
-        String sql = "TRUNCATE TABLE tb_loan, tb_book, tb_customer RESTART IDENTITY CASCADE";
+        String sql = "TRUNCATE TABLE loan, book, customer RESTART IDENTITY CASCADE";
 
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {

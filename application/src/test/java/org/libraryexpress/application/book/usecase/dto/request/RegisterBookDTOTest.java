@@ -7,75 +7,86 @@ import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @UnitTest
-@DisplayName("RegisterBookDTOTest - Unit Test")
-public class RegisterBookDTOTest {
+@DisplayName("RegisterBookDTO - Unit Test")
+class RegisterBookDTOTest {
 
     private static final String ISBN_STR = "9788535902778";
 
     @Test
-    @DisplayName("Should create a new instance of RegisterBookDTO when provide a valid data")
-    void shouldCreateNewInstanceOfRegisterBookDTO_whenProvideValidData() {
-        Book book = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE");
-
-        RegisterBookDTO registerBookDTO = new RegisterBookDTO(
-                ISBN_STR,
-                "Clean Code",
-                "Robert C. Martin",
-                2008,
-                "AVAILABLE"
+    @DisplayName("Creates a manual-registration entity from valid request data")
+    void shouldCreateEntity_whenManualRegistrationDataIsValid() {
+        RegisterBookDTO dto = new RegisterBookDTO(
+                ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE"
         );
 
-        Book bookEntity = registerBookDTO.toEntity();
+        Book book = dto.toEntity();
 
-        assertNotNull(registerBookDTO);
-        assertNotNull(bookEntity);
-
-        assertEquals(book.getIsbn(), bookEntity.getIsbn());
-        assertEquals(book.getTitle(), bookEntity.getTitle());
-        assertEquals(book.getAuthor(), bookEntity.getAuthor());
-        assertEquals(book.getPublicationYear(), bookEntity.getPublicationYear());
+        assertTrue(dto.isManualRegistration());
+        assertEquals(ISBN_STR, book.getIsbn().value());
+        assertEquals("Clean Code", book.getTitle());
+        assertEquals("Robert C. Martin", book.getAuthors().getFirst().name());
+        assertEquals(2008, book.getPublicationYear());
     }
 
     @Test
-    @DisplayName("Should throw InvalidArgumentException when one or more fields are missing or Invalid")
-    void shouldThrowInvalidArgumentException_whenOneOrMoreFieldsAreMissingOrInvalid() {
-//        TEST 1
-        var error1 = assertThrows(InvalidArgumentException.class, () -> {
-            new RegisterBookDTO(null, "Clean Code","Robert C. Martin",2008, "AVAILABLE");
-        });
-        assertEquals("[Isbn, title and author are mandatory]", error1.getMessage());
+    @DisplayName("Allows an omitted ISBN for external metadata lookup")
+    void shouldIdentifyExternalRegistration_whenIsbnIsMissing() {
+        RegisterBookDTO dto = new RegisterBookDTO(null, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE");
 
-//        TEST 2
-        var error2 = assertThrows(InvalidArgumentException.class, () -> {
-            new RegisterBookDTO(ISBN_STR, "","Robert C. Martin",2008, "AVAILABLE");
-        });
-        assertEquals("[Isbn, title and author are mandatory]", error2.getMessage());
+        assertFalse(dto.isManualRegistration());
+    }
 
-//        TEST 3
-        var error3 = assertThrows(InvalidArgumentException.class, () -> {
-            new RegisterBookDTO(ISBN_STR,"Clean Code","",2008, "AVAILABLE");
-        });
-        assertEquals("[Isbn, title and author are mandatory]", error3.getMessage());
+    @Test
+    @DisplayName("Rejects missing title and author")
+    void shouldThrowInvalidArgumentException_whenTitleOrAuthorIsMissing() {
+        InvalidArgumentException exception = assertThrows(
+                InvalidArgumentException.class,
+                () -> new RegisterBookDTO(ISBN_STR, " ", null, 2008, "AVAILABLE")
+        );
 
-//        TEST 4
-        var error4 = assertThrows(InvalidArgumentException.class, () -> {
-            new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", -10, "AVAILABLE");
-        });
-        assertEquals("[Publication year is invalid]", error4.getMessage());
+        assertEquals("[Title and author are mandatory]", exception.getMessage());
+    }
 
-//        TEST 4
-        var error5 = assertThrows(InvalidArgumentException.class, () -> {
-            new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 1990, "MAINTENANCE");
-        });
-        assertEquals("[Invalid status provided]", error5.getMessage());
+    @Test
+    @DisplayName("Rejects years before zero or in the future")
+    void shouldThrowInvalidArgumentException_whenPublicationYearIsOutOfRange() {
+        InvalidArgumentException negativeYear = assertThrows(
+                InvalidArgumentException.class,
+                () -> new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", -1, "AVAILABLE")
+        );
+        InvalidArgumentException futureYear = assertThrows(
+                InvalidArgumentException.class,
+                () -> new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", LocalDate.now().getYear() + 1, "AVAILABLE")
+        );
 
-//        TEST 6
-        var error6 = assertThrows(InvalidArgumentException.class, () -> {
-            new RegisterBookDTO(ISBN_STR, "", "Robert C. Martin", -100, "AVAILABLE");
-        });
-        assertEquals("[Isbn, title and author are mandatory, Publication year is invalid]", error6.getMessage());
+        assertEquals("[Publication year is invalid]", negativeYear.getMessage());
+        assertEquals("[Publication year is invalid]", futureYear.getMessage());
+    }
+
+    @Test
+    @DisplayName("Rejects an unknown status")
+    void shouldThrowInvalidArgumentException_whenStatusIsInvalid() {
+        InvalidArgumentException exception = assertThrows(
+                InvalidArgumentException.class,
+                () -> new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "MAINTENANCE")
+        );
+
+        assertEquals("[Invalid status provided]", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Reports all invalid fields in one validation error")
+    void shouldReportAllValidationErrors_whenMultipleFieldsAreInvalid() {
+        InvalidArgumentException exception = assertThrows(
+                InvalidArgumentException.class,
+                () -> new RegisterBookDTO(null, "", " ", -1, "MAINTENANCE")
+        );
+
+        assertEquals("[Title and author are mandatory, Publication year is invalid, Invalid status provided]", exception.getMessage());
     }
 }

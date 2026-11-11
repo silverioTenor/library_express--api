@@ -44,15 +44,15 @@ public class AppBootstrapper {
                 LogTrace.start();
                 log.info("JVM exit signal intercepted. Executing cascading graceful shutdown sequence...");
 
-                // Passo 1: Fecha a porta de entrada (Ninguém mais entra na aplicação)
+                // Step 1: Close the entrance door (No one else enters the application)
                 log.info("Stopping HTTP server layer...");
                 server.stop();
 
-                // Passo 2: Fecha os serviços de aplicação (Seu futuro SesV2Client dentro do AppContext)
-                log.info("Closing application contexts and clients...");
-                // context.close(); // Se o seu AppContext fechar o cliente de email da AWS
+                // Step 2: Close the application services (Future SesV2Client within the AppContext)
+//                log.info("Closing application contexts and clients...");
+                // context.close();
 
-                // Passo 3: Finalmente, desliga o banco de dados (Garante que as queries finais rodaram)
+                // Step 3: Shut down the database (Ensures that the final queries have run)
                 log.info("Shutting down relational connection pool...");
                 connectionProvider.close();
 
