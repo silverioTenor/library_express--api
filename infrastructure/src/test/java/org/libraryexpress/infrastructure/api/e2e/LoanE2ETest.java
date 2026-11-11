@@ -480,8 +480,8 @@ public class LoanE2ETest extends E2EBaseConfig {
 
         static void createLoan(String loanId, String customerId, String isbn, String status) {
             String sql = """
-                INSERT INTO tb_loan (id, customer_id, isbn, status, start_date, end_date) 
-                VALUES (?, ?, ?, ?, NOW() - INTERVAL '20 days', NOW() - INTERVAL '5 days')
+                INSERT INTO loan (id, book_id, customer_id, status, start_date, end_date)
+                VALUES (?, (SELECT id FROM book WHERE isbn = ?), ?, ?, NOW() - INTERVAL '20 days', NOW() - INTERVAL '5 days')
             """;
 
             String jdbcUrl = postgres.getJdbcUrl();
@@ -491,9 +491,9 @@ public class LoanE2ETest extends E2EBaseConfig {
             try (var conn = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword);
                  var stmt = conn.prepareStatement(sql)) {
 
-                stmt.setString(1, loanId);
-                stmt.setString(2, customerId);
-                stmt.setString(3, isbn);
+                stmt.setObject(1, UUID.fromString(loanId));
+                stmt.setString(2, isbn);
+                stmt.setObject(3, UUID.fromString(customerId));
                 stmt.setString(4, status);
                 stmt.executeUpdate();
 

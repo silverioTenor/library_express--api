@@ -24,13 +24,13 @@ public class CustomerDbRepository implements CustomerRepository {
 
     @Override
     public void create(Customer customer) {
-        String query = "INSERT INTO tb_customer (id, name, email) VALUES (?, ?, ?)";
+        String query = "INSERT INTO customer (id, name, email) VALUES (?, ?, ?)";
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)
         ) {
-            statement.setString(1, customer.getId());
+            statement.setObject(1, UUID.fromString(customer.getId()));
             statement.setString(2, customer.getName());
             statement.setString(3, customer.getEmail().value());
             statement.execute();
@@ -42,7 +42,7 @@ public class CustomerDbRepository implements CustomerRepository {
 
     @Override
     public void update(Customer customer) {
-        String query = "UPDATE tb_customer SET name = ?, email = ? WHERE id = ?";
+        String query = "UPDATE customer SET name = ?, email = ? WHERE id::text = ?";
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -60,7 +60,7 @@ public class CustomerDbRepository implements CustomerRepository {
 
     @Override
     public Optional<Customer> getById(String id) {
-        String query = "SELECT * FROM tb_customer WHERE id = ?";
+        String query = "SELECT * FROM customer WHERE id::text = ?";
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -82,7 +82,7 @@ public class CustomerDbRepository implements CustomerRepository {
 
     @Override
     public Optional<Customer> getByEmail(String email) {
-        String query = "SELECT * FROM tb_customer WHERE email = ?";
+        String query = "SELECT * FROM customer WHERE email = ?";
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -107,8 +107,8 @@ public class CustomerDbRepository implements CustomerRepository {
         boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
         var query = shouldPaginate
-                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_customer WHERE 1=1")
-                : new StringBuilder("SELECT * FROM tb_customer WHERE 1=1");
+                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM customer WHERE 1=1")
+                : new StringBuilder("SELECT * FROM customer WHERE 1=1");
 
         List<Customer> customers = new ArrayList<>();
         long totalElements;
@@ -117,7 +117,7 @@ public class CustomerDbRepository implements CustomerRepository {
         boolean hasName = filter.name() != null && !filter.name().isBlank();
         boolean hasEmail = filter.email() != null && !filter.email().isBlank();
 
-        if (hasId) query.append(" AND id = ?");
+        if (hasId) query.append(" AND id::text = ?");
         if (hasName) query.append(" AND name LIKE ?");
         if (hasEmail) query.append(" AND email LIKE ?");
 

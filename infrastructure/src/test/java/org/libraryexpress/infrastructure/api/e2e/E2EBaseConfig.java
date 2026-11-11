@@ -62,7 +62,7 @@ public abstract class E2EBaseConfig {
     @AfterAll
     static void cleanDatabaseState() {
         logger.info("Cleaning database...");
-        String truncateSql = "TRUNCATE TABLE tb_loan, tb_book, tb_customer RESTART IDENTITY CASCADE";
+        String truncateSql = "TRUNCATE TABLE loan, book, customer RESTART IDENTITY CASCADE";
 
         String jdbcUrl = postgres.getJdbcUrl();
         String dbUser = postgres.getUsername();

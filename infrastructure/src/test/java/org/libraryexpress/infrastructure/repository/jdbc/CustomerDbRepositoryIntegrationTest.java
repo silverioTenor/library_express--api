@@ -27,7 +27,7 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should successfully persist a new customer and retrieve it back by its unique ID descriptor")
     void shouldPersistAndRetrieveCustomer_whenPayloadIsValidAndQueriedById() {
         // Arrange (Testing create and getById)
-        String customerId = "custom-1111-2222-3333";
+        String customerId = "10000000-0000-4000-8000-000000000001";
         Customer newCustomer = createSampleCustomer(customerId, "John Doe", "john.doe@libraryexpress.com");
 
         // Act
@@ -45,7 +45,7 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     void shouldFindCustomer_whenQueryingByValidEmailString() {
         // Arrange (Testing getByEmail)
         String targetEmail = "alice.smith@libraryexpress.com";
-        Customer customer = createSampleCustomer("custom-0000-aaaa-bbbb", "Alice Smith", targetEmail);
+        Customer customer = createSampleCustomer("10000000-0000-4000-8000-000000000002", "Alice Smith", targetEmail);
         customerRepository.create(customer);
 
         // Act
@@ -61,10 +61,10 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     void shouldThrowRuntimeException_whenEmailConstraintIsViolatedAtDatabaseLevel() {
         // Arrange (Testing structural database constraint protection without leaking domain exceptions)
         String sharedEmail = "duplicate@libraryexpress.com";
-        Customer client1 = createSampleCustomer("cust-first-id-123", "First Client", sharedEmail);
+        Customer client1 = createSampleCustomer("10000000-0000-4000-8000-000000000003", "First Client", sharedEmail);
         customerRepository.create(client1);
 
-        Customer client2 = createSampleCustomer("cust-second-id-456", "Second Client Boot Attempt", sharedEmail);
+        Customer client2 = createSampleCustomer("10000000-0000-4000-8000-000000000004", "Second Client Boot Attempt", sharedEmail);
 
         // Act & Assert - DDD Principle: Expecting technical wrapper exception, not business rules mappings
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
@@ -79,7 +79,7 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should successfully modify customer personal attributes and persist changes during record updates")
     void shouldUpdateCustomerState_whenModifyingExistingRecord() {
         // Arrange (Testing update)
-        String customerId = "cust-updt-id-999";
+        String customerId = "10000000-0000-4000-8000-000000000005";
         Customer baseCustomer = createSampleCustomer(customerId, "Old Name", "old.email@libraryexpress.com");
         customerRepository.create(baseCustomer);
 
@@ -103,8 +103,8 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should successfully capture and retrieve the entire customers collection dataset during unrestricted scans")
     void shouldReturnAllPersistedCustomers_whenTriggeringUnrestrictedCatalogScan() {
         // Arrange (Testing search)
-        Customer customer1 = createSampleCustomer("id-multi-1", "User Alpha", "alpha@libraryexpress.com");
-        Customer customer2 = createSampleCustomer("id-multi-2", "User Beta", "beta@libraryexpress.com");
+        Customer customer1 = createSampleCustomer("10000000-0000-4000-8000-000000000006", "User Alpha", "alpha@libraryexpress.com");
+        Customer customer2 = createSampleCustomer("10000000-0000-4000-8000-000000000007", "User Beta", "beta@libraryexpress.com");
 
         customerRepository.create(customer1);
         customerRepository.create(customer2);
