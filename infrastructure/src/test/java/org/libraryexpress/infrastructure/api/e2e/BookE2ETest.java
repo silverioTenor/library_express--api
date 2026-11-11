@@ -5,6 +5,8 @@ import org.junit.jupiter.api.*;
 import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.infrastructure.E2ETest;
 
+import java.util.List;
+
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
@@ -48,7 +50,7 @@ class BookE2ETest extends E2EBaseConfig {
         .then()
                 .statusCode(200)
                 .body("title", equalTo("Clean Architecture Modern Java"))
-                .body("author", equalTo("John Doe"))
+                .body("authors", equalTo(List.of("John Doe")))
                 .body("publicationYear", equalTo(2026))
                 .body("status", equalTo("AVAILABLE"));
     }
@@ -153,6 +155,6 @@ class BookE2ETest extends E2EBaseConfig {
         .then()
                 .statusCode(200)
                 .body("title", equalTo("E2E Fake Gateway Book"))
-                .body("author", equalTo("Test Author"));
+                .body("authors", equalTo(List.of("Test Author")));
     }
 }
