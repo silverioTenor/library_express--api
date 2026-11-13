@@ -37,7 +37,7 @@ public final class GoogleBooksGateway implements BookMetadataGateway {
         String encodedTitle = URLEncoder.encode(titleParam, StandardCharsets.UTF_8);
         String encodedAuthor = URLEncoder.encode(authorParam, StandardCharsets.UTF_8);
 
-        String apiKey = ConfigRegistry.getGoogleBooksApi();
+        String apiKey = ConfigRegistry.getGoogleBooksApiKey();
 
         String secureUrl = "https://www.googleapis.com/books/v1/volumes?q=" +
                 encodedTitle + "&inauthor=" + encodedAuthor + "&key=" + apiKey;
@@ -51,6 +51,10 @@ public final class GoogleBooksGateway implements BookMetadataGateway {
                 case 200 -> {
                     log.info("Search completed.");
                     yield GoogleBookMetadataParser.parse(response.body());
+                }
+                case 400, 409 -> {
+                    log.warn("External service error during book search. HTTP response [{}]", response.body());
+                    throw new InfrastructureException(INVALID_DATA, response.body());
                 }
                 case 404 -> {
                     log.warn("The provided information does not match any book in our external registry. "
