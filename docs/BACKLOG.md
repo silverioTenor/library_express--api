@@ -27,10 +27,10 @@ PO/Scrum Master: Claude · Dev: Silvério
 | E11 | Log Evolution & Full Observability (Prometheus/Grafana) | ⏳ Backlog (post Go-Live — scope note captured, not refined) |
 | E12 | Overdue Enforcement Evolution — Job, Loan Restriction & Settlement | ⏳ Backlog (post Go-Live — scope note captured, not refined) |
 | E13 | Notifications (loan created / completed / overdue) | ⏳ Backlog (post Go-Live, title only) |
-| E14 | Edge Security — Cloudflare (DNS, TLS, origin lock, WAF, rate limiting) | 🔵 Refined, ready for execution (Sprint 10) |
-| E15 | Domain & API Refinement (flow corrections, auditing fields, book metadata lookup) | ⏳ Backlog (scope note captured, not refined) |
-| E16 | Authentication & RBAC (JWT ES256, refresh/logout, brute-force protection) | ⏳ Backlog (scope note captured, not refined) |
-| E17 | Multi-tenancy (tenant isolation, tenant management) | ⏳ Backlog (scope note captured, not refined) |
+| E14 | Edge Security — Cloudflare (DNS, TLS, origin lock, WAF, rate limiting) | ✅ Done (Sprint 10) — ADR 0010 |
+| E15 | Domain & API Refinement (flow corrections, auditing fields, book metadata lookup, factory pattern) | ✅ Done (Sprint 11) — ADR 0011 |
+| E16 | Authentication & RBAC (JWT ES256, refresh/logout, brute-force protection) | 🔵 Refined, ready for execution (Sprint 12) |
+| E17 | Multi-tenancy (tenant isolation, tenant management) | 🔵 Refined, ready for execution (Sprint 13, after E16) |
 
 ### Renumbering note (historical — first revision)
 
@@ -63,7 +63,19 @@ After Marco 2, the public API was identified as having no authentication and no 
 - **E16 (Authentication & RBAC)** precedes **E17 (Multi-tenancy)** because the `tenant_id` travels as a JWT claim.
 - **Safeguard between E16 and E17:** only the superAdmin can create admins, and **no admin for an external person is created until E17 closes** — otherwise there would be authentication without data isolation.
 
-Rationale to be recorded in the ADRs listed in section 5.
+Rationale is recorded in the ADRs listed in section 5 (ADR 0010 for E14; the others as each epic closes).
+
+### E15 closure note
+
+E15 closed with scope beyond the original refinement, decided with the Dev during execution:
+
+- **Factory pattern** replaced the Builder in the domain entities (Book, Customer, Loan), with `of()` factories on value objects and self-validating input DTOs — three extra stories (US-1511 to US-1513) that ran before the metadata lookup and the closure.
+- **Book metadata lookup** shipped with **Google Books as the only provider**. Open Library was discarded for data quality and integrity reasons, and the planned cache was dropped: cache is a global concern and will be designed once for the whole application, not inside one feature.
+- **Schema consolidation:** `V1` was rewritten and `V2`–`V4` removed; the production database was recreated empty before the release. Applied migrations are no longer edited.
+- **`updated_at` by database trigger**, reversing the explicit-SQL decision — recorded as ADR 0006, Amendment 3.
+- **Creation contract kept minimal:** `201` with the resource identifier, no `Location` header and no full resource DTO.
+
+E16 and E17 refinement texts must be read against the current schema (table names, `APP_ENV` values) when each epic enters execution.
 
 ---
 
@@ -89,8 +101,8 @@ Theme sequence:
 4. Structured logging foundation, system-wide (E8) ✅ done — resolves TD07
 5. REST API + documentation (Swagger/OpenAPI) (E9) ✅ done
 6. ~~Marco 2 — Go Live (E10)~~ ✅ done
-7. Edge security — Cloudflare (E14)
-8. Domain & API refinement (E15)
+7. Edge security — Cloudflare (E14) ✅ done
+8. Domain & API refinement (E15) ✅ done
 9. Authentication & RBAC (E16)
 10. Multi-tenancy (E17)
 11. Log evolution — full observability with Prometheus/Grafana (E11)
@@ -150,6 +162,9 @@ Scope: not yet formalized into epics (future backlog). Most of what would tradit
 Ideas surfaced during refinement that were deliberately **not** turned into epics or TDs — captured here so they aren't lost, without committing points or a sprint slot.
 
 - **Business-level audit trail (DB-backed).** Distinct from technical logging (SLF4J + Logback, ADR 0004, delivered via E8). A "who did what" table for business events was proposed during E8/E12 refinement and intentionally deferred — revisit only after all currently planned epics (through E13) are closed. Not a replacement for structured logging; a separate concern if ever pursued.
+- **Global application cache.** The per-feature cache planned for the book metadata lookup was dropped in E15. If a cache is ever introduced, it should be a single, application-wide mechanism (and the Google Books lookup is the first candidate), not a configuration owned by one feature.
+- **`year` → `publicationDate` on `Book`.** Replace the integer publication year with a `LocalDate`, handling partial dates (year only, year and month) returned by providers. Deferred because it changes the database schema; today the year defaults to `0` and the author to `Unnamed` when neither the client nor the provider supplies them.
+- **Book remodeling and provider enrichment.** Manual registrations store empty category and description; enriching them with provider data (client > provider > default) was discussed and not implemented in E15. Revisit together with the `publicationDate` change.
 
 ---
 
@@ -157,10 +172,12 @@ Ideas surfaced during refinement that were deliberately **not** turned into epic
 
 | ADR | Subject | Epic |
 | --- | --- | --- |
-| 0010 | Roadmap resequencing (E14–E17 ahead of E11–E13) + Cloudflare edge decisions | E14 |
-| 0011 | Authentication: ES256/JWKS, Argon2id, activation token, refresh and blacklist, brute-force backoff | E16 |
-| 0012 | Multi-tenancy model: discriminator column, explicit `TenantId`, composite FKs | E17 |
-| 0013 | Book metadata lookup: provider port, Open Library default, Google Books optional, LLM discarded | E15 |
+| 0010 | Roadmap resequencing (E14–E17 ahead of E11–E13) + Cloudflare edge decisions | E14 — ✅ Accepted |
+| 0011 | Book metadata lookup (Google Books only), creation contract, factory pattern, schema consolidation | E15 — ✅ Accepted |
+| 0012 | Authentication: ES256/JWKS, Argon2id, session-bound activation/access/refresh tokens, brute-force backoff | E16 |
+| 0013 | Multi-tenancy model: discriminator column, explicit `TenantId`, composite FKs | E17 |
+
+ADR 0006 also received Amendment 3 in E15 (`updated_at` maintained by a database trigger).
 
 ---
 
@@ -189,7 +206,7 @@ Follows SemVer (`MAJOR.MINOR.PATCH`):
 
 ---
 
-**Last update:** Epic E9 (REST API + Documentation) closed — Sprint 8, 35 points, TD08 resolved. Epic E10 (CD / Go Live, Marco 2) fully refined and ready for execution — Sprint 9, 34 points across 8 User Stories (US-1001–US-1008). Key E10 decisions: Amazon ECS with EC2 launch type (not Fargate), no Elastic Beanstalk, no Application Load Balancer (direct Elastic IP + Route 53), no managed RDS (Neon serverless Postgres chosen over Supabase for its automatic idle-resume behavior), single-container ECS task definition, AWS account on the Paid Plan (post-July-2025 credit model, US$200 budget with alerts), and a real CD pipeline (GitHub Actions → ECR → ECS service update). These conventions will be recorded in ADR 0009 (drafted during E10 execution, US-1008).
+**Last update:** Epic E14 (Edge Security — Cloudflare) and Epic E15 (Domain & API Refinement) closed. E14 moved DNS and edge protection to Cloudflare and locked the origin (ADR 0010). E15 delivered deterministic and unified listings, ISBN canonical form, loan creation policy and `closed_at`, the Google Books metadata lookup, and the Builder → Factory refactoring (ADR 0011; ADR 0006 Amendment 3). Epic E16 (Authentication & RBAC, Sprint 12) and Epic E17 (Multi-tenancy, Sprint 13) are refined and ready for execution; no admin account is created for an external person until E17 closes.
 
 ---
 

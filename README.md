@@ -18,10 +18,10 @@ This project is part of my Java Journey, a long-term learning path focused on ma
 
 ## Features
 
-- Book management
+- Book management (manual registration, or automatic ISBN/metadata lookup through Google Books)
 - Customer management
-- Loan management (creation, search)
-- Business rule validation (book availability, active loan limits)
+- Loan management (creation, return, search, closing of overdue loans)
+- Business rule validation (book availability, active loan limits, loan period)
 - Custom exception handling
 
 ## 🏗 Current Architecture
@@ -36,7 +36,7 @@ library_express--api
 │   ├── pom.xml
 │   └── src
 │       ├── main/java/org.libraryexpress.domain
-│       │   ├── book
+│       │   ├── book (entity, value objects, gateway, repository, validator)
 │       │   ├── customer
 │       │   ├── loan
 │       │   └── core (shared entities, enums, helpers, repository/validator interfaces)
@@ -55,8 +55,10 @@ library_express--api
 │   ├── pom.xml
 │   └── src
 │       ├── main/java/org.libraryexpress.infrastructure
+│       │   ├── api (embedded HTTP server, router, controllers, central exception handler, OpenAPI)
 │       │   ├── config
 │       │   ├── exception
+│       │   ├── gateway (external HTTP clients — Google Books adapter, fake adapter for tests)
 │       │   └── repository (JDBC implementations, backed by PostgreSQL)
 │       └── test/java/org.libraryexpress.infrastructure
 │           ├── unit (@UnitTest)
@@ -79,25 +81,39 @@ The API is served by the application's own embedded HTTP server on the port defi
 ### Conventions
 
 - **Resource-based URIs**, no version prefix (e.g. `/books`, not `/v1/books`).
-- **Pagination:** paginated list endpoints accept `page` (0-indexed, default `0`) and `size` (default `20`) query parameters.
+- **One listing endpoint per resource:** `GET /books`, `GET /customers` and `GET /loans` are paginated and accept optional filters; there are no separate search routes.
+- **Pagination:** paginated list endpoints accept `page` (0-indexed, default `0`) and `limit` (default `10`) query parameters.
+- **Deterministic ordering:** every listing is ordered by `created_at, id`, so consecutive pages never repeat or skip records.
+- **Creation:** `POST` endpoints answer `201 Created` with a JSON body carrying the identifier of the created resource (the ISBN for books, the `id` for customers and loans). The full resource is read through the corresponding `GET`. No `Location` header is sent.
+- **Input validation:** invalid input is rejected with `400`; the `message` lists every violated field.
+- **ISBN:** ISBN-10 and ISBN-13 are accepted (hyphens and spaces ignored) and always stored and returned as ISBN-13, digits only. The same book cannot be registered twice under both formats.
 - **Error responses:** structured JSON body (`status`, `message`, `timestamp`) on every 4xx/5xx.
 - **Trace ID:** every response includes an `X-Trace-Id` header — echoes a client-supplied value or generates one when absent.
+- **Audit columns:** `created_at` and `updated_at` exist on every business table, are maintained by the database, and are never exposed by the API.
 
 ### Endpoints
 
 | Resource | Method | Path | Description |
 |---|---|---|---|
-| Books | POST | `/books` | Register a book |
-| Books | GET | `/books/{isbn}` | Get a book by ISBN |
-| Books | GET | `/books` | Search books by filters (paginated) |
+| Books | POST | `/books` | Register a book (manual, or automatic lookup when no ISBN is sent) |
+| Books | GET | `/books/{isbn}` | Get a book by ISBN (ISBN-10, ISBN-13 or hyphenated) |
+| Books | GET | `/books` | List books (paginated). Filters: `isbn`, `title`, `author`, `statuses`, `publishedYear` |
 | Customers | POST | `/customers` | Create a customer |
-| Customers | GET | `/customers` | Search customers by filters (paginated |
+| Customers | GET | `/customers` | List customers (paginated). Filters: `id`, `name`, `email` |
 | Customers | PATCH | `/customers/{id}/update-email` | Update a customer's email |
-| Customers | GET | `/customers` | List customers (paginated) |
 | Loans | POST | `/loans` | Create a loan |
-| Loans | GET | `/loans` | Search loans by filters (paginated) |
+| Loans | GET | `/loans` | List loans (paginated). Filters: `id`, `customerId`, `isbn`, `statuses` |
 | Loans | POST | `/loans/{loanId}/returns` | Return a loan |
 | Loans | PATCH | `/loans/{loanId}/close-overdue` | Close an overdue loan (temporary flow) |
+
+### Book registration
+
+`POST /books` works in two modes, decided by the request:
+
+- **Manual** — the request carries an `isbn`. No external call is made; the book is stored with the data sent. `status` is optional and defaults to `AVAILABLE`.
+- **Automatic lookup** — the request carries no `isbn`, only `title` and `author`. The application queries Google Books and registers the book with the ISBN-13, authors, categories, publication year and description (at most 500 characters) returned. If no match is found the response is `404`, asking for the data to be reviewed or sent manually; if the provider is unavailable or times out, a gateway-class `5xx` is returned and nothing is persisted.
+
+A duplicate ISBN (in any accepted format) is answered with `409`.
 
 ### API Documentation
 
@@ -124,8 +140,9 @@ The API is served by the application's own embedded HTTP server on the port defi
 - Let's Encrypt / Certbot (TLS certificates, auto-renewed)
 - Neon (serverless managed PostgreSQL, production)
 - Amazon ECS (EC2 launch type) + Amazon ECR
-- AWS Route 53 (DNS)
+- Cloudflare (Free plan — DNS, proxy, TLS Full strict, Free Managed Ruleset WAF, rate limiting, Authenticated Origin Pulls)
 - AWS Systems Manager (Session Manager — instance access, no SSH)
+- Google Books API (book metadata lookup, via `java.net.http` + Jackson)
 
 ## Getting Started
 
@@ -145,44 +162,57 @@ mvn clean package -DskipTests
 
 ## 🚀 Running the Application
 
-You can execute the Library Express ecosystem using three different approaches depending on your infrastructure requirements:
+The application is a plain HTTP service: it starts the embedded server on `API_PORT` and has no interactive prompt. You can run it in three ways.
+
+### Configuration
+
+Values are resolved, in this order, from JVM system properties, environment variables, a local `.env` file and `application.properties`. Use `.env.example` as the starting point for a local `.env`.
+
+| Variable | Default | Description |
+|---|---|---|
+| `API_PORT` | `3000` | Port of the embedded HTTP server |
+| `APP_ENV` | `prod` | Runtime profile. `prod` uses the production database settings; `test` swaps the Google Books adapter for a fake one (no external calls) and is used by tests and by local runs that must not consume external resources; any other value (e.g. `development`) is a local profile |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | `localhost`, `5432`, `library_express`, none, none | PostgreSQL connection; `DB_USER` and `DB_PASSWORD` are mandatory |
+| `GOOGLE_BOOKS_API` | none | Google Books API key, used by the automatic book lookup. In production it is injected from AWS Secrets Manager through the ECS task definition |
+| `hikari.*` | see `application.properties` | HikariCP pool settings (`maximum-pool-size`, `minimum-idle`, `idle-timeout`, `connection-timeout`, `max-lifetime`) |
 
 ### 1. Native Execution via Consolidated Fat JAR (Production Pattern)
 
-The project utilizes the `maven-shade-plugin` inside the infrastructure module to compile all multi-module dependencies into a single, standalone executable binary. Run it directly through the JVM:
+The project uses the `maven-shade-plugin` inside the infrastructure module to compile all multi-module dependencies into a single, standalone executable JAR. Run it directly through the JVM:
 
 ```
-java -jar infrastructure/target/infrastructure-0.1.4.jar
+java -jar infrastructure/target/infrastructure-<version>.jar
 ```
 
-Note: Ensure your local environment variables (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`) are exported or present in a local `.env` file for the database connector to handshake successfully.
+Make sure the variables above (at least `DB_USER` and `DB_PASSWORD`) are exported or present in a local `.env` file.
 
-### 2. Containerized Execution via Docker Compose (Interactive Development Stack)
+### 2. Containerized Execution via Docker Compose
 
-To run the full stack (Java Application + PostgreSQL 17) inside isolated networks without pre-installing any local database tools, use the optimized Docker engine wrapper.
-
-Since Library Express is a rich command-line interactive system, it requires a pseudo-TTY connection to capture input streams cleanly. Always boot using the following interactive configuration:
+To run the full stack (Java application + PostgreSQL 17) in isolated containers without installing a local database:
 
 ```
-# Spins up PostgreSQL in background, builds the application container, and attaches your keyboard stream
-docker compose run --service-ports app
+docker compose up --build
 ```
 
-To tear down the active local network data volumes and stop containers:
+No pseudo-TTY is needed. To stop the containers and remove the local data volume:
 
 ```
-docker compose down
+docker compose down -v
 ```
 
-### 3. Development Execution via Maven CLI
+### 3. Development Execution via Maven
 
-For fast compilation loop reviews during ongoing development iterations inside your local host terminal:
+For a fast loop during development, from the host terminal:
 
 ```
 mvn exec:java
 ```
 
 The entrypoint lives in the infrastructure module. `exec-maven-plugin` is skipped by default (`exec.skip=true` in the parent POM) and only re-enabled (`exec.skip=false`) in infrastructure — so even though the reactor visits all three modules, it only actually executes there. No `-pl` needed.
+
+## 🗄 Database Migrations
+
+Schema changes are versioned with Flyway under `infrastructure/src/main/resources/db/migration`. The schema was consolidated into a single `V1` migration during Epic E15, and the production database was recreated empty before that release. From now on, an applied migration is never edited: every change is a new, higher-numbered migration.
 
 ## ✅ Running Tests
 
@@ -208,11 +238,11 @@ Coverage is enforced as a CI quality gate (JaCoCo `check` goal), using the **Ins
 
 | Module | Instruction | Branch |
 |---|---|---|
-| domain | 85% | 90% |
-| application | 85% | 95% |
-| infrastructure | 70% | 50% |
+| domain | 90% | 88% |
+| application | 95% | 88% |
+| infrastructure | 80% | 65% |
 
-The `infrastructure` thresholds are intentionally lower for now — only the JDBC repository layer exists, with no API surface yet to exercise more branches. These will be revisited and raised once the REST API (Epic E9) and end-to-end tests against the live system land (tracked as TD08 in `docs/BACKLOG.md`).
+Thresholds are set at the measured coverage minus a safety margin, so normal variance does not break the build while real regressions do. The rationale is in ADR 0006, Amendment 2.
 
 A build that falls below any of these thresholds fails automatically — see the CI section below.
 
@@ -231,7 +261,11 @@ Continuous **Delivery** is handled by a separate workflow (`cd.yml`), triggered 
 
 ## 🌐 Production
 
-The API is live at `https://api.jlibraryexpress.com` — no port needed; TLS is terminated by an Nginx reverse proxy running on the same EC2 instance that hosts the application container.
+The API is live at `https://api.jlibraryexpress.com` — no port needed.
+
+DNS and the public edge are served by **Cloudflare** (Free plan): the `api` record is proxied, TLS runs in Full (strict) mode, the Free Managed Ruleset is active, and a per-IP rate-limiting rule slows abusive traffic. The EC2 instance that hosts the application container is reachable only through Cloudflare: the Security Group accepts 80/443 only from Cloudflare's published ranges, Nginx requires our own client certificate (Authenticated Origin Pulls) and rejects any `Host` other than the API's, and the real client IP is restored from `CF-Connecting-IP`. TLS is terminated by an Nginx reverse proxy on the same instance, using a Let's Encrypt certificate renewed by Certbot. The Nginx configuration is versioned in `.infra/nginx`. Full rationale: ADR 0010.
+
+The database is a managed serverless PostgreSQL on Neon, and the instance schedule and connection-pool settings are tuned to keep the monthly cost minimal.
 
 - Swagger UI: `https://api.jlibraryexpress.com/docs`
 - Raw OpenAPI contract: `https://api.jlibraryexpress.com/openapi.json`
