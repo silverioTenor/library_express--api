@@ -88,8 +88,8 @@ public final class ConfigRegistry {
         return resolve("APP_ENV", "prod");
     }
 
-    public static String getGoogleBooksApi() {
-        return resolve("GOOGLE_BOOKS_API", "optional");
+    public static String getGoogleBooksApiKey() {
+        return resolve("GOOGLE_BOOKS_API_KEY", null);
     }
 
     private static String resolve(String key, String defaultValue) {
