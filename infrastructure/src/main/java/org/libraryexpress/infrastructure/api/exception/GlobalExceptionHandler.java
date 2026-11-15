@@ -64,6 +64,7 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
 
     private HttpStatusCode getInfrastructureErrorType(InfrastructureException ie) {
         return switch (ie.getErrorType()) {
+            case INVALID_DATA -> BAD_REQUEST;
             case RESOURCE_NOT_FOUND -> NOT_FOUND;
             case BAD_GATEWAY -> BAD_GATEWAY;
             case GATEWAY_TIMEOUT -> GATEWAY_TIMEOUT;
