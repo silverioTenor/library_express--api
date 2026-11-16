@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public record BookFilterDTO(
+        String id,
         Isbn ISBN,
         String title,
         String author,
@@ -19,6 +20,7 @@ public record BookFilterDTO(
         InputPaginationDto paginationDto
 ) {
     public BookFilterDTO(
+            String id,
             String ISBN,
             String title,
             String author,
@@ -28,6 +30,7 @@ public record BookFilterDTO(
             int size
     ) {
         this(
+            id,
             parseIsbn(ISBN),
             title,
             author,
@@ -39,6 +42,7 @@ public record BookFilterDTO(
 
     public BookFilter toBookFilter() {
         return new BookFilter(
+                id(),
                 ISBN(),
                 title(),
                 author(),

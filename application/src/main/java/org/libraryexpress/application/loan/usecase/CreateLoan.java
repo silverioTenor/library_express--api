@@ -49,7 +49,7 @@ public class CreateLoan {
         logger.info("Initiating loan creation. loan DTO: [{}]", createLoanDto);
 
         this.loanEligibilityValidator.validate(createLoanDto.customerId());
-        Book book = this.bookAvailabilityValidator.validate(createLoanDto.isbn());
+        Book book = this.bookAvailabilityValidator.validate(createLoanDto.bookId());
 
         this.customerRepository
                 .getById(createLoanDto.customerId())

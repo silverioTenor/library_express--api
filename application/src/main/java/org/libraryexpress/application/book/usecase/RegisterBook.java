@@ -41,7 +41,7 @@ public class RegisterBook {
         this.bookRepository.create(book);
         log.info("Book registered.");
 
-        return new RegisterBookResponseDTO(book.getIsbn().value());
+        return new RegisterBookResponseDTO(book.getId().toString());
     }
 
     private Book processManualRegistration(RegisterBookDTO dto) {

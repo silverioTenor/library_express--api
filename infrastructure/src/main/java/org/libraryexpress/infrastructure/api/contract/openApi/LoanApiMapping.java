@@ -27,7 +27,7 @@ public interface LoanApiMapping {
     record CreateLoanContract(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String customerId,
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String bookId,
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) LocalDate dueDate
+            @Schema(description = "(optional)") LocalDate dueDate
     ) {}
 
     @POST
@@ -66,7 +66,7 @@ public interface LoanApiMapping {
     @Parameters({
             @Parameter(name = "id", in = ParameterIn.QUERY),
             @Parameter(name = "customerId", in = ParameterIn.QUERY),
-            @Parameter(name = "isbn", in = ParameterIn.QUERY),
+            @Parameter(name = "bookId", in = ParameterIn.QUERY),
             @Parameter(name = "statuses", in = ParameterIn.QUERY, example = "active, overdue, finished"),
             @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
@@ -129,6 +129,11 @@ public interface LoanApiMapping {
             @ApiResponse(
                     responseCode = "409",
                     description = "Loan not in OVERDUE state",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Only OVERDUE loans",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })

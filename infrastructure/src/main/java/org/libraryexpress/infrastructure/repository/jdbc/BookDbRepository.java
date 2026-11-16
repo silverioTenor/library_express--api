@@ -77,6 +77,29 @@ public class BookDbRepository implements BookRepository {
     }
 
     @Override
+    public Optional<Book> getById(String id) {
+        String query = "SELECT id, isbn, title, author, publication_year, status, category, description FROM book WHERE id::text = ?";
+
+        try (
+                Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)
+        ) {
+            statement.setString(1, id);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return Optional.of(mapRowToBook(resultSet));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Fatal database error executing book payload query by id: " + e.getMessage(), e);
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<Book> getByIsbn(String ISBN) {
         String query = "SELECT id, isbn, title, author, publication_year, status, category, description FROM book WHERE isbn = ?";
 
@@ -112,14 +135,16 @@ public class BookDbRepository implements BookRepository {
         long totalElements;
 
         boolean hasIsbnFilter = filter.ISBN() != null && !filter.ISBN().value().isBlank();
+        boolean hasIdFilter = filter.id() != null && !filter.id().isBlank();
         boolean hasStatusFilter = filter.statuses() != null && !filter.statuses().isEmpty();
 
+        if (hasIdFilter) query.append(" AND id::text = ?");
         if (hasIsbnFilter) query.append(" AND isbn = ?");
 
         // Dynamically building the IN (?, ?, ...) clause to match the Set collections size safely
         if (hasStatusFilter) query.append(" AND status = ANY(?)");
 
-        if (shouldPaginate) query.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?;");
+        if (shouldPaginate) query.append(" ORDER BY created_at, id DESC LIMIT ? OFFSET ?;");
         else query.append(" ORDER BY created_at DESC;");
 
         try (
@@ -127,6 +152,10 @@ public class BookDbRepository implements BookRepository {
                 PreparedStatement statement = connection.prepareStatement(query.toString());
         ) {
             int parameterIndex = 1;
+
+            if (hasIdFilter) {
+                statement.setString(parameterIndex++, filter.id());
+            }
 
             if (hasIsbnFilter) {
                 statement.setString(parameterIndex++, filter.ISBN().value());

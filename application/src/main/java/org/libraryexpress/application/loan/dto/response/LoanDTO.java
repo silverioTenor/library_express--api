@@ -8,7 +8,7 @@ import java.time.LocalDate;
 public record LoanDTO(
         String id,
         String customerId,
-        String ISBN,
+        String bookId,
         LoanStatus status,
         LocalDate startDate,
         LocalDate endDate,

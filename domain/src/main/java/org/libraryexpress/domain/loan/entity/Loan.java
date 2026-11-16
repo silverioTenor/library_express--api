@@ -1,6 +1,5 @@
 package org.libraryexpress.domain.loan.entity;
 
-import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.libraryexpress.domain.core.exception.DomainErrorType;
 import org.libraryexpress.domain.core.exception.DomainException;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
@@ -19,7 +18,7 @@ public class Loan implements Comparable<Loan> {
 
     private final String id;
 
-    private final Isbn ISBN;
+    private final String bookId;
 
     private final String customerId;
 
@@ -33,27 +32,28 @@ public class Loan implements Comparable<Loan> {
 
     private Loan(
             String id,
-            Isbn ISBN,
+            String bookId,
             String customerId,
             LoanStatus status,
             LocalDate startDate,
             LocalDate endDate,
             Instant closedAt
     ) {
-        Objects.requireNonNull(ISBN, "Book ISBN cannot be null");
         Objects.requireNonNull(status, "Loan status cannot be null");
         Objects.requireNonNull(startDate, "Start date cannot be null");
         Objects.requireNonNull(endDate, "End date cannot be null");
 
         if (id == null || id.isBlank())
             throw new InvalidArgumentException("Loan ID cannot be null or empty");
+        if (bookId == null || bookId.isBlank())
+            throw new InvalidArgumentException("Book ID cannot be null or empty");
         if (customerId == null || customerId.isBlank())
             throw new InvalidArgumentException("Customer ID cannot be null or empty");
         if (endDate.isBefore(startDate))
             throw new DateOutOfBoundException("End date cannot be before start date");
 
         this.id = id;
-        this.ISBN = ISBN;
+        this.bookId = bookId;
         this.customerId = customerId;
         this.status = status;
         this.startDate = startDate;
@@ -63,24 +63,24 @@ public class Loan implements Comparable<Loan> {
 
     public static Loan create(
             String id,
-            String ISBN,
+            String bookId,
             String customerId,
             LocalDate startDate,
             LocalDate endDate
     ) {
-        return new Loan(id, new Isbn(ISBN), customerId, LoanStatus.ACTIVE, startDate, endDate, null);
+        return new Loan(id, bookId, customerId, LoanStatus.ACTIVE, startDate, endDate, null);
     }
 
     public static Loan restore(
             String id,
-            String ISBN,
+            String bookId,
             String customerId,
             LoanStatus status,
             LocalDate startDate,
             LocalDate endDate,
             Instant closedAt
     ) {
-        return new Loan(id, new Isbn(ISBN), customerId, status, startDate, endDate, closedAt);
+        return new Loan(id, bookId, customerId, status, startDate, endDate, closedAt);
     }
 
     public void processReturn(Clock clock, boolean isOverdueFlow) {
@@ -110,8 +110,8 @@ public class Loan implements Comparable<Loan> {
         return id;
     }
 
-    public Isbn getISBN() {
-        return ISBN;
+    public String getBookId() {
+        return bookId;
     }
 
     public String getCustomerId() {
@@ -138,7 +138,7 @@ public class Loan implements Comparable<Loan> {
     public String toString() {
         return "{\n" +
                 " id: " + id + ",\n" +
-                " ISBN: " + ISBN + ",\n" +
+                " bookId: " + bookId + ",\n" +
                 " customerId: " + customerId + ",\n" +
                 " statuses: " + status.toString() + ",\n" +
                 " startDate: " + startDate + ",\n" +

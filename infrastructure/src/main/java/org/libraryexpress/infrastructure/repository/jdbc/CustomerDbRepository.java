@@ -122,7 +122,7 @@ public class CustomerDbRepository implements CustomerRepository {
         if (hasEmail) query.append(" AND email LIKE ?");
 
         if (shouldPaginate) query.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?;");
-        else query.append(" ORDER BY created_at DESC;");
+        else query.append(" ORDER BY created_at, id DESC;");
 
         try (
                 Connection connection = dataSource.getConnection();

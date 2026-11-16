@@ -1,6 +1,5 @@
 package org.libraryexpress.application.loan.dto.request;
 
-import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
@@ -13,15 +12,15 @@ import java.util.stream.Collectors;
 public record LoanFilterDTO(
         String id,
         String customerId,
-        Isbn ISBN,
+        String bookId,
         Set<LoanStatus> statuses,
         InputPaginationDto paginationDto
 ) {
-    public LoanFilterDTO(String id, String customerId, String ISBN, String statusesStr, int page, int size) {
+    public LoanFilterDTO(String id, String customerId, String bookId, String statusesStr, int page, int size) {
         this(
                 id,
                 customerId,
-                parseIsbn(ISBN),
+                bookId,
                 parseStatuses(statusesStr),
                 new InputPaginationDto(page, size)
         );
@@ -31,16 +30,10 @@ public record LoanFilterDTO(
         return new LoanFilter(
                 id,
                 customerId,
-                ISBN,
+                bookId,
                 statuses,
                 paginationDto
         );
-    }
-
-    private static Isbn parseIsbn(String ISBN) {
-        if (ISBN == null || ISBN.isBlank()) return null;
-
-        return new Isbn(ISBN);
     }
 
     private static Set<LoanStatus> parseStatuses(String statusesStr) {

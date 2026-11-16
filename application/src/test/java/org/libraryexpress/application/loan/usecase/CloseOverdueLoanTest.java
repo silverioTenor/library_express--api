@@ -36,7 +36,7 @@ class CloseOverdueLoanTest {
     private CloseOverdueLoan closeOverdueLoan;
 
     private static final String LOAN_ID = "loan-uuid-123";
-    private static final String ISBN_STR = "978-43-12345-67-8";
+    private static final String BOOK_ID = "00000000-0000-4000-8000-000000000001";
     private static final String CUSTOMER_ID = "customer-uuid-123";
 
     @BeforeEach
@@ -48,7 +48,7 @@ class CloseOverdueLoanTest {
         // Arrange
         Loan overdueLoan = Loan.restore(
                 LOAN_ID,
-                ISBN_STR,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.OVERDUE,
                 // Valid state for this palliative operational flow
@@ -91,7 +91,7 @@ class CloseOverdueLoanTest {
         // Arrange
         Loan activeLoan = Loan.restore(
                 LOAN_ID,
-                ISBN_STR,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 // Invalid state: this usecase is exclusively restricted to OVERDUE

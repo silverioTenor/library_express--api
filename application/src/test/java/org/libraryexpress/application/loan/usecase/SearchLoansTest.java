@@ -38,18 +38,18 @@ class SearchLoansTest {
     private SearchLoans searchLoans;
 
     private static final String CUSTOMER_ID = "customer-uuid-123";
-    private static final String ISBN_STR = "978-43-12345-67-8";
+    private static final String BOOK_ID = "00000000-0000-4000-8000-000000000001";
 
     @Test
     @DisplayName("Should successfully return mapped DTOs when valid criteria are provided")
     void shouldReturnLoanDtos_whenFilterCriteriaAreValid() {
         // Arrange
         Set<LoanStatus> statuses = Set.of(LoanStatus.ACTIVE);
-        var validFilter = new LoanFilterDTO(null, CUSTOMER_ID, ISBN_STR, "active", 0, 0);
+        var validFilter = new LoanFilterDTO(null, CUSTOMER_ID, BOOK_ID, "active", 0, 0);
 
         Loan mockLoan = Loan.restore(
                 "loan-1",
-                ISBN_STR,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
@@ -60,7 +60,7 @@ class SearchLoansTest {
         LoanDTO expectedDto = new LoanDTO(
                 "loan-1",
                 CUSTOMER_ID,
-                ISBN_STR,
+                BOOK_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
                 LocalDate.now().plusDays(15),
@@ -85,11 +85,11 @@ class SearchLoansTest {
     void shouldRetrieveOverdueLoan_whenPersistedPeriodHasElapsed() {
         LocalDate startDate = LocalDate.now().minusDays(20);
         LocalDate endDate = startDate.plusDays(15);
-        var overdueFilter = new LoanFilterDTO(null, CUSTOMER_ID, ISBN_STR, "overdue", 0, 0);
+        var overdueFilter = new LoanFilterDTO(null, CUSTOMER_ID, BOOK_ID, "overdue", 0, 0);
 
         Loan overdueLoan = Loan.restore(
                 "loan-overdue-1",
-                ISBN_STR,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.OVERDUE,
                 startDate,
@@ -100,7 +100,7 @@ class SearchLoansTest {
         LoanDTO expectedDto = new LoanDTO(
                 "loan-overdue-1",
                 CUSTOMER_ID,
-                ISBN_STR,
+                BOOK_ID,
                 LoanStatus.OVERDUE,
                 startDate,
                 endDate,

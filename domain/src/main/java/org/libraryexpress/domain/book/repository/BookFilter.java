@@ -7,6 +7,7 @@ import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import java.util.Set;
 
 public record BookFilter(
+        String id,
         Isbn ISBN,
         String title,
         String author,
