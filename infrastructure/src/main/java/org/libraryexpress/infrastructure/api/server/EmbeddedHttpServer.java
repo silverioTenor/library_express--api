@@ -15,7 +15,7 @@ public final class EmbeddedHttpServer {
 
     private static final int SERVER_PORT = ConfigRegistry.getApiPort();
 
-    private static final CustomLogger logger = CustomLoggerFactory.getLogger(EmbeddedHttpServer.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(EmbeddedHttpServer.class);
 
     private final HttpServer server;
 
@@ -30,7 +30,7 @@ public final class EmbeddedHttpServer {
 
             server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         } catch (Exception e) {
-            logger.error("FATAL: Failed to construct and wire embedded HTTP Server context properties", e);
+            LOG.error("FATAL: Failed to construct and wire embedded HTTP Server context properties", e);
             throw new IllegalStateException("HTTP Server context initialization failure", e);
         }
     }
@@ -38,18 +38,18 @@ public final class EmbeddedHttpServer {
     public void start() {
         try {
             server.start();
-            logger.info("Server running on port {}", SERVER_PORT);
+            LOG.info("Server running on port {}", SERVER_PORT);
         } catch (Exception e) {
-            logger.error("FATAL: Failed to start embedded HTTP Server network listeners", e);
+            LOG.error("FATAL: Failed to start embedded HTTP Server network listeners", e);
             System.exit(1);
         }
     }
 
     public void stop() {
-        logger.info("JVM execution signal captured. Tearing down embedded HTTP Server listeners...");
+        LOG.info("JVM execution signal captured. Tearing down embedded HTTP Server listeners...");
         if (server != null) {
             server.stop(5);
         }
-        logger.info("HTTP Server connection resources cleared safely.");
+        LOG.info("HTTP Server connection resources cleared safely.");
     }
 }
