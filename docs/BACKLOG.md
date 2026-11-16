@@ -164,7 +164,8 @@ Ideas surfaced during refinement that were deliberately **not** turned into epic
 - **Business-level audit trail (DB-backed).** Distinct from technical logging (SLF4J + Logback, ADR 0004, delivered via E8). A "who did what" table for business events was proposed during E8/E12 refinement and intentionally deferred — revisit only after all currently planned epics (through E13) are closed. Not a replacement for structured logging; a separate concern if ever pursued.
 - **Global application cache.** The per-feature cache planned for the book metadata lookup was dropped in E15. If a cache is ever introduced, it should be a single, application-wide mechanism (and the Google Books lookup is the first candidate), not a configuration owned by one feature.
 - **`year` → `publicationDate` on `Book`.** Replace the integer publication year with a `LocalDate`, handling partial dates (year only, year and month) returned by providers. Deferred because it changes the database schema; today the year defaults to `0` and the author to `Unnamed` when neither the client nor the provider supplies them.
-- **Book remodeling and provider enrichment.** Manual registrations store empty category and description; enriching them with provider data (client > provider > default) was discussed and not implemented in E15. Revisit together with the `publicationDate` change.
+- **Duplicate title and author.** The application keeps one record per book, author and ISBN, with no editions. A future rule should reject a new book whose title and author match an existing one under a different ISBN.
+- **Book remodeling and provider enrichment.** Manual registrations store empty category and description; enriching them with provider data was discussed and not implemented in E15. Revisit together with the `publicationDate` change.
 
 ---
 

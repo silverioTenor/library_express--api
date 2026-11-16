@@ -16,16 +16,20 @@ When a registration request carries no ISBN, the application resolves the book f
 - The contract is the `BookMetadataGateway` port, in the `domain` module next to the other book contracts (`domain/book/gateway`). The use case depends only on the port; the `infrastructure` module provides the Google Books adapter, built on `java.net.http` and Jackson.
 - **Google Books is the only provider.** The API key is read from `GOOGLE_BOOKS_API`; in production it is injected from AWS Secrets Manager through the ECS task definition.
 - A factory selects the adapter from `APP_ENV`: `test` selects a fake gateway, so tests and local runs never call the external service.
-- `POST /books` therefore has two modes. **Manual:** an ISBN is present, no external call is made, and category and description are stored empty. **Automatic:** no ISBN; the title and author are looked up and the book is registered with the ISBN-13, authors, categories, publication year and description returned by the provider. The description is limited to 500 characters.
-- No match answers `404` (the user is asked to review the data or register manually). A provider that is unavailable, returns an invalid response or times out is mapped to a gateway-class `5xx` by the central exception handler, and nothing is persisted.
+- `POST /books` therefore has two modes. **Manual:** an ISBN is present, no external call is made, and category and description are stored empty. **Automatic:** no ISBN; the title and author are used only to search, and the book is registered with the ISBN, authors, categories, publication year and description returned by the provider.
+- The provider's data is authoritative in automatic mode, including the publication year. The application models **one record per book, author and ISBN** — it does not model editions — so overwriting the year sent by the client is acceptable; only `title` and `author` are mandatory. A future rule will reject a new book whose title and author match an existing one under a different ISBN.
+- The description is cut to 500 characters, including a trailing `...`.
+- The HTTP client uses a 3 s connect timeout and a 5 s request timeout, and there is no retry.
+- The adapter takes the first result (position 0), which Google ranks as the closest match to the search parameters. If nothing matches, the answer is `404` (the user is asked to review the data or register manually).
+- A provider answering `500`, `502`, `503` or `504` is mapped to `503`. A connection failure, a timeout or an unexpected status (such as `400` for an invalid key) surfaces as `500` **by design**: the end user does not need to know that a dependency is down; that is for whoever reads the logs. Nothing is persisted on any failure.
 - The column and field are named `description`, not `summary`, because that is the common term.
-- Enriching a **manual** registration with provider data (precedence client > provider > default) was discussed and **not implemented** in E15; it is recorded as a future-exploration note together with the `publicationDate` change.
 
 **Alternatives considered**
 
 | Alternative | Outcome |
 |---|---|
 | Open Library as default and as fallback | Discarded. During implementation its records showed data-quality and integrity problems that compromised what would be stored; the multi-provider ordering and fallback design went with it |
+| Confidence rule (title and author match) before accepting a candidate | Part of the original design; not adopted. In the Dev's tests Google's first result is the closest match and an empty result answers `404`, so the extra rule adds code without a demonstrated need |
 | LLM-based lookup | Discarded in refinement: models return plausible but invented ISBNs |
 | Port in the `application` module | Not adopted; the gateway contract sits with the other domain contracts, as the repository interfaces do |
 
@@ -40,7 +44,7 @@ Input DTOs validate themselves. The compact constructor of each request record a
 **Alternatives considered:** a Notification-style collector (a `Violations` class) shared by all DTOs — rejected as excess machinery for a framework-free project; a fail-fast check on the first violation — rejected because it hides the other invalid fields from the client.
 
 ### Factories instead of Builders in the domain
-The Builder pattern was used incorrectly in the entities, which in a DDD and Clean Architecture design should be created through meaningful factories that enforce their invariants. Entities (`Book`, `Customer`, `Loan`) are now created through static factory methods, and value objects such as `Email` and `Isbn` expose `of()`. The input DTOs receive raw data and perform the conversion to domain types, so a DTO can produce its entity (`toEntity()`).
+The Builder pattern was used incorrectly in the entities, which in a DDD and Clean Architecture design should be created through meaningful factories that enforce their invariants. Entities (`Book`, `Customer`, `Loan`) are now created through static factory methods, and value objects such as `Email` and `Isbn` expose `of()`. The input DTOs receive raw data and perform the conversion to domain types, so a DTO can produce its entity (`toEntity()`). Value objects and DTOs are Java `record`s, whose canonical constructor cannot be made private; `of()` is therefore the conventional entry point, and direct instantiation with `new` remains available and is used where it is simpler (for example in mappers).
 
 ### Database: audit columns by trigger, consolidated schema
 - `created_at` and `updated_at` exist on every business table, are never exposed by the API, and listings are ordered by `created_at, id`. `updated_at` is maintained by a database trigger — see ADR 0006, Amendment 3, which also widens the narrow PL/pgSQL exception by that single, mechanical purpose.
@@ -70,4 +74,4 @@ The Builder pattern was used incorrectly in the entities, which in a DDD and Cle
 - Manual registrations have empty category and description; the lookup data is not used to complete them.
 - No cache: repeated automatic registrations of the same title repeat the external request.
 - The rewritten `V1` means environments built from the old history cannot be migrated in place; they must be recreated. E16 and E17 refinement texts must be read against the new table names and `APP_ENV` values.
-- `GOOGLE_BOOKS_API` has a placeholder default in `ConfigRegistry`, so a missing key in production is not detected at startup; the lookup fails at request time instead.
+- `GOOGLE_BOOKS_API` is meant to have no default. A temporary placeholder default existed in `ConfigRegistry` during development and is removed in US-1510; a missing key then shows up as a failure of the lookup, not as a silent fake value.
