@@ -16,8 +16,8 @@ import io.swagger.v3.oas.annotations.servers.Server;
                 title = "Library Express API",
                 version = "0.0.0-PLACEHOLDER",
                 description = "REST API for the Library Express book/customer/loan management system.",
-                contact = @Contact(name = "GitHub", url = "https://github.com/silverioTenor/library_express--api"),
-                license = @License(name = "MIT", url = "https://opensource.org/licenses/MIT")
+                contact = @Contact(name = "GitHub - Library Express API", url = "https://github.com/silverioTenor/library_express--api"),
+                license = @License(name = "Licence MIT", url = "https://opensource.org/licenses/MIT")
         ),
         servers = {
                 @Server(url = "http://localhost:4000", description = "Local development server"),

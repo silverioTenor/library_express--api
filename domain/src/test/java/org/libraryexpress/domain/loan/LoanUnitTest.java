@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Loan Entity - Unit Test")
 public class LoanUnitTest {
 
-    private static final String VALID_ISBN = "978-43-12345-67-8";
+    private static final String BOOK_ID = "00000000-0000-4000-8000-000000000001";
     private static final String CUSTOMER_ID = "customer-uuid-123";
 
     @Test
@@ -32,7 +32,7 @@ public class LoanUnitTest {
         assertThrows(NullPointerException.class, () ->
                 Loan.restore(
                         "loan-1",
-                        VALID_ISBN,
+                        BOOK_ID,
                         CUSTOMER_ID,
                         LoanStatus.ACTIVE,
                         startDate,
@@ -50,7 +50,7 @@ public class LoanUnitTest {
 
         Loan loan = Loan.restore(
                 "loan-1",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 startDate,
@@ -69,7 +69,7 @@ public class LoanUnitTest {
         assertThrows(InvalidArgumentException.class, () ->
                         Loan.restore(
                                 null,
-                                VALID_ISBN,
+                                BOOK_ID,
                                 CUSTOMER_ID,
                                 LoanStatus.ACTIVE,
                                 now,
@@ -81,7 +81,7 @@ public class LoanUnitTest {
         assertThrows(InvalidArgumentException.class, () ->
                         Loan.restore(
                                 "",
-                                VALID_ISBN,
+                                BOOK_ID,
                                 CUSTOMER_ID,
                                 LoanStatus.ACTIVE,
                                 now,
@@ -93,7 +93,7 @@ public class LoanUnitTest {
         assertThrows(InvalidArgumentException.class, () ->
                         Loan.restore(
                                 "   ",
-                                VALID_ISBN,
+                                BOOK_ID,
                                 CUSTOMER_ID,
                                 LoanStatus.ACTIVE,
                                 now,
@@ -106,7 +106,7 @@ public class LoanUnitTest {
         assertThrows(InvalidArgumentException.class, () ->
                         Loan.restore(
                                 "loan-1",
-                                VALID_ISBN,
+                                BOOK_ID,
                                 null,
                                 LoanStatus.ACTIVE,
                                 now,
@@ -118,7 +118,7 @@ public class LoanUnitTest {
         assertThrows(InvalidArgumentException.class, () ->
                         Loan.restore(
                                 "loan-1",
-                                VALID_ISBN,
+                                BOOK_ID,
                                 "",
                                 LoanStatus.ACTIVE,
                                 now,
@@ -130,7 +130,7 @@ public class LoanUnitTest {
         assertThrows(InvalidArgumentException.class, () ->
                         Loan.restore(
                                 "loan-1",
-                                VALID_ISBN,
+                                BOOK_ID,
                                 "   ",
                                 LoanStatus.ACTIVE,
                                 now,
@@ -143,7 +143,7 @@ public class LoanUnitTest {
         assertThrows(NullPointerException.class, () ->
                         Loan.restore(
                                 "loan-1",
-                                VALID_ISBN,
+                                BOOK_ID,
                                 CUSTOMER_ID,
                                 null,
                                 now,
@@ -163,13 +163,13 @@ public class LoanUnitTest {
                                 now.plusDays(15),
                                 null
                         ),
-                "Should throw exception for null ISBN"
+                "Should throw exception for null Book ID"
         );
 
         assertThrows(NullPointerException.class, () ->
                         Loan.restore(
                                 "loan-1",
-                                VALID_ISBN,
+                                BOOK_ID,
                                 CUSTOMER_ID,
                                 LoanStatus.ACTIVE,
                                 null,
@@ -187,7 +187,7 @@ public class LoanUnitTest {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         Loan loan = Loan.restore(
                 "loan-1",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 startDate,
@@ -207,7 +207,7 @@ public class LoanUnitTest {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         Loan loan = Loan.restore(
                 "loan-1",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 startDate,
@@ -227,7 +227,7 @@ public class LoanUnitTest {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         Loan loan = Loan.restore(
                 "loan-1",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 startDate,
@@ -246,7 +246,7 @@ public class LoanUnitTest {
     void shouldSortLoansByStartDate_whenCompared() {
         Loan earlyLoan = Loan.restore(
                 "1",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.of(2026, 8, 1),
@@ -256,7 +256,7 @@ public class LoanUnitTest {
 
         Loan lateLoan = Loan.restore(
                 "2",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.of(2026, 8, 15),
@@ -278,7 +278,7 @@ public class LoanUnitTest {
         DateOutOfBoundException exception = assertThrows(DateOutOfBoundException.class, () ->
                 Loan.restore(
                         "loan-1",
-                        VALID_ISBN,
+                        BOOK_ID,
                         CUSTOMER_ID,
                         LoanStatus.ACTIVE,
                         startDate,
@@ -298,7 +298,7 @@ public class LoanUnitTest {
 
         Loan loan = Loan.restore(
                 "loan-1",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.OVERDUE,
                 startDate,
@@ -319,7 +319,7 @@ public class LoanUnitTest {
 
         Loan loan = Loan.restore(
                 "sdasdasdasd",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 timestamp,
@@ -347,7 +347,7 @@ public class LoanUnitTest {
 
         Loan loan = Loan.restore(
                 "sdasdasdasd",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.OVERDUE,
                 startDate,
@@ -375,7 +375,7 @@ public class LoanUnitTest {
 
         Loan loan = Loan.restore(
                 "sdasdasdasd",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.OVERDUE,
                 startDate,

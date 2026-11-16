@@ -9,7 +9,6 @@ import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 
 import java.time.Clock;
-import java.time.Instant;
 
 /**
  * TODO - Temporary/palliative use case.
@@ -19,7 +18,7 @@ import java.time.Instant;
  */
 public class CloseOverdueLoan {
 
-    private static final CustomLogger logger =  CustomLoggerFactory.getLogger(CloseOverdueLoan.class);
+    private static final CustomLogger LOG =  CustomLoggerFactory.getLogger(CloseOverdueLoan.class);
 
     private final LoanRepository loanRepository;
 
@@ -31,22 +30,22 @@ public class CloseOverdueLoan {
     }
 
     public void execute(String loanId) {
-        logger.info("Initiating overdue loan settlement...");
+        LOG.info("Initiating overdue loan settlement...");
 
         Loan loan = this.loanRepository.findById(loanId)
                 .orElseThrow(() -> {
-                    logger.error("CRITICAL: No loan was found for the ID: [{}]", loanId);
+                    LOG.error("CRITICAL: No loan was found for the ID: [{}]", loanId);
                     return new LoanNotFoundException();
                 });
 
         if (!loan.getStatus().equals(LoanStatus.OVERDUE)) {
-            logger.warn("ABORTED: The loan was already overdue");
+            LOG.warn("ABORTED: The loan was already overdue");
             throw new OverdueLoanException();
         }
 
         loan.processReturn(clock, true);
         this.loanRepository.update(loan);
 
-        logger.info("Loan successfully completed! Loan ID: [{}]", loanId);
+        LOG.info("Loan successfully completed! Loan ID: [{}]", loanId);
     }
 }

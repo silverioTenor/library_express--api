@@ -8,6 +8,7 @@ import java.util.Optional;
 public interface BookRepository {
     void create(Book book);
     void update(Book bookToUpdate);
+    Optional<Book> getById(String id);
     Optional<Book> getByIsbn(String isbn);
     QueryResult<Book> search(BookFilter filter);
 }

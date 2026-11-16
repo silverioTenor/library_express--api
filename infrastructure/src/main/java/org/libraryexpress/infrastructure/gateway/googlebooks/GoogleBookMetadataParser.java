@@ -11,7 +11,7 @@ import java.util.StringJoiner;
 
 final class GoogleBookMetadataParser {
 
-    private static final CustomLogger log = CustomLoggerFactory.getLogger(GoogleBookMetadataParser.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(GoogleBookMetadataParser.class);
 
     private GoogleBookMetadataParser() {}
 
@@ -19,7 +19,7 @@ final class GoogleBookMetadataParser {
         if (jsonBody == null || jsonBody.isBlank()) return Optional.empty();
 
         try {
-            log.info("Starting BookMetadata parsing...");
+            LOG.info("Starting BookMetadata parsing...");
 
             JsonNode root = JacksonConfig.mapper().readTree(jsonBody);
             JsonNode items = root.path("items");
@@ -30,7 +30,7 @@ final class GoogleBookMetadataParser {
             return Optional.of(mapToMetadata(firstMatch));
 
         } catch (Exception e) {
-            log.warn("Book metadata parser failed: {}", e.getMessage(), e);
+            LOG.warn("Book metadata parser failed: {}", e.getMessage(), e);
             return Optional.empty();
         }
     }
@@ -43,7 +43,7 @@ final class GoogleBookMetadataParser {
         String category = extractCategory(item);
         String description = extractDescription(item);
 
-        log.info("BookMetadata parse completed.");
+        LOG.info("BookMetadata parse completed.");
 
         return new BookMetadata(isbn, title, author, publicationYear, category, description);
     }

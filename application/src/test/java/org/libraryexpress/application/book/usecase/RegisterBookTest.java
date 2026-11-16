@@ -8,7 +8,6 @@ import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
 import org.libraryexpress.application.book.dto.response.RegisterBookResponseDTO;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
-import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.exception.UniqueIsbnViolationException;
 import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
@@ -16,6 +15,7 @@ import org.libraryexpress.domain.book.repository.BookRepository;
 import org.libraryexpress.domain.book.valueobject.BookMetadata;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
@@ -49,11 +49,23 @@ class RegisterBookTest {
         Book expectedBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE", "", "");
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.empty());
 
-        RegisterBookResponseDTO response = registerBook.execute(requestDto);
+        try (MockedStatic<Book> bookMocked  =mockStatic(Book.class)) {
+            bookMocked.when(() -> Book.create(
+                    eq(ISBN_STR),
+                    eq("Clean Code"),
+                    eq("Robert C. Martin"),
+                    eq(2008),
+                    eq("AVAILABLE"),
+                    eq(""),
+                    eq("")
+            )).thenReturn(expectedBook);
 
-        assertEquals(ISBN_STR, response.isbn());
-        verify(bookRepository).create(expectedBook);
-        verifyNoInteractions(bookGateway, mapper);
+            RegisterBookResponseDTO response = registerBook.execute(requestDto);
+
+            assertEquals(expectedBook.getId().toString(), response.id());
+            verify(bookRepository).create(expectedBook);
+            verifyNoInteractions(bookGateway, mapper);
+        }
     }
 
     @Test
@@ -75,12 +87,13 @@ class RegisterBookTest {
         RegisterBookDTO requestDto = new RegisterBookDTO(null, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE");
         BookMetadata metadata = new BookMetadata(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "Software", "A guide");
         Book expectedBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE", "Software", "A guide");
+
         when(bookGateway.fetch(requestDto.title(), requestDto.author())).thenReturn(Optional.of(metadata));
         when(mapper.toEntity(metadata, requestDto.status())).thenReturn(expectedBook);
 
         RegisterBookResponseDTO response = registerBook.execute(requestDto);
 
-        assertEquals(ISBN_STR, response.isbn());
+        assertEquals(expectedBook.getId().toString(), response.id());
         verify(mapper).toEntity(metadata, requestDto.status());
         verify(bookRepository).create(expectedBook);
         verify(bookRepository).getByIsbn(ISBN_STR);

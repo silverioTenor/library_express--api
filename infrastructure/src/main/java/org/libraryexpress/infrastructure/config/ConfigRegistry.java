@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 public final class ConfigRegistry {
 
-    private static final CustomLogger log = CustomLoggerFactory.getLogger(ConfigRegistry.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(ConfigRegistry.class);
 
     private static final Dotenv dotenv;
     private static final Properties properties;
@@ -29,10 +29,10 @@ public final class ConfigRegistry {
             if (input != null) {
                 properties.load(input);
             } else {
-                log.warn("Warning: application.properties not found. Relying on default parameters.");
+                LOG.warn("Warning: application.properties not found. Relying on default parameters.");
             }
         } catch (IOException e) {
-            log.error("Error reading connection properties file: " + e.getMessage(), e);
+            LOG.error("Error reading connection properties file: " + e.getMessage(), e);
         }
     }
 
@@ -88,8 +88,8 @@ public final class ConfigRegistry {
         return resolve("APP_ENV", "prod");
     }
 
-    public static String getGoogleBooksApi() {
-        return resolve("GOOGLE_BOOKS_API", "optional");
+    public static String getGoogleBooksApiKey() {
+        return resolve("GOOGLE_BOOKS_API_KEY", null);
     }
 
     private static String resolve(String key, String defaultValue) {

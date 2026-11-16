@@ -11,7 +11,7 @@ import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
 public class UpdateCustomerEmail {
 
-    private static final CustomLogger logger  = CustomLoggerFactory.getLogger(UpdateCustomerEmail.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(UpdateCustomerEmail.class);
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper mapper;
@@ -22,11 +22,11 @@ public class UpdateCustomerEmail {
     }
 
     public void execute(UpdateCustomerEmailDTO updateCustomerEmailDto) {
-        logger.info("Initiating Update Customer Email Flow");
+        LOG.info("Initiating Update Customer Email Flow");
 
         Customer customer = this.customerRepository.getById(updateCustomerEmailDto.id())
                 .orElseThrow(() -> {
-                    logger.error("CRITICAL: No customer was found for the ID: [{}] ", updateCustomerEmailDto.id());
+                    LOG.error("CRITICAL: No customer was found for the ID: [{}] ", updateCustomerEmailDto.id());
                     return new CustomerNotFoundException();
                 });
 
@@ -34,7 +34,7 @@ public class UpdateCustomerEmail {
                 .orElse(null);
 
         if (isEmailUsed != null) {
-            logger.warn(
+            LOG.warn(
                     "ALERT: The email address has already been used. Customer ID: [{}] - email provided: [{}]",
                     updateCustomerEmailDto.id(), updateCustomerEmailDto.email()
             );
@@ -45,6 +45,6 @@ public class UpdateCustomerEmail {
 
         this.customerRepository.update(customer);
 
-        logger.info("Customer email successfully updated! Customer ID [{}]", customer.getId());
+        LOG.info("Customer email successfully updated! Customer ID [{}]", customer.getId());
     }
 }

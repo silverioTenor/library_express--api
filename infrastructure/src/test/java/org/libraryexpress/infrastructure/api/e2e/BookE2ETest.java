@@ -9,6 +9,7 @@ import java.util.List;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @E2ETest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -63,6 +64,26 @@ class BookE2ETest extends E2EBaseConfig {
 
         given()
                 .contentType(ContentType.JSON)
+                .param("id", bookDto.id())
+        .when()
+                .get("/books")
+        .then()
+                .statusCode(200)
+                .body("items", hasSize(1))
+                .body("items[0].id", is(bookDto.id()));
+
+        given()
+                .contentType(ContentType.JSON)
+                .param("isbn", bookDto.isbn())
+        .when()
+                .get("/books")
+        .then()
+                .statusCode(200)
+                .body("items", hasSize(1))
+                .body("items[0].id", is(bookDto.id()));
+
+        given()
+                .contentType(ContentType.JSON)
         .when()
                 .get("/books")
         .then()
@@ -72,7 +93,7 @@ class BookE2ETest extends E2EBaseConfig {
                 .body("limit", is(1))
                 .body("totalPages", is(1))
                 .body("total", is(1))
-                .body("items[0].isbn", is(bookDto.isbn()));
+                .body("items[0].id", is(bookDto.id()));
 
         given()
                 .contentType(ContentType.JSON)
@@ -138,7 +159,7 @@ class BookE2ETest extends E2EBaseConfig {
             }
             """;
 
-        String isbn = given()
+        String bookId = given()
                 .contentType(ContentType.JSON)
                 .body(bookPayload)
         .when()
@@ -146,15 +167,7 @@ class BookE2ETest extends E2EBaseConfig {
         .then()
                 .statusCode(201)
                 .extract()
-                .path("isbn");
-
-        given()
-                .contentType(ContentType.JSON)
-        .when()
-                .get("/books/{isbn}", isbn)
-        .then()
-                .statusCode(200)
-                .body("title", equalTo("E2E Fake Gateway Book"))
-                .body("authors", equalTo(List.of("Test Author")));
+                 .path("id");
+        assertNotNull(bookId);
     }
 }

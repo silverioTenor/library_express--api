@@ -39,9 +39,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String payload = """
                 {
                     "customerId": "%s",
-                    "isbn": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.isbn());
+                """.formatted(customer.id(), book.id());
 
         given()
             .contentType(ContentType.JSON)
@@ -69,11 +69,12 @@ public class LoanE2ETest extends E2EBaseConfig {
 
         given()
             .contentType(ContentType.JSON)
-            .param("isbn", book.isbn())
+            .param("bookId", book.id())
         .when()
             .get("/loans")
         .then()
-            .statusCode(200);
+            .statusCode(200)
+            .body("items[0].bookId", is(book.id()));
 
         given()
             .contentType(ContentType.JSON)
@@ -96,9 +97,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String payload = """
                 {
                     "customerId": "%s",
-                    "isbn": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.isbn());
+                """.formatted(customer.id(), book.id());
 
         // Create new loan
         given()
@@ -141,9 +142,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String payload = """
                 {
                     "customerId": "%s",
-                    "isbn": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.isbn());
+                """.formatted(customer.id(), book.id());
 
        var loanId = given()
                        .contentType(ContentType.JSON)
@@ -178,7 +179,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         var book = TestDataFactory.getBook("978-2-3885-1775-2");
 
         String loanId = UUID.randomUUID().toString();
-        TestDataFactory.createLoan(loanId, customer.id(), book.isbn(), "ACTIVE");
+        TestDataFactory.createLoan(loanId, customer.id(), book.id(), "ACTIVE");
 
         assertNotNull(customer);
         assertNotNull(book);
@@ -204,7 +205,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         var book = TestDataFactory.getBook("9788535902778");
 
         String loanId = UUID.randomUUID().toString();
-        TestDataFactory.createLoan(loanId, customer.id(), book.isbn(), "OVERDUE");
+        TestDataFactory.createLoan(loanId, customer.id(), book.id(), "OVERDUE");
 
         given()
                 .contentType(ContentType.JSON)
@@ -225,11 +226,12 @@ public class LoanE2ETest extends E2EBaseConfig {
         TestDataFactory.createBook("9788520921579");
 
         var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
+        var book = TestDataFactory.getBook("9788520921579");
 
         String firstPayload = """
                 {
                     "customerId": "%s",
-                    "isbn": "9780140283334"
+                    "bookId": "9780140283334"
                 }
                 """.formatted(customer.id());
 
@@ -245,9 +247,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String secondPayload = """
                 {
                     "customerId": "invalid-customer-id",
-                    "isbn": "9788520921579"
+                    "bookId": "%s"
                 }
-                """;
+                """.formatted(book.id());
 
         given()
             .contentType(ContentType.JSON)
@@ -269,9 +271,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String firstPayload = """
                 {
                     "customerId": "%s",
-                    "isbn": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.isbn());
+                """.formatted(customer.id(), book.id());
 
         given()
             .contentType(ContentType.JSON)
@@ -293,14 +295,14 @@ public class LoanE2ETest extends E2EBaseConfig {
         var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
 
         String loanId = UUID.randomUUID().toString();
-        TestDataFactory.createLoan(loanId, customer.id(), book.isbn(), "OVERDUE");
+        TestDataFactory.createLoan(loanId, customer.id(), book.id(), "OVERDUE");
 
         String payload = """
                 {
                     "customerId": "%s",
-                    "isbn": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.isbn());
+                """.formatted(customer.id(), book.id());
 
         given()
             .contentType(ContentType.JSON)
@@ -324,9 +326,9 @@ public class LoanE2ETest extends E2EBaseConfig {
         String payload = """
                 {
                     "customerId": "%s",
-                    "isbn": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.isbn());
+                """.formatted(customer.id(), book.id());
 
         given()
                 .contentType(ContentType.JSON)
@@ -459,7 +461,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         }
 
         static OutputPaginationDto<LoanDTO> getPagedLoans(String... parameterValues) {
-            String[] parameterNames = {"isbn", "customerId", "statuses"};
+            String[] parameterNames = {"bookId", "customerId", "statuses"};
 
             var request = given()
                 .contentType(ContentType.JSON);
@@ -478,10 +480,10 @@ public class LoanE2ETest extends E2EBaseConfig {
                 .body().as(new TypeRef<OutputPaginationDto<LoanDTO>>() {});
         }
 
-        static void createLoan(String loanId, String customerId, String isbn, String status) {
+        static void createLoan(String loanId, String customerId, String bookId, String status) {
             String sql = """
                 INSERT INTO loan (id, book_id, customer_id, status, start_date, end_date)
-                VALUES (?, (SELECT id FROM book WHERE isbn = ?), ?, ?, NOW() - INTERVAL '20 days', NOW() - INTERVAL '5 days')
+                VALUES (?, ?, ?, ?, NOW() - INTERVAL '20 days', NOW() - INTERVAL '5 days')
             """;
 
             String jdbcUrl = postgres.getJdbcUrl();
@@ -492,7 +494,7 @@ public class LoanE2ETest extends E2EBaseConfig {
                  var stmt = conn.prepareStatement(sql)) {
 
                 stmt.setObject(1, UUID.fromString(loanId));
-                stmt.setString(2, isbn);
+                stmt.setObject(2, UUID.fromString(bookId));
                 stmt.setObject(3, UUID.fromString(customerId));
                 stmt.setString(4, status);
                 stmt.executeUpdate();

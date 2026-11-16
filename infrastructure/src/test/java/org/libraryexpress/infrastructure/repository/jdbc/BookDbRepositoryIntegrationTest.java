@@ -109,7 +109,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
 
         // Act - Searching using your awesome high-performance ANY arrays filter implementation
-        BookFilter filter = new BookFilter(null, null, null, null, Set.of(BookStatus.AVAILABLE), null);
+        BookFilter filter = new BookFilter(null, null, null, null, null, Set.of(BookStatus.AVAILABLE), null);
         QueryResult<Book> result = bookRepository.search(filter);
 
         List<Book> foundBooks = result.items();
@@ -119,6 +119,9 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         assertEquals(2, foundBooks.size(), "Should find exactly 2 AVAILABLE books, discarding the BORROWED entry");
         assertTrue(foundBooks.stream().anyMatch(b -> b.getTitle().equals("Design Patterns Base")));
         assertTrue(foundBooks.stream().anyMatch(b -> b.getTitle().equals("Enterprise Integration Patterns")));
+
+        BookFilter byIdFilter = new BookFilter(book1.getId().toString(), null, null, null, null, null, null);
+        assertEquals(List.of(book1), bookRepository.search(byIdFilter).items());
     }
 
     @Test
@@ -132,7 +135,7 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book2);
 
         // Act
-        BookFilter filter = new BookFilter(null, null, null, null, null, null);
+        BookFilter filter = new BookFilter(null, null, null, null, null, null, null);
         List<Book> allBooks = bookRepository.search(filter).items();
 
         // Assert

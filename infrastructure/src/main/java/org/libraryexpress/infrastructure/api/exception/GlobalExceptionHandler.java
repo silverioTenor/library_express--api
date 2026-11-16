@@ -8,7 +8,6 @@ import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
 import org.libraryexpress.infrastructure.api.routing.CustomHttpHandler;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
-import org.libraryexpress.infrastructure.exception.InfrastructureErrorType;
 import org.libraryexpress.infrastructure.exception.InfrastructureException;
 
 import java.io.IOException;
@@ -18,7 +17,7 @@ import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.BAD_GAT
 
 public class GlobalExceptionHandler implements CustomHttpHandler {
 
-    private static final CustomLogger logger = CustomLoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private final CustomHttpHandler httpHandler;
 
@@ -43,13 +42,13 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
         };
 
         if (statusCode.equals(INTERNAL_SERVER_ERROR)) {
-            logger.error("Internal error occurred while processing request", exception);
+            LOG.error("Internal error occurred while processing request", exception);
             response.status(INTERNAL_SERVER_ERROR)
                     .json(ErrorResponse.of(500, "An unexpected internal server error occurred. Please contact support."));
             return;
         }
 
-        logger.warn("Application execution request rejected. HTTP Status: [{}]. Reason: [{}]", statusCode, exception.getMessage());
+        LOG.warn("Application execution request rejected. HTTP Status: [{}]. Reason: [{}]", statusCode, exception.getMessage());
         response.status(statusCode).json(ErrorResponse.of(statusCode.getCode(), exception.getMessage()));
     }
 
@@ -64,6 +63,7 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
 
     private HttpStatusCode getInfrastructureErrorType(InfrastructureException ie) {
         return switch (ie.getErrorType()) {
+            case INVALID_DATA -> BAD_REQUEST;
             case RESOURCE_NOT_FOUND -> NOT_FOUND;
             case BAD_GATEWAY -> BAD_GATEWAY;
             case GATEWAY_TIMEOUT -> GATEWAY_TIMEOUT;

@@ -36,7 +36,7 @@ class LoanEligibilityValidatorTest {
     private LoanEligibilityValidator validator;
 
     private static final String CUSTOMER_ID = "customer-uuid-123";
-    private static final String VALID_ISBN = "978-43-12345-67-8";
+    private static final String BOOK_ID = "00000000-0000-4000-8000-000000000001";
 
     @Test
     @DisplayName("Should validate successfully when the customer has no active or overdue loans")
@@ -60,7 +60,7 @@ class LoanEligibilityValidatorTest {
         // Arrange
         Loan overdueLoan = Loan.restore(
                 "loan-1",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.OVERDUE,
                 // Status that triggers the blocking mechanism
@@ -89,7 +89,7 @@ class LoanEligibilityValidatorTest {
         // Arrange
         Loan activeLoan1 = Loan.restore(
                 "loan-1",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
@@ -99,7 +99,7 @@ class LoanEligibilityValidatorTest {
 
         Loan activeLoan2 = Loan.restore(
                 "loan-2",
-                "111-22-33333-44-5",
+                "00000000-0000-4000-8000-000000000002",
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
@@ -127,7 +127,7 @@ class LoanEligibilityValidatorTest {
         // Arrange
         Loan activeLoan = Loan.restore(
                 "loan-1",
-                VALID_ISBN,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.now(),

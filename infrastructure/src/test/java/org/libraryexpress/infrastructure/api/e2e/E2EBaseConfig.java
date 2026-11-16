@@ -5,7 +5,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
-import org.libraryexpress.infrastructure.api.server.EmbeddedHttpServer;
 import org.libraryexpress.infrastructure.config.AppBootstrapper;
 import org.libraryexpress.infrastructure.config.logging.Slf4jLoggerAdapter;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -24,11 +23,11 @@ public abstract class E2EBaseConfig {
 
     private static final AtomicBoolean serverStarted = new AtomicBoolean(false);
 
-    private static final CustomLogger logger;
+    private static final CustomLogger LOG;
 
     static {
         CustomLoggerFactory.initialize(Slf4jLoggerAdapter::new);
-        logger = CustomLoggerFactory.getLogger(E2EBaseConfig.class);
+        LOG = CustomLoggerFactory.getLogger(E2EBaseConfig.class);
     }
 
     @BeforeAll
@@ -61,7 +60,7 @@ public abstract class E2EBaseConfig {
 
     @AfterAll
     static void cleanDatabaseState() {
-        logger.info("Cleaning database...");
+        LOG.info("Cleaning database...");
         String truncateSql = "TRUNCATE TABLE loan, book, customer RESTART IDENTITY CASCADE";
 
         String jdbcUrl = postgres.getJdbcUrl();
@@ -73,10 +72,10 @@ public abstract class E2EBaseConfig {
 
             stmt.executeUpdate(truncateSql);
 
-            logger.info("Database truncated successfully");
+            LOG.info("Database truncated successfully");
 
         } catch (SQLException e) {
-            logger.error("Failed to execute truncate on the database: " + e.getMessage(), e);
+            LOG.error("Failed to execute truncate on the database: " + e.getMessage(), e);
         }
     }
 }
