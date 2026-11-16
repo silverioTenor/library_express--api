@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.libraryexpress</groupId>
         <artifactId>LibraryExpress</artifactId>
-        <version>0.2.1</version>
+        <version>0.3.0-beta</version>
     </parent>
 
     <artifactId>infrastructure</artifactId>
@@ -218,10 +218,9 @@
                             </includes>
 
                             <excludes>
-                                <exclude>**/cli/**/*</exclude>
                                 <exclude>**/config/**/*</exclude>
                                 <exclude>**/util/*</exclude>
-                                <exclude>**/InMemory/*</exclude>
+                                <exclude>**/openApi/*</exclude>
                                 <exclude>**/*.class</exclude>
                             </excludes>
 

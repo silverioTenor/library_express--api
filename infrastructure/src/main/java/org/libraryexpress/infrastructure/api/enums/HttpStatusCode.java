@@ -11,7 +11,10 @@ public enum HttpStatusCode {
     CONFLICT(409),
     UNPROCESSABLE_ENTITY(422),
     INTERNAL_SERVER_ERROR(500),
-    NOT_IMPLEMENTED(501);
+    NOT_IMPLEMENTED(501),
+    BAD_GATEWAY(502),
+    SERVICE_UNAVAILABLE(503),
+    GATEWAY_TIMEOUT(504);
 
     private final int code;
 

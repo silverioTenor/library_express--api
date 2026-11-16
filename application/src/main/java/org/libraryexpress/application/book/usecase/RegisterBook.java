@@ -1,39 +1,74 @@
 package org.libraryexpress.application.book.usecase;
 
-import org.libraryexpress.application.book.dto.request.RegisterBookDto;
+import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
+import org.libraryexpress.application.book.dto.response.RegisterBookResponseDTO;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
+import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.exception.UniqueIsbnViolationException;
+import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
 import org.libraryexpress.domain.book.repository.BookRepository;
+import org.libraryexpress.domain.book.valueobject.BookMetadata;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 
+import java.util.Optional;
+
 public class RegisterBook {
 
-    private static final CustomLogger logger =  CustomLoggerFactory.getLogger(RegisterBook.class);
+    private static final CustomLogger LOG =  CustomLoggerFactory.getLogger(RegisterBook.class);
 
     private final BookRepository bookRepository;
+
+    private final BookMetadataGateway bookGateway;
+
     private final BookMapper mapper;
 
-    public RegisterBook(BookRepository bookRepository, BookMapper mapper) {
+    public RegisterBook(BookRepository bookRepository, BookMetadataGateway bookGateway, BookMapper mapper) {
         this.bookRepository = bookRepository;
+        this.bookGateway = bookGateway;
         this.mapper = mapper;
     }
 
-    public void execute(RegisterBookDto registerBookDto) {
-        logger.info("Starting book registration...");
+    public RegisterBookResponseDTO execute(RegisterBookDTO registerBookDto) {
+        LOG.info("Starting book registration...");
 
-        var hasRegistered = this.bookRepository.getByIsbn(registerBookDto.ISBN());
-
-        if (hasRegistered.isPresent()) {
-            logger.warn("ABORTED: Book already exists. ISBN: [{}]", registerBookDto.ISBN());
-            throw new UniqueIsbnViolationException();
-        }
-
-        Book book = this.mapper.toEntity(registerBookDto).build();
+        Book book = registerBookDto.isManualRegistration()
+                ? processManualRegistration(registerBookDto)
+                : processExternalRegistration(registerBookDto);
 
         this.bookRepository.create(book);
+        LOG.info("Book registered.");
 
-        logger.info("Book successfully registered!");
+        return new RegisterBookResponseDTO(book.getId().toString());
+    }
+
+    private Book processManualRegistration(RegisterBookDTO dto) {
+        Book book = dto.toEntity();
+        ensureIsbnIsUnique(book);
+        return book;
+    }
+
+    private Book processExternalRegistration(RegisterBookDTO dto) {
+        Optional<BookMetadata> bookMetadata = this.bookGateway.fetch(dto.title(), dto.author());
+
+        if (bookMetadata.isEmpty()) {
+            LOG.warn("External book lookup returned empty. Title: [{}], Author: [{}]", dto.title(), dto.author());
+            throw new BookNotFoundException(
+                    "No book matches the provided title and author in the external registry. Please review the search data or fill in the complete details manually."
+            );
+        }
+
+        Book book = this.mapper.toEntity(bookMetadata.get(), dto.status());
+        ensureIsbnIsUnique(book);
+        return book;
+    }
+
+    private void ensureIsbnIsUnique(Book book) {
+        String isbn = book.getIsbn().value();
+        if (this.bookRepository.getByIsbn(isbn).isPresent()) {
+            LOG.warn("ABORTED: Book already exists. isbn: {}", isbn);
+            throw new UniqueIsbnViolationException();
+        }
     }
 }

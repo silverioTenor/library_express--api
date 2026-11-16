@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
-import org.libraryexpress.application.customer.dto.request.CreateCustomerDto;
+import org.libraryexpress.application.customer.dto.request.CreateCustomerDTO;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
@@ -39,19 +39,13 @@ class CreateCustomerTest {
     @DisplayName("Should successfully create a customer when the email is unique in database")
     void shouldCreateCustomer_whenEmailIsUnique() {
         // Arrange
-        CreateCustomerDto requestDto = new CreateCustomerDto(CUSTOMER_NAME, EMAIL_STR);
+        CreateCustomerDTO requestDto = new CreateCustomerDTO(CUSTOMER_NAME, EMAIL_STR);
 
-        // Mocking the Customer.Builder fluid chain returned by the mapper layer
-        Customer.Builder mockBuilder = mock(Customer.Builder.class);
-        Customer targetCustomer = new Customer.Builder()
-                .setName(CUSTOMER_NAME)
-                .setEmail(EMAIL_STR)
-                .build();
+        Customer targetCustomer = Customer.create(CUSTOMER_NAME, EMAIL_STR);
 
         // Stubbing repository query to simulate an empty database slot
         when(customerRepository.getByEmail(EMAIL_STR)).thenReturn(Optional.empty());
-        when(mapper.toEntity(requestDto)).thenReturn(mockBuilder);
-        when(mockBuilder.build()).thenReturn(targetCustomer);
+        when(mapper.toEntity(requestDto)).thenReturn(targetCustomer);
 
         // Act
         createCustomer.execute(requestDto);
@@ -64,13 +58,9 @@ class CreateCustomerTest {
     @DisplayName("Should throw UniqueEmailViolationException and abort persistence when email already exists")
     void shouldThrowUniqueEmailViolationException_whenEmailAlreadyExists() {
         // Arrange
-        CreateCustomerDto requestDto = new CreateCustomerDto(CUSTOMER_NAME, EMAIL_STR);
+        CreateCustomerDTO requestDto = new CreateCustomerDTO(CUSTOMER_NAME, EMAIL_STR);
 
-        Customer existingCustomer = new Customer.Builder()
-                .setId("existing-id")
-                .setName("Another Customer Name")
-                .setEmail(EMAIL_STR)
-                .build();
+        Customer existingCustomer = Customer.restore("existing-id", "Another Customer Name", EMAIL_STR);
 
         // Stubbing repository query to simulate an existing email collision
         when(customerRepository.getByEmail(EMAIL_STR)).thenReturn(Optional.of(existingCustomer));

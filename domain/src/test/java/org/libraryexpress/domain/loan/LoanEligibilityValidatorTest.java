@@ -9,6 +9,7 @@ import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.exception.LoanLimitReachedException;
 import org.libraryexpress.domain.loan.exception.OverdueLoanException;
+import org.libraryexpress.domain.loan.repository.LoanFilter;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.mockito.InjectMocks;
@@ -17,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,36 +36,44 @@ class LoanEligibilityValidatorTest {
     private LoanEligibilityValidator validator;
 
     private static final String CUSTOMER_ID = "customer-uuid-123";
-    private static final String VALID_ISBN = "978-43-12345-67-8";
+    private static final String BOOK_ID = "00000000-0000-4000-8000-000000000001";
 
     @Test
     @DisplayName("Should validate successfully when the customer has no active or overdue loans")
     void shouldValidateSuccessfully_whenCustomerHasNoLoans() {
         // Arrange
-        when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
-                .thenReturn(new QueryResult<>(Collections.emptySet(), 0));
+        var filter = new LoanFilter(
+                null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
+        );
+        when(loanRepository.search(filter))
+                .thenReturn(new QueryResult<>(Collections.emptyList(), 0));
 
         // Act & Assert
         // assertDoesNotThrow ensures the flow runs cleanly without triggering business exceptions
         assertDoesNotThrow(() -> validator.validate(CUSTOMER_ID));
-        verify(loanRepository, times(1))
-                .search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null);
+        verify(loanRepository, times(1)).search(filter);
     }
 
     @Test
     @DisplayName("Should throw OverdueLoanException when the customer has at least one overdue loan")
     void shouldThrowOverdueLoanException_whenCustomerHasOverdueLoan() {
         // Arrange
-        Loan overdueLoan = new Loan.Builder()
-                .setId("loan-1")
-                .setISBN(VALID_ISBN)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.OVERDUE) // Status that triggers the blocking mechanism
-                .setStartDate(LocalDate.now().minusDays(20))
-                .build();
+        Loan overdueLoan = Loan.restore(
+                "loan-1",
+                BOOK_ID,
+                CUSTOMER_ID,
+                LoanStatus.OVERDUE,
+                // Status that triggers the blocking mechanism
+                LocalDate.now().minusDays(20),
+                LocalDate.now().minusDays(5),
+                null
+        );
 
-        when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
-                .thenReturn(new QueryResult<>(Set.of(overdueLoan), 1));
+        var filter = new LoanFilter(
+                null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
+        );
+        when(loanRepository.search(filter))
+                .thenReturn(new QueryResult<>(List.of(overdueLoan), 1));
 
         // Act & Assert
         OverdueLoanException exception = assertThrows(OverdueLoanException.class, () ->
@@ -77,24 +87,31 @@ class LoanEligibilityValidatorTest {
     @DisplayName("Should throw LoanLimitReachedException when active loans count reaches maximum allowed limit")
     void shouldThrowLoanLimitReachedException_whenActiveLoansCountReachesMaxLimit() {
         // Arrange
-        Loan activeLoan1 = new Loan.Builder()
-                .setId("loan-1")
-                .setISBN(VALID_ISBN)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .build();
+        Loan activeLoan1 = Loan.restore(
+                "loan-1",
+                BOOK_ID,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
-        Loan activeLoan2 = new Loan.Builder()
-                .setId("loan-2")
-                .setISBN("111-22-33333-44-5")
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .build();
+        Loan activeLoan2 = Loan.restore(
+                "loan-2",
+                "00000000-0000-4000-8000-000000000002",
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
-        when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
-                .thenReturn(new QueryResult<>(Set.of(activeLoan1, activeLoan2), 1));
+        var filter = new LoanFilter(
+                null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
+        );
+        when(loanRepository.search(filter))
+                .thenReturn(new QueryResult<>(List.of(activeLoan1, activeLoan2), 1));
 
         // Act & Assert
         LoanLimitReachedException exception = assertThrows(LoanLimitReachedException.class, () ->
@@ -108,16 +125,21 @@ class LoanEligibilityValidatorTest {
     @DisplayName("Should validate successfully when active loans count is strictly below the limit")
     void shouldValidateSuccessfully_whenActiveLoansCountIsBelowLimit() {
         // Arrange
-        Loan activeLoan = new Loan.Builder()
-                .setId("loan-1")
-                .setISBN(VALID_ISBN)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .build();
+        Loan activeLoan = Loan.restore(
+                "loan-1",
+                BOOK_ID,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
-        when(loanRepository.search(CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null))
-                .thenReturn(new QueryResult<>(Set.of(activeLoan), 1));
+        var filter = new LoanFilter(
+                null, CUSTOMER_ID, null, Set.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE), null
+        );
+        when(loanRepository.search(filter))
+                .thenReturn(new QueryResult<>(List.of(activeLoan), 1));
 
         // Act & Assert
         assertDoesNotThrow(() -> validator.validate(CUSTOMER_ID));

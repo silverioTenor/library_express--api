@@ -1,6 +1,7 @@
 package org.libraryexpress.application.customer.usecase;
 
-import org.libraryexpress.application.customer.dto.request.CreateCustomerDto;
+import org.libraryexpress.application.customer.dto.request.CreateCustomerDTO;
+import org.libraryexpress.application.customer.dto.response.CreateCustomerResponseDTO;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 public class CreateCustomer {
 
-    private static final CustomLogger logger = CustomLoggerFactory.getLogger(CreateCustomer.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(CreateCustomer.class);
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper mapper;
@@ -22,20 +23,21 @@ public class CreateCustomer {
         this.mapper = mapper;
     }
 
-    public void execute(CreateCustomerDto createCustomerDto) {
-        logger.info("Starting customer registration...");
+    public CreateCustomerResponseDTO execute(CreateCustomerDTO createCustomerDto) {
+        LOG.info("Starting customer registration...");
 
         Optional<Customer> hasClient = this.customerRepository.getByEmail(createCustomerDto.email());
 
         if (hasClient.isPresent()) {
-            logger.warn("ABORTED: Customer with email [{}] already exists", createCustomerDto.email());
+            LOG.warn("ABORTED: Customer with email [{}] already exists", createCustomerDto.email());
             throw new UniqueEmailViolationException();
         }
 
-        Customer customer = mapper.toEntity(createCustomerDto).build();
-
+        Customer customer = mapper.toEntity(createCustomerDto);
         this.customerRepository.create(customer);
 
-        logger.info("Customer successfully registered! Customer ID: [{}]", customer.getId());
+        LOG.info("Customer successfully registered! Customer ID: [{}]", customer.getId());
+
+        return new CreateCustomerResponseDTO(customer.getId());
     }
 }

@@ -8,10 +8,12 @@ import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
+import org.libraryexpress.domain.loan.repository.LoanFilter;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,10 +24,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
     private LoanDbRepository loanRepository;
+    private String validBookId;
 
     // Standard business entities required to fulfill foreign key constraints
-    private static final String VALID_ISBN = "978-16-14841-20-0"; // Task Requirement: Matching your custom formatting rule
-    private static final String VALID_CUSTOMER_ID = "cust-loan-owner-123";
+    private static final String VALID_ISBN = "978-16-14841-20-0";
+    private static final String VALID_CUSTOMER_ID = "20000000-0000-4000-8000-000000000001";
 
     @BeforeEach
     void setUp() {
@@ -34,36 +37,32 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         CustomerDbRepository customerRepository = new CustomerDbRepository(dataSource);
 
         // Task Solution: Seed structural parent records into the isolated database to prevent FK violations
-        Customer parentCustomer = new Customer.Builder()
-                .setId(VALID_CUSTOMER_ID)
-                .setName("Loan Tester Customer")
-                .setEmail("loan.tester@libraryexpress.com")
-                .build();
+        Customer parentCustomer = Customer.restore(
+                VALID_CUSTOMER_ID,
+                "Loan Tester Customer",
+                "loan.tester@libraryexpress.com"
+        );
         customerRepository.create(parentCustomer);
 
-        Book parentBook = new Book.Builder()
-                .setISBN(VALID_ISBN)
-                .setTitle("Continuous Delivery Baseline")
-                .setAuthor("Jez Humble")
-                .setYear(2010)
-                .setStatus(BookStatus.AVAILABLE)
-                .build();
+        Book parentBook = Book.create(VALID_ISBN, "Continuous Delivery Baseline", "Jez Humble", 2010, "AVAILABLE", "", "");
         bookRepository.create(parentBook);
+        validBookId = parentBook.getId().toString();
     }
 
     @Test
     @DisplayName("Should successfully persist a new transactional loan and retrieve it back using its unique ID identity")
     void shouldPersistAndRetrieveLoan_whenPayloadIsValidAndFkConstraintsAreMet() {
         // Arrange (Testing create and findById)
-        String loanId = "loan-uuid-active-789";
-        Loan newLoan = new Loan.Builder()
-                .setId(loanId)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(14))
-                .build();
+        String loanId = "30000000-0000-4000-8000-000000000001";
+        Loan newLoan = Loan.restore(
+                loanId,
+                validBookId,
+                VALID_CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(14),
+                null
+        );
 
         // Act
         loanRepository.create(newLoan);
@@ -71,7 +70,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         // Assert
         assertTrue(retrieved.isPresent(), "Persisted loan transaction metadata must be located inside the database");
-        assertEquals(VALID_ISBN, retrieved.get().getISBN().value());
+        assertEquals(validBookId, retrieved.get().getBookId());
         assertEquals(VALID_CUSTOMER_ID, retrieved.get().getCustomerId());
         assertEquals(LoanStatus.ACTIVE, retrieved.get().getStatus());
         assertEquals(LocalDate.now(), retrieved.get().getStartDate(), "Temporal state mappings must preserve date alignments");
@@ -81,26 +80,30 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should successfully overwrite database transaction states when executing loan record modifications")
     void shouldUpdateLoanState_whenModifyingExistingRecord() {
         // Arrange (Testing update)
-        String loanId = "loan-uuid-updt-555";
-        Loan loan = new Loan.Builder()
-                .setId(loanId)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now().minusDays(5))
-                .setEndDate(LocalDate.now().plusDays(9))
-                .build();
+        String loanId = "30000000-0000-4000-8000-000000000002";
+        Loan loan = Loan.restore(
+                loanId,
+                validBookId,
+                VALID_CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now().minusDays(5),
+                LocalDate.now().plusDays(9),
+                null
+        );
         loanRepository.create(loan);
 
         // Reconstructing entity representing a standard business return execution lifecycle
-        Loan returnedLoan = new Loan.Builder()
-                .setId(loanId)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.FINISHED) // Mutating business state
-                .setStartDate(LocalDate.now().minusDays(5))
-                .setEndDate(LocalDate.now()) // Modifying temporal fields
-                .build();
+        Loan returnedLoan = Loan.restore(
+                loanId,
+                validBookId,
+                VALID_CUSTOMER_ID,
+                LoanStatus.FINISHED,
+                // Mutating business state
+                LocalDate.now().minusDays(5),
+                LocalDate.now(),
+                // Modifying temporal fields
+                null
+        );
 
         // Act
         loanRepository.update(returnedLoan);
@@ -116,41 +119,43 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @DisplayName("Should fetch isolated multi-criteria results when utilizing high-performance array clauses")
     void shouldReturnFilteredSet_whenSearchingByJointRelationalKeysAndNativeStatusArrays() {
         // Arrange
-        String loanId1 = "loan-search-1";
-        String loanId2 = "loan-search-2";
+        String loanId1 = "30000000-0000-4000-8000-000000000003";
+        String loanId2 = "30000000-0000-4000-8000-000000000004";
 
-        Loan activeLoan = new Loan.Builder()
-                .setId(loanId1)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE)
-                .setStartDate(LocalDate.now())
-                .setEndDate(LocalDate.now().plusDays(14))
-                .build();
+        Loan activeLoan = Loan.restore(
+                loanId1,
+                validBookId,
+                VALID_CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now(),
+                LocalDate.now().plusDays(14),
+                null
+        );
 
-        Loan overdueLoan = new Loan.Builder()
-                .setId(loanId2)
-                .setISBN(VALID_ISBN)
-                .setCustomerId(VALID_CUSTOMER_ID)
-                .setStatus(LoanStatus.OVERDUE)
-                .setStartDate(LocalDate.now().minusDays(20))
-                .setEndDate(LocalDate.now().minusDays(6))
-                .build();
+        Loan overdueLoan = Loan.restore(
+                loanId2,
+                validBookId,
+                VALID_CUSTOMER_ID,
+                LoanStatus.OVERDUE,
+                LocalDate.now().minusDays(20),
+                LocalDate.now().minusDays(6),
+                null
+        );
 
         loanRepository.create(activeLoan);
         loanRepository.create(overdueLoan);
 
         // Act - Triggering search using your optimized ANY clause database algorithm
-        Set<Loan> matchedLoans = loanRepository.search(
-                VALID_CUSTOMER_ID,
-                null,
-                Set.of(LoanStatus.OVERDUE), null
-        ).items();
+        var filter = new LoanFilter(null, VALID_CUSTOMER_ID, null, Set.of(LoanStatus.OVERDUE), null);
+        List<Loan> matchedLoans = loanRepository.search(filter).items();
 
         // Assert
         assertNotNull(matchedLoans);
         assertEquals(1, matchedLoans.size(), "Filter must pinpoint exactly the OVERDUE entry based on native array unpacking");
         assertTrue(matchedLoans.stream().anyMatch(l -> l.getId().equals(loanId2)), "The correctly mapped target id must match records data");
+
+        var bookIdFilter = new LoanFilter(null, null, validBookId, Set.of(LoanStatus.OVERDUE), null);
+        assertEquals(1, loanRepository.search(bookIdFilter).items().size());
     }
 
 }

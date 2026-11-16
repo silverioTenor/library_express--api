@@ -1,0 +1,18 @@
+---
+description: Testing conventions, Testcontainers, JaCoCo coverage gate per module
+globs: **/src/test/**/*.java
+alwaysApply: false
+---
+
+# Testing and quality gates
+
+- JUnit 5 (Jupiter) + Mockito. Infrastructure integration tests use **Testcontainers (real PostgreSQL)** with Flyway.
+- Use the existing annotations: `@UnitTest` (fast, no Docker), `@IntegrationTest` (Testcontainers, runs in
+  `verify`) and `@E2ETest` (REST Assured against the running API, `infrastructure/.../api/e2e`, base class
+  `E2EBaseConfig`). `domain` tests never see infrastructure dependencies; `application` tests mock repositories.
+- Write BDD-aligned tests: each Gherkin scenario in the active epic maps to at least one test.
+- **JaCoCo thresholds are a CI gate** (Instruction / Branch), configured in each module's `pom.xml`
+  (currently domain 90/88, application 95/88, infrastructure 80/65). Treat the pom as the source of truth.
+  **Never lower a threshold, exclude classes, or use tricks to pass the gate.** If coverage drops, add tests.
+  Only change thresholds when the active epic's tasks say to re-measure them.
+- Before declaring work done, `mvn -B clean verify` must pass.

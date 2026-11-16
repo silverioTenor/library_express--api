@@ -4,14 +4,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
-import org.libraryexpress.application.book.dto.request.RegisterBookDto;
+import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
+import org.libraryexpress.application.book.dto.response.RegisterBookResponseDTO;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
-import org.libraryexpress.domain.book.enums.BookStatus;
+import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.exception.UniqueIsbnViolationException;
+import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
 import org.libraryexpress.domain.book.repository.BookRepository;
+import org.libraryexpress.domain.book.valueobject.BookMetadata;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
@@ -28,58 +32,99 @@ class RegisterBookTest {
     private BookRepository bookRepository;
 
     @Mock
+    private BookMetadataGateway bookGateway;
+
+    @Mock
     private BookMapper mapper;
 
     @InjectMocks
     private RegisterBook registerBook;
 
-    private static final String ISBN_STR = "978-43-12345-67-8";
+    private static final String ISBN_STR = "9788535902778";
 
     @Test
-    @DisplayName("Should successfully register a book when the ISBN does not exist in database")
+    @DisplayName("Registers a manual book when its ISBN is unique")
     void shouldRegisterBook_whenIsbnIsUnique() {
-        // Arrange
-        RegisterBookDto requestDto = new RegisterBookDto(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
-
-        // Setting up a Book.Builder mock since mapper returns a Builder instance chain
-        Book.Builder mockBuilder = mock(Book.Builder.class);
-        Book targetBook = new Book.Builder()
-                .setISBN(ISBN_STR)
-                .setTitle("Clean Code")
-                .setStatus(BookStatus.AVAILABLE)
-                .build();
-
-        // Stubbing repository to simulate an empty database slot and configuring builder fluid chain
+        RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE");
+        Book expectedBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE", "", "");
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.empty());
-        when(mapper.toEntity(requestDto)).thenReturn(mockBuilder);
-        when(mockBuilder.build()).thenReturn(targetBook);
 
-        // Act
-        registerBook.execute(requestDto);
+        try (MockedStatic<Book> bookMocked  =mockStatic(Book.class)) {
+            bookMocked.when(() -> Book.create(
+                    eq(ISBN_STR),
+                    eq("Clean Code"),
+                    eq("Robert C. Martin"),
+                    eq(2008),
+                    eq("AVAILABLE"),
+                    eq(""),
+                    eq("")
+            )).thenReturn(expectedBook);
 
-        // Assert & Orchestration verification (style guide compliant: avoiding redundant counters)
-        verify(bookRepository).create(targetBook);
+            RegisterBookResponseDTO response = registerBook.execute(requestDto);
+
+            assertEquals(expectedBook.getId().toString(), response.id());
+            verify(bookRepository).create(expectedBook);
+            verifyNoInteractions(bookGateway, mapper);
+        }
     }
 
     @Test
-    @DisplayName("Should throw UniqueIsbnViolationException and abort persistence when ISBN already exists")
+    @DisplayName("Rejects a manual book when its ISBN already exists")
     void shouldThrowUniqueIsbnViolationException_whenIsbnAlreadyExists() {
-        // Arrange
-        RegisterBookDto requestDto = new RegisterBookDto(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, BookStatus.AVAILABLE);
-
-        Book existingBook = new Book.Builder()
-                .setISBN(ISBN_STR)
-                .setTitle("Duplicate Book Entry")
-                .build();
-
-        // Stubbing repository query to simulate an existing identifier conflict
+        RegisterBookDTO requestDto = new RegisterBookDTO(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE");
+        Book existingBook = Book.create(ISBN_STR, "Duplicate Book Entry", "Another Author", 2008, "AVAILABLE", "", "");
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(existingBook));
 
-        // Act & Assert
         assertThrows(UniqueIsbnViolationException.class, () -> registerBook.execute(requestDto));
 
-        // Orchestration guard verification: data persistence must be completely bypassed on collision
         verify(bookRepository, never()).create(any(Book.class));
+        verifyNoInteractions(bookGateway, mapper);
+    }
+
+    @Test
+    @DisplayName("Registers an externally looked-up book when its metadata is found")
+    void shouldRegisterBook_whenExternalMetadataIsFound() {
+        RegisterBookDTO requestDto = new RegisterBookDTO(null, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE");
+        BookMetadata metadata = new BookMetadata(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "Software", "A guide");
+        Book expectedBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE", "Software", "A guide");
+
+        when(bookGateway.fetch(requestDto.title(), requestDto.author())).thenReturn(Optional.of(metadata));
+        when(mapper.toEntity(metadata, requestDto.status())).thenReturn(expectedBook);
+
+        RegisterBookResponseDTO response = registerBook.execute(requestDto);
+
+        assertEquals(expectedBook.getId().toString(), response.id());
+        verify(mapper).toEntity(metadata, requestDto.status());
+        verify(bookRepository).create(expectedBook);
+        verify(bookRepository).getByIsbn(ISBN_STR);
+    }
+
+    @Test
+    @DisplayName("Rejects external registration when metadata cannot be found")
+    void shouldThrowBookNotFoundException_whenExternalMetadataIsMissing() {
+        RegisterBookDTO requestDto = new RegisterBookDTO(null, "Unknown title", "Unknown author", 2008, "AVAILABLE");
+        when(bookGateway.fetch(requestDto.title(), requestDto.author())).thenReturn(Optional.empty());
+
+        assertThrows(BookNotFoundException.class, () -> registerBook.execute(requestDto));
+
         verifyNoInteractions(mapper);
+        verify(bookRepository, never()).create(any(Book.class));
+        verify(bookRepository, never()).getByIsbn(anyString());
+    }
+
+    @Test
+    @DisplayName("Rejects an externally found book when its ISBN already exists")
+    void shouldThrowUniqueIsbnViolationException_whenExternalMetadataIsAlreadyRegistered() {
+        RegisterBookDTO requestDto = new RegisterBookDTO(null, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE");
+        BookMetadata metadata = new BookMetadata(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "", "");
+        Book existingBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE", "", "");
+        Book mappedBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE", "", "");
+        when(bookGateway.fetch(requestDto.title(), requestDto.author())).thenReturn(Optional.of(metadata));
+        when(mapper.toEntity(metadata, requestDto.status())).thenReturn(mappedBook);
+        when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(existingBook));
+
+        assertThrows(UniqueIsbnViolationException.class, () -> registerBook.execute(requestDto));
+
+        verify(bookRepository, never()).create(any(Book.class));
     }
 }

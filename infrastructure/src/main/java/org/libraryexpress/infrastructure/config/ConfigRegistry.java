@@ -4,6 +4,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.Properties;
@@ -12,7 +13,7 @@ import java.util.stream.Stream;
 
 public final class ConfigRegistry {
 
-    private static final CustomLogger logger = CustomLoggerFactory.getLogger(ConfigRegistry.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(ConfigRegistry.class);
 
     private static final Dotenv dotenv;
     private static final Properties properties;
@@ -28,14 +29,16 @@ public final class ConfigRegistry {
             if (input != null) {
                 properties.load(input);
             } else {
-                logger.warn("Warning: application.properties not found. Relying on default parameters.");
+                LOG.warn("Warning: application.properties not found. Relying on default parameters.");
             }
-        } catch (Exception e) {
-            logger.error("Error reading connection properties file: " + e.getMessage(), e);
+        } catch (IOException e) {
+            LOG.error("Error reading connection properties file: " + e.getMessage(), e);
         }
     }
 
     private ConfigRegistry() {}
+
+    // In the future, consider using Lazy Initialization or caching for frequently called methods.
 
     public static int getApiPort() {
         return Integer.parseInt(resolve("API_PORT", "3000"));
@@ -85,13 +88,17 @@ public final class ConfigRegistry {
         return resolve("APP_ENV", "prod");
     }
 
+    public static String getGoogleBooksApiKey() {
+        return resolve("GOOGLE_BOOKS_API_KEY", null);
+    }
+
     private static String resolve(String key, String defaultValue) {
         if (key == null || key.isBlank()) return defaultValue;
 
         return Stream.<Supplier<String>>of(
-                        () -> dotenv.get(key),
-                        () -> System.getenv(key),
                         () -> System.getProperty(key),
+                        () -> System.getenv(key),
+                        () -> dotenv.get(key),
                         () -> properties.getProperty(key)
                 )
                 .map(Supplier::get)

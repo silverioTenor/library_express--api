@@ -1,5 +1,6 @@
 package org.libraryexpress.application.loan.usecase;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +14,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,25 +36,34 @@ class CloseOverdueLoanTest {
     private CloseOverdueLoan closeOverdueLoan;
 
     private static final String LOAN_ID = "loan-uuid-123";
-    private static final String ISBN_STR = "978-43-12345-67-8";
+    private static final String BOOK_ID = "00000000-0000-4000-8000-000000000001";
     private static final String CUSTOMER_ID = "customer-uuid-123";
+
+    @BeforeEach
+    void setUp() {}
 
     @Test
     @DisplayName("Should successfully transition status to FINISHED when loan is OVERDUE")
     void shouldCloseLoan_whenLoanStatusIsOverdue() {
         // Arrange
-        Loan overdueLoan = new Loan.Builder()
-                .setId(LOAN_ID)
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.OVERDUE) // Valid state for this palliative operational flow
-                .setStartDate(LocalDate.now().minusDays(20))
-                .build();
+        Loan overdueLoan = Loan.restore(
+                LOAN_ID,
+                BOOK_ID,
+                CUSTOMER_ID,
+                LoanStatus.OVERDUE,
+                // Valid state for this palliative operational flow
+                LocalDate.now().minusDays(20),
+                LocalDate.now().minusDays(5),
+                null
+        );
+
+        Clock clock = Clock.fixed(Instant.now().minus(20, ChronoUnit.DAYS), ZoneId.of("UTC"));
+        CloseOverdueLoan closeOverdueLoan1 = new CloseOverdueLoan(loanRepository, clock);
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(overdueLoan));
 
         // Act
-        closeOverdueLoan.execute(LOAN_ID);
+        closeOverdueLoan1.execute(LOAN_ID);
 
         // Assert
         assertEquals(LoanStatus.FINISHED, overdueLoan.getStatus(), "Loan status should transition from OVERDUE to FINISHED");
@@ -75,13 +89,16 @@ class CloseOverdueLoanTest {
     @DisplayName("Should throw OverdueLoanException and never update database when loan status is not OVERDUE")
     void shouldThrowOverdueLoanException_whenLoanStatusIsActive() {
         // Arrange
-        Loan activeLoan = new Loan.Builder()
-                .setId(LOAN_ID)
-                .setISBN(ISBN_STR)
-                .setCustomerId(CUSTOMER_ID)
-                .setStatus(LoanStatus.ACTIVE) // Invalid state: this usecase is exclusively restricted to OVERDUE
-                .setStartDate(LocalDate.now())
-                .build();
+        Loan activeLoan = Loan.restore(
+                LOAN_ID,
+                BOOK_ID,
+                CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                // Invalid state: this usecase is exclusively restricted to OVERDUE
+                LocalDate.now(),
+                LocalDate.now().plusDays(15),
+                null
+        );
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
 

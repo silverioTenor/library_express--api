@@ -30,4 +30,21 @@ class ConfigRegistryTest {
 
         assertTrue(exception.getMessage().contains("is mandatory but was not defined"));
     }
+
+    @Test
+    @DisplayName("Should prioritize the APP_ENV system property over dotenv configuration")
+    void shouldPrioritizeSystemProperty_whenResolvingAppEnvironment() {
+        String originalAppEnv = System.getProperty("APP_ENV");
+        try {
+            System.setProperty("APP_ENV", "test");
+
+            assertEquals("test", ConfigRegistry.getAppEnv());
+        } finally {
+            if (originalAppEnv == null) {
+                System.clearProperty("APP_ENV");
+            } else {
+                System.setProperty("APP_ENV", originalAppEnv);
+            }
+        }
+    }
 }

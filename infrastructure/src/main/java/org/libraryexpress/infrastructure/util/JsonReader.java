@@ -2,6 +2,7 @@ package org.libraryexpress.infrastructure.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.libraryexpress.domain.core.exception.DomainException;
 import org.libraryexpress.infrastructure.config.JacksonConfig;
 
 import java.io.IOException;
@@ -23,6 +24,13 @@ public final class JsonReader {
         try {
             return JacksonConfig.mapper().readValue(src, targetType);
         } catch (IOException e) {
+            if (e instanceof JsonProcessingException mappingException) {
+                Throwable cause = mappingException.getCause();
+
+                if (cause instanceof DomainException domainException) {
+                    throw domainException;
+                }
+            }
             throw new IllegalArgumentException("Invalid JSON for type " + targetType.getSimpleName(), e);
         }
     }

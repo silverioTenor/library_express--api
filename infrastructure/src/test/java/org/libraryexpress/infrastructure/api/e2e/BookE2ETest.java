@@ -2,11 +2,14 @@ package org.libraryexpress.infrastructure.api.e2e;
 
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.*;
-import org.libraryexpress.application.book.dto.response.BookDto;
+import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.infrastructure.E2ETest;
+
+import java.util.List;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @E2ETest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -19,10 +22,10 @@ class BookE2ETest extends E2EBaseConfig {
     void shouldRegisterBook_whenExecutingFullHappyPath() {
         String bookPayload = """
             {
-                "ISBN": "995-29-66530-22-4",
+                "isbn": "9788520923580",
                 "title": "Clean Architecture Modern Java",
                 "author": "John Doe",
-                "year": 2026,
+                "publicationYear": 2026,
                 "status": "AVAILABLE"
             }
             """;
@@ -39,25 +42,45 @@ class BookE2ETest extends E2EBaseConfig {
 
     @Test
     @Order(2)
-    @DisplayName("Should get a book by ISBN when the data provided is valid")
+    @DisplayName("Should get a book by isbn when the data provided is valid")
     void shouldGetBookPreviouslySaved_whenProvideValidIsbn() {
         given()
                 .contentType(ContentType.JSON)
         .when()
-                .get("/books/995-29-66530-22-4")
+                .get("/books/9788520923580")
         .then()
                 .statusCode(200)
                 .body("title", equalTo("Clean Architecture Modern Java"))
-                .body("author", equalTo("John Doe"))
-                .body("year", equalTo(2026))
+                .body("authors", equalTo(List.of("John Doe")))
+                .body("publicationYear", equalTo(2026))
                 .body("status", equalTo("AVAILABLE"));
     }
 
     @Test
     @Order(3)
-    @DisplayName("Should get a book by ISBN when the data provided is valid")
+    @DisplayName("Should get a book by isbn when the data provided is valid")
     void shouldSuccessfullyListBooks_whenCallEndpoint() {
-        BookDto bookDto = get("/books/995-29-66530-22-4").as(BookDto.class);
+        BookDTO bookDto = get("/books/9788520923580").as(BookDTO.class);
+
+        given()
+                .contentType(ContentType.JSON)
+                .param("id", bookDto.id())
+        .when()
+                .get("/books")
+        .then()
+                .statusCode(200)
+                .body("items", hasSize(1))
+                .body("items[0].id", is(bookDto.id()));
+
+        given()
+                .contentType(ContentType.JSON)
+                .param("isbn", bookDto.isbn())
+        .when()
+                .get("/books")
+        .then()
+                .statusCode(200)
+                .body("items", hasSize(1))
+                .body("items[0].id", is(bookDto.id()));
 
         given()
                 .contentType(ContentType.JSON)
@@ -70,7 +93,7 @@ class BookE2ETest extends E2EBaseConfig {
                 .body("limit", is(1))
                 .body("totalPages", is(1))
                 .body("total", is(1))
-                .body("items[0].ISBN", is(bookDto.ISBN()));
+                .body("items[0].id", is(bookDto.id()));
 
         given()
                 .contentType(ContentType.JSON)
@@ -88,14 +111,14 @@ class BookE2ETest extends E2EBaseConfig {
 
     @Test
     @Order(4)
-    @DisplayName("Should throw an error with status code 409 when trying register a new book with ISBN previous registered")
+    @DisplayName("Should throw an error with status code 409 when trying register a new book with isbn previous registered")
     void shouldThrowConflictError_whenTryingRegisterNewBookWithISBNPreviousRegistered() {
         String bookPayload = """
             {
-                "ISBN": "995-29-66530-22-4",
+                "isbn": "9788520923580",
                 "title": "New Book",
                 "author": "Another Author",
-                "year": 1999,
+                "publicationYear": 1999,
                 "status": "AVAILABLE"
             }
             """;
@@ -107,19 +130,44 @@ class BookE2ETest extends E2EBaseConfig {
                 .post("/books")
                 .then()
                 .statusCode(409)
-                .body("message", equalTo("It is not permitted to register a book with an ISBN that is already in use."));
+                .body("message", equalTo("It is not permitted to register a book with an isbn that is already in use."));
     }
 
     @Test
     @Order(5)
-    @DisplayName("Should throw an error with status code 404 when provide an invalid ISBN")
+    @DisplayName("Should throw an error with status code 400 when provide an invalid isbn")
     void shouldThrowError_whenProvideAnInvalidIsbn() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
-                .get("/books/995-29-6XL0-22-4")
+                .get("/books/995-29-6XL01-22-4")
                 .then()
-                .statusCode(404)
-                .body("message", equalTo("Book not Found!"));
+                .statusCode(400)
+                .body("message", containsString("Invalid isbn format provided:"));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("Should register a book from the fake metadata gateway without calling the external service")
+    void shouldRegisterBookFromFakeGateway_whenIsbnIsOmittedInTestEnvironment() {
+        String bookPayload = """
+            {
+                "title": "E2E Fake Gateway Book",
+                "author": "Test Author",
+                "publicationYear": 2020,
+                "status": "AVAILABLE"
+            }
+            """;
+
+        String bookId = given()
+                .contentType(ContentType.JSON)
+                .body(bookPayload)
+        .when()
+                .post("/books")
+        .then()
+                .statusCode(201)
+                .extract()
+                 .path("id");
+        assertNotNull(bookId);
     }
 }

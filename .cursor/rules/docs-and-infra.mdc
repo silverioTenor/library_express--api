@@ -1,0 +1,22 @@
+---
+description: Boundaries for docs (README, ADRs, backlog), CI/CD, Docker, Nginx and pom versioning
+globs: docs/**,README.md,.github/**,.infra/**,Dockerfile,compose*.yml,docker-compose*.yml,**/pom.xml
+alwaysApply: false
+---
+
+# Documentation and infrastructure boundaries
+
+- `README.md` is strictly presentation and how-to: no ADR rationale, no backlog items, no decision commentary.
+  Update it only when the story's tasks say so.
+- Architectural rationale lives in `docs/adr/`. **Never silently edit an accepted ADR.** A decision that reverses or
+  narrows an ADR requires a new or amending ADR, agreed with the developer first. ADRs 0011–0013 are written during
+  their own epics.
+- `docs/BACKLOG.md` stays lean (roadmap, status, summaries); refined epic detail lives in `docs/epics/`.
+  Do not edit backlog/epic/ADR files unless the task asks; propose the change instead.
+- Runbooks and execution evidence are **not** stored in the repository (they live in the developer's Notion).
+- Do not modify without being asked: `.github/workflows/*`, `Dockerfile`, `compose.yml`, `.infra/**` (Nginx),
+  ECS task definitions, Security Group or Cloudflare settings. Production runs on AWS (ECS on EC2, ECR, Neon,
+  Nginx + Let's Encrypt) behind Cloudflare, with the origin locked to Cloudflare. No Terraform/IaC in this project.
+- Do not change the `pom.xml` version or the module/dependency structure unless the task says so.
+- The Cloudflare rate limit (20 requests / 10 s per IP on `/auth/`, `/books`, `/customers`, `/loans`) applies in
+  production: keep any smoke test or script below it.

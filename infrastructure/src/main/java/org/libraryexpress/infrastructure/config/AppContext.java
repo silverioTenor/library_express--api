@@ -3,23 +3,26 @@ package org.libraryexpress.infrastructure.config;
 import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.application.book.usecase.FindBook;
-import org.libraryexpress.application.book.usecase.ListBooks;
+import org.libraryexpress.application.book.usecase.SearchBooks;
 import org.libraryexpress.application.book.usecase.RegisterBook;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.application.customer.usecase.CreateCustomer;
 import org.libraryexpress.application.customer.usecase.FindCustomer;
-import org.libraryexpress.application.customer.usecase.ListCustomers;
+import org.libraryexpress.application.customer.usecase.SearchCustomers;
 import org.libraryexpress.application.customer.usecase.UpdateCustomerEmail;
 import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.libraryexpress.application.loan.mapper.LoanMapper;
 import org.libraryexpress.application.loan.usecase.*;
-import org.libraryexpress.application.loan.validator.SearchLoanValidator;
+import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
+import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
 import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.api.controller.CustomerController;
 import org.libraryexpress.infrastructure.api.controller.LoanController;
 import org.libraryexpress.infrastructure.api.routing.openApi.OpenApiContractHandler;
 import org.libraryexpress.infrastructure.api.routing.openApi.SwaggerUiHandler;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
+import org.libraryexpress.infrastructure.gateway.adapter.NativeHttpClient;
+import org.libraryexpress.infrastructure.gateway.BookMetadataGatewayFactory;
 import org.libraryexpress.infrastructure.repository.jdbc.BookDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.CustomerDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.LoanDbRepository;
@@ -32,35 +35,43 @@ public class AppContext {
     // CUSTOMER
     private final CreateCustomer createCustomer;
     private final FindCustomer findCustomer;
-    private final ListCustomers listCustomers;
+    private final SearchCustomers searchCustomers;
     private final UpdateCustomerEmail updateCustomerEmail;
     private final CustomerController customerController;
 
     // BOOK
     private final RegisterBook registerBook;
     private final FindBook findBook;
-    private final ListBooks listBooks;
+    private final SearchBooks serchBooks;
     private final BookController bookController;
 
     // LOAN
     private final CreateLoan createLoan;
     private final SearchLoans searchLoans;
-    private final ReturnLoan returnLoan;
+    private final LoanReturn loanReturn;
     private final CloseOverdueLoan closeOverdueLoan;
     private final LoanController loanController;
 
+    // DOCS
     private final OpenApiContractHandler  openApiContractHandler;
     private final SwaggerUiHandler swaggerUiHandler;
 
+    // GATEWAYS
+    private final BookMetadataGateway bookMetadataGateway;
+
     public AppContext(ConnectionProvider connectionProvider) {
         DataSource dataSource = connectionProvider.getDataSource();
+
+        // GATEWAYS
+        NativeHttpClient nativeHttpClient = new NativeHttpClient();
+        this.bookMetadataGateway = BookMetadataGatewayFactory.create(ConfigRegistry.getAppEnv(), nativeHttpClient);
 
         // CUSTOMER
         CustomerDbRepository customerRepository = new CustomerDbRepository(dataSource);
 
         this.createCustomer = new CreateCustomer(customerRepository, CustomerMapper.INSTANCE);
         this.findCustomer = new FindCustomer(customerRepository, CustomerMapper.INSTANCE);
-        this.listCustomers = new ListCustomers(customerRepository, CustomerMapper.INSTANCE);
+        this.searchCustomers = new SearchCustomers(customerRepository, CustomerMapper.INSTANCE);
         this.updateCustomerEmail = new UpdateCustomerEmail(customerRepository, CustomerMapper.INSTANCE);
         this.customerController = new CustomerController(this);
 
@@ -68,22 +79,30 @@ public class AppContext {
         BookDbRepository bookRepository = new BookDbRepository(dataSource);
         BookAvailabilityValidator bookAvailabilityValidator = new BookAvailabilityValidator(bookRepository);
 
-        this.registerBook = new RegisterBook(bookRepository, BookMapper.INSTANCE);
+        this.registerBook = new RegisterBook(bookRepository, bookMetadataGateway, BookMapper.INSTANCE);
         this.findBook = new FindBook(bookRepository, BookMapper.INSTANCE);
-        this.listBooks = new ListBooks(bookRepository, BookMapper.INSTANCE);
+        this.serchBooks = new SearchBooks(bookRepository, BookMapper.INSTANCE);
         this.bookController = new BookController(this);
 
         // LOAN
         LoanDbRepository loanRepository = new LoanDbRepository(dataSource);
         LoanEligibilityValidator loanEligibilityValidator = new LoanEligibilityValidator(loanRepository);
-        SearchLoanValidator searchLoanValidator = new SearchLoanValidator();
+        LoanPeriodValidator loanPeriodValidator = new LoanPeriodValidator();
 
-        this.createLoan = new CreateLoan(loanRepository, bookRepository, loanEligibilityValidator, bookAvailabilityValidator);
-        this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE, searchLoanValidator);
-        this.returnLoan = new ReturnLoan(loanRepository, bookRepository, Clock.systemDefaultZone());
-        this.closeOverdueLoan = new CloseOverdueLoan(loanRepository);
+        this.createLoan = new CreateLoan(
+                loanRepository,
+                bookRepository,
+                customerRepository,
+                loanEligibilityValidator,
+                bookAvailabilityValidator,
+                loanPeriodValidator
+        );
+        this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE);
+        this.loanReturn = new LoanReturn(loanRepository, bookRepository, Clock.systemDefaultZone());
+        this.closeOverdueLoan = new CloseOverdueLoan(loanRepository, Clock.systemDefaultZone());
         this.loanController = new LoanController(this);
 
+        // DOCS
         this.openApiContractHandler = new OpenApiContractHandler();
         this.swaggerUiHandler = new SwaggerUiHandler();
     }
@@ -96,8 +115,8 @@ public class AppContext {
         return findCustomer;
     }
 
-    public ListCustomers getListCustomers() {
-        return listCustomers;
+    public SearchCustomers getListCustomers() {
+        return searchCustomers;
     }
 
     public UpdateCustomerEmail getUpdateCustomerEmail() {
@@ -112,8 +131,8 @@ public class AppContext {
         return findBook;
     }
 
-    public ListBooks getListBooks() {
-        return listBooks;
+    public SearchBooks getListBooks() {
+        return serchBooks;
     }
 
     public CreateLoan getCreateLoan() {
@@ -124,8 +143,8 @@ public class AppContext {
         return searchLoans;
     }
 
-    public ReturnLoan getReturnLoan() {
-        return returnLoan;
+    public LoanReturn getLoanReturn() {
+        return loanReturn;
     }
 
     public CloseOverdueLoan getCloseOverdueLoan() {
@@ -150,5 +169,9 @@ public class AppContext {
 
     public SwaggerUiHandler getSwaggerUiHandler() {
         return swaggerUiHandler;
+    }
+
+    public BookMetadataGateway getBookMetadataGateway() {
+        return bookMetadataGateway;
     }
 }

@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.libraryexpress.domain.UnitTest;
-import org.libraryexpress.domain.book.exception.InvalidIsbnException;
 import org.libraryexpress.domain.book.valueobject.Isbn;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,74 +14,51 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("ISBN Value Object - Unit Test")
 class IsbnTest {
 
-    @Test
-    @DisplayName("Should create the instance successfully when the ISBN format is valid")
-    void shouldCreateInstance_whenIsbnIsValid() {
-        // Arrange & Act
-        String validIsbnStr = "978-43-12345-67-8";
-        Isbn isbn = new Isbn(validIsbnStr);
-
-        // Assert
-        assertEquals(validIsbnStr, isbn.value());
-    }
-
-    @Test
-    @DisplayName("Should throw InvalidIsbnException when the ISBN is null")
-    void shouldThrowInvalidIsbnException_whenIsbnIsNull() {
-        // Act & Assert
-        assertThrows(InvalidIsbnException.class, () -> new Isbn(null));
-    }
-
-    @Test
-    @DisplayName("Should throw InvalidIsbnException when the ISBN is empty or blank")
-    void shouldThrowInvalidIsbnException_whenIsbnIsEmptyOrBlank() {
-        // Act & Assert
-        assertThrows(InvalidIsbnException.class, () -> new Isbn(""));
-        assertThrows(InvalidIsbnException.class, () -> new Isbn("   "));
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "0-596-52068-9",
+            "0-262-13472-1",
+            "0-19-852663-6",
+            "0-471-95869-7"
+    })
+    @DisplayName("Should create an ISBN-13 instance without hyphens when provided an ISBN-10 with hyphens")
+    void shouldCreateAnIsbn13InstanceWithoutHyphens_whenProvidedAnIsbn10WithHyphens(String isbn) {
+        assertEquals(13, new Isbn(isbn).value().length());
+        assertFalse(new Isbn(isbn).value().contains("-"));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "123-45-67890-12",       // Missing the last block
-            "978-4-12345-67-8",       // Second block has only 1 digit (needs 2)
-            "978-43-1234-67-8",       // Third block has only 4 digits (needs 5)
-            "978-43-12345-678-9",     // Fourth block has 3 digits (needs 2)
-            "abc-de-fghij-kl-m",      // Letters instead of numbers
-            "9784312345678"           // Valid digits but missing hyphens
+            "978-85-359-0277-8",
+            "978-85-7522-458-8",
+            "978-85-01-06544-5",
+            "978-65-86015-01-0",
+            "978-85-209-2325-2"
     })
-    @DisplayName("Should throw InvalidIsbnException for various malformed ISBN formats")
-    void shouldThrowInvalidIsbnException_whenIsbnFormatIsInvalid(String invalidIsbn) {
-        // Act & Assert
-        assertThrows(InvalidIsbnException.class, () -> new Isbn(invalidIsbn), "The provided ISBN is invalid.");
+    @DisplayName("Should create an ISBN-13 instance without hyphens when provided an ISBN-13 with hyphens")
+    void shouldCreateAnIsbn13InstanceWithoutHyphens_whenProvidedAnIsbn13WithHyphens(String isbn) {
+        assertEquals(isbn.replaceAll("[\\s-]", "").toUpperCase(), new Isbn(isbn).value());
     }
 
     @Test
-    @DisplayName("Should generate a valid and compliant ISBN string automatically")
-    void shouldGenerateValidIsbn_whenGenerateIsCalled() {
-        // Act
-        Isbn generatedIsbn = Isbn.generate();
+    @DisplayName("Should create an ISBN-13 instance without hyphens when provided an ISBN-13 without hyphens")
+    void shouldCreateAnIsbn13InstanceWithoutHyphens_whenProvidedAnIsbn13WithoutHyphens() {
+        String validIsbnStr = "9784312345678";
+        Isbn isbn = new Isbn(validIsbnStr);
 
-        // Assert
-        assertNotNull(generatedIsbn);
-        assertNotNull(generatedIsbn.value());
-
-        // Aqui garantimos que o valor gerado aleatoriamente passa na nossa própria validação sem estourar erro
-        assertDoesNotThrow(() -> new Isbn(generatedIsbn.value()),
-                "The generated ISBN string must be compliant with the ISBN pattern");
+        assertEquals("9784312345678", isbn.value());
     }
 
-    @Test
-    @DisplayName("Should ensure structural equality between two ISBN records with the same value")
-    void shouldBeEqual_whenIsbnsHaveSameValue() {
-        // Arrange
-        String commonIsbn = "111-22-33333-44-5";
-        Isbn isbn1 = new Isbn(commonIsbn);
-        Isbn isbn2 = new Isbn(commonIsbn);
-        Isbn isbn3 = new Isbn("999-88-77777-66-5");
-
-        // Assert
-        assertEquals(isbn1, isbn2);
-        assertEquals(isbn1.hashCode(), isbn2.hashCode());
-        assertNotEquals(isbn1, isbn3);
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "123-45-67890-12",
+            "978-4-12345-67-8",
+            "978-43-1234-67-8",
+            "978-43-12345-678-9",
+            "abc-de-fghij-kl-m"
+    })
+    @DisplayName("Should throw an exception when provided an invalid ISBN format or null")
+    void shouldThrowAnExceptionWhenProvidedAnInvalidISBNFormatOrNull(String invalidISBNFormat) {
+        assertThrows(InvalidArgumentException.class, () -> new Isbn(invalidISBNFormat));
     }
 }

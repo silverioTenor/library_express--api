@@ -1,19 +1,22 @@
 package org.libraryexpress.infrastructure.api.e2e;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.*;
-import org.libraryexpress.application.book.dto.response.BookDto;
-import org.libraryexpress.application.customer.dto.response.CustomerDto;
-import org.libraryexpress.application.loan.dto.response.LoanDto;
+import org.libraryexpress.application.book.dto.response.BookDTO;
+import org.libraryexpress.application.customer.dto.response.CustomerDTO;
+import org.libraryexpress.application.loan.dto.response.CreateLoanResponseDTO;
+import org.libraryexpress.application.loan.dto.response.LoanDTO;
+import org.libraryexpress.application.loan.dto.response.LoanReturnResponseDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.E2ETest;
 
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.util.UUID;
 
-import static io.restassured.RestAssured.get;
-import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,17 +31,17 @@ public class LoanE2ETest extends E2EBaseConfig {
     @DisplayName("Should create a new loan when all data provided is valid")
     void shouldCreateLoanSuccessfully_whenProvideValidData() {
         TestDataFactory.createCustomer("j.doe@test.com");
-        TestDataFactory.createBook("408-36-74383-60-6");
+        TestDataFactory.createBook("9788535902778");
 
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
-        var book = TestDataFactory.getBook("408-36-74383-60-6");
+        var book = TestDataFactory.getBook("9788535902778");
 
         String payload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.id());
 
         given()
             .contentType(ContentType.JSON)
@@ -54,7 +57,7 @@ public class LoanE2ETest extends E2EBaseConfig {
     @DisplayName("Should search loans when provide a valid parameters")
     void shouldSearchLoansSuccessfully_whenProvideValidParameters() {
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
-        var book = TestDataFactory.getBook("408-36-74383-60-6");
+        var book = TestDataFactory.getBook("9788535902778");
 
         given()
             .contentType(ContentType.JSON)
@@ -66,11 +69,12 @@ public class LoanE2ETest extends E2EBaseConfig {
 
         given()
             .contentType(ContentType.JSON)
-            .param("ISBN", book.ISBN())
+            .param("bookId", book.id())
         .when()
             .get("/loans")
         .then()
-            .statusCode(200);
+            .statusCode(200)
+            .body("items[0].bookId", is(book.id()));
 
         given()
             .contentType(ContentType.JSON)
@@ -85,17 +89,17 @@ public class LoanE2ETest extends E2EBaseConfig {
     @Order(3)
     @DisplayName("Should list all loans when no provide parameters")
     void shouldListAllLoansSuccessfully_whenNoProvideParameters() {
-        TestDataFactory.createBook("498-15-66626-60-5");
+        TestDataFactory.createBook("9780306406157");
 
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
-        var book = TestDataFactory.getBook("498-15-66626-60-5");
+        var book = TestDataFactory.getBook("9780306406157");
 
         String payload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.id());
 
         // Create new loan
         given()
@@ -124,22 +128,93 @@ public class LoanE2ETest extends E2EBaseConfig {
 
     @Test
     @Order(4)
-    @DisplayName("Should close a loan successfully when the status is overdue")
-    void shouldCloseLoanSuccessfully_whenStatusIsOverdue() {
-        var customer = TestDataFactory.getCustomer("j.doe@test.com");
-        var book = TestDataFactory.getBook("408-36-74383-60-6");
+    @DisplayName("Should close a loan when the status is active")
+    void shouldCloseLoan_whenStatusIsActive() {
+        TestDataFactory.createCustomer("nix.t@test.com");
+        TestDataFactory.createBook("979-8-4092-9140-2");
 
-        String loanId = UUID.randomUUID().toString();
-        TestDataFactory.createOverdueLoan(loanId, customer.id(), book.ISBN());
+        var customer = TestDataFactory.getCustomer("nix.t@test.com");
+        var book = TestDataFactory.getBook("979-8-4092-9140-2");
+
+        assertNotNull(customer);
+        assertNotNull(book);
+
+        String payload = """
+                {
+                    "customerId": "%s",
+                    "bookId": "%s"
+                }
+                """.formatted(customer.id(), book.id());
+
+       var loanId = given()
+                       .contentType(ContentType.JSON)
+                       .body(payload)
+                   .when()
+                       .post("/loans")
+                       .as(CreateLoanResponseDTO.class);
+
+       assertNotNull(loanId);
 
         given()
             .contentType(ContentType.JSON)
             .header("X-Trace-Id", "08004816-4be3-4d5f-96b8-119c78db1e52")
-            .param("loanId", loanId)
+            .pathParam("loanId", loanId.id())
         .when()
-            .patch("/loans/" + loanId + "/close-overdue")
+            .post("/loans/{loanId}/returns")
         .then()
-            .statusCode(204);
+            .statusCode(200)
+            .body("status", is("success"))
+            .body("message", is("Book returned."));
+
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("Should set loan status to overdue when the book is returned past the due date")
+    void shouldSetLoanStatusToOverdue_whenBookIsReturnedPastTheDueDate() {
+        TestDataFactory.createCustomer("emmy.t@test.com");
+        TestDataFactory.createBook("978-2-3885-1775-2");
+
+        var customer = TestDataFactory.getCustomer("emmy.t@test.com");
+        var book = TestDataFactory.getBook("978-2-3885-1775-2");
+
+        String loanId = UUID.randomUUID().toString();
+        TestDataFactory.createLoan(loanId, customer.id(), book.id(), "ACTIVE");
+
+        assertNotNull(customer);
+        assertNotNull(book);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("X-Trace-Id", "08004816-4be3-4d5f-96b8-119c78db1e52")
+            .pathParam("loanId", loanId)
+        .when()
+            .post("/loans/{loanId}/returns")
+        .then()
+            .statusCode(200)
+            .body("status", is("warning"))
+            .body("message", is("Book returned, but a late fee is pending."));
+
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("Should close a loan when the status is overdue")
+    void shouldCloseLoan_whenStatusIsOverdue() {
+        var customer = TestDataFactory.getCustomer("j.doe@test.com");
+        var book = TestDataFactory.getBook("9788535902778");
+
+        String loanId = UUID.randomUUID().toString();
+        TestDataFactory.createLoan(loanId, customer.id(), book.id(), "OVERDUE");
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("X-Trace-Id", "08004816-4be3-4d5f-96b8-119c78db1e52")
+                .pathParam("loanId", loanId)
+                .when()
+                .patch("/loans/{loanId}/close-overdue")
+                .then()
+                .statusCode(204);
 
     }
 
@@ -148,32 +223,33 @@ public class LoanE2ETest extends E2EBaseConfig {
     @DisplayName("Should throw an error when trying to create a loan without customer or book")
     void shouldThrowError_whenTryingCreateLoanWithoutCustomerOrBook() {
         TestDataFactory.createCustomer("hellen.doe@test.com");
-        TestDataFactory.createBook("344-89-27240-40-1");
+        TestDataFactory.createBook("9788520921579");
 
         var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
+        var book = TestDataFactory.getBook("9788520921579");
 
         String firstPayload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "invalid-isbn"
+                    "bookId": "9780140283334"
                 }
                 """.formatted(customer.id());
 
         given()
-                .contentType(ContentType.JSON)
-                .body(firstPayload)
-                .when()
-                .post("/loans")
-                .then()
-                .statusCode(404)
-                .body("message", equalTo("Book not Found!"));
+            .contentType(ContentType.JSON)
+            .body(firstPayload)
+        .when()
+            .post("/loans")
+        .then()
+            .statusCode(404)
+            .body("message", equalTo("Book not Found!"));
 
         String secondPayload = """
                 {
                     "customerId": "invalid-customer-id",
-                    "ISBN": "344-89-27240-40-1"
+                    "bookId": "%s"
                 }
-                """;
+                """.formatted(book.id());
 
         given()
             .contentType(ContentType.JSON)
@@ -181,22 +257,23 @@ public class LoanE2ETest extends E2EBaseConfig {
         .when()
             .post("/loans")
         .then()
-            .statusCode(500); // TODO: No have customer validation yet
+            .statusCode(404)
+            .body("message", equalTo("Customer not found!"));
     }
 
     @Test
     @Order(6)
     @DisplayName("Should throw an error when trying to create a loan with a book unavailable")
     void shouldThrowError_whenTryingCreateLoanWithBookUnavailable() {
-        var book = TestDataFactory.getBook("408-36-74383-60-6");
+        var book = TestDataFactory.getBook("9788535902778");
         var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
 
         String firstPayload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.id());
 
         given()
             .contentType(ContentType.JSON)
@@ -212,20 +289,20 @@ public class LoanE2ETest extends E2EBaseConfig {
     @Order(7)
     @DisplayName("Should throw an error when trying to create a loan for a customer who has another overdue loan")
     void shouldThrowError_whenTryingCreateLoanForCustomerWhichHasAnotherOverdue() {
-        TestDataFactory.createBook("551-67-24636-52-4");
+        TestDataFactory.createBook("9780307277671");
 
-        var book = TestDataFactory.getBook("551-67-24636-52-4");
+        var book = TestDataFactory.getBook("9780307277671");
         var customer = TestDataFactory.getCustomer("hellen.doe@test.com");
 
         String loanId = UUID.randomUUID().toString();
-        TestDataFactory.createOverdueLoan(loanId, customer.id(), book.ISBN());
+        TestDataFactory.createLoan(loanId, customer.id(), book.id(), "OVERDUE");
 
         String payload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.id());
 
         given()
             .contentType(ContentType.JSON)
@@ -241,17 +318,17 @@ public class LoanE2ETest extends E2EBaseConfig {
     @Order(8)
     @DisplayName("Should throw an error when trying to create a loan for a customer has reached the maximum limit of active loans")
     void shouldThrowError_whenTryingCreateLoanForCustomerHasReachedTheMaximumLimitOfActiveLoans() {
-        TestDataFactory.createBook("145-25-89157-94-8");
+        TestDataFactory.createBook("9788571641693");
 
-        var book = TestDataFactory.getBook("145-25-89157-94-8");
+        var book = TestDataFactory.getBook("9788571641693");
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
 
         String payload = """
                 {
                     "customerId": "%s",
-                    "ISBN": "%s"
+                    "bookId": "%s"
                 }
-                """.formatted(customer.id(), book.ISBN());
+                """.formatted(customer.id(), book.id());
 
         given()
                 .contentType(ContentType.JSON)
@@ -349,17 +426,22 @@ public class LoanE2ETest extends E2EBaseConfig {
                 .statusCode(201);
         }
 
-        static CustomerDto getCustomer(String email) {
-            return get("/customers/search?email=" + email).as(CustomerDto.class);
+        static CustomerDTO getCustomer(String email) {
+            var result = get("/customers?email=" + email).as(new TypeRef<OutputPaginationDto<CustomerDTO>>() {
+            });
+
+            assertNotNull(result.items());
+
+            return result.items().getFirst();
         }
 
         static void createBook(String isbn) {
             String payload = """
                     {
-                        "ISBN": "%s",
+                        "isbn": "%s",
                         "title": "Clean Architecture Modern Java",
                         "author": "John Doe",
-                        "year": 2026,
+                        "publicationYear": 2026,
                         "status": "AVAILABLE"
                     }
                     """.formatted(isbn);
@@ -374,12 +456,12 @@ public class LoanE2ETest extends E2EBaseConfig {
                 .statusCode(201);
         }
 
-        static BookDto getBook(String isbn) {
-            return get("books/{isbn}", isbn).as(BookDto.class);
+        static BookDTO getBook(String isbn) {
+            return get("books/{isbn}", isbn).as(BookDTO.class);
         }
 
-        static OutputPaginationDto<LoanDto> getPagedLoans(String... parameterValues) {
-            String[] parameterNames = {"ISBN", "customerId", "statuses"};
+        static OutputPaginationDto<LoanDTO> getPagedLoans(String... parameterValues) {
+            String[] parameterNames = {"bookId", "customerId", "statuses"};
 
             var request = given()
                 .contentType(ContentType.JSON);
@@ -395,14 +477,14 @@ public class LoanE2ETest extends E2EBaseConfig {
             .then()
                 .statusCode(200)
                 .extract()
-                .body().as(new TypeRef<OutputPaginationDto<LoanDto>>() {});
+                .body().as(new TypeRef<OutputPaginationDto<LoanDTO>>() {});
         }
 
-        static void createOverdueLoan(String loanId, String customerId, String isbn) {
+        static void createLoan(String loanId, String customerId, String bookId, String status) {
             String sql = """
-                INSERT INTO tb_loan (id, customer_id, isbn, status, start_date, end_date) 
-                VALUES (?, ?, ?, 'OVERDUE', NOW() - INTERVAL '20 days', NOW() - INTERVAL '5 days')
-                """;
+                INSERT INTO loan (id, book_id, customer_id, status, start_date, end_date)
+                VALUES (?, ?, ?, ?, NOW() - INTERVAL '20 days', NOW() - INTERVAL '5 days')
+            """;
 
             String jdbcUrl = postgres.getJdbcUrl();
             String dbUser = postgres.getUsername();
@@ -411,9 +493,10 @@ public class LoanE2ETest extends E2EBaseConfig {
             try (var conn = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword);
                  var stmt = conn.prepareStatement(sql)) {
 
-                stmt.setString(1, loanId);
-                stmt.setString(2, customerId);
-                stmt.setString(3, isbn);
+                stmt.setObject(1, UUID.fromString(loanId));
+                stmt.setObject(2, UUID.fromString(bookId));
+                stmt.setObject(3, UUID.fromString(customerId));
+                stmt.setString(4, status);
                 stmt.executeUpdate();
 
             } catch (java.sql.SQLException e) {

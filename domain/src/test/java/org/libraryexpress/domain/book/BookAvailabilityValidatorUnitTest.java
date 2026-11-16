@@ -10,13 +10,11 @@ import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.exception.BookUnavailableException;
 import org.libraryexpress.domain.book.repository.BookRepository;
 import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
-import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -36,62 +34,50 @@ public class BookAvailabilityValidatorUnitTest {
     @DisplayName("Should return the book when its found and status is available")
     void shouldReturnBook_whenBookIsFoundAndAvailable() {
         // Arrange
-        String IsbnStr = Isbn.generate().value();
+        String isbnStr = "978-85-209-2325-2";
+        Book book = Book.create(isbnStr, "Book Test", "John Doe", 2008, "AVAILABLE", "", "");
+        String bookId = book.getId().toString();
 
-        Book book = new Book.Builder()
-                .setISBN(IsbnStr)
-                .setTitle("Book Test")
-                .setAuthor("John Doe")
-                .setYear(2008)
-                .setStatus(BookStatus.AVAILABLE)
-                .build();
-
-        when(bookRepository.search(IsbnStr, null)).thenReturn(Set.of(book));
+        when(bookRepository.getById(bookId)).thenReturn(Optional.of(book));
 
         // Act
-        Book availableBook = bookAvailabilityValidator.validate(IsbnStr);
+        Book availableBook = bookAvailabilityValidator.validate(bookId);
 
         // Assert
         assertNotNull(availableBook);
-        assertEquals(IsbnStr, availableBook.getISBN().value());
+        assertEquals(book.getIsbn().value(), availableBook.getIsbn().value());
         assertEquals("Book Test", availableBook.getTitle());
-        assertEquals("John Doe", availableBook.getAuthor());
-        assertEquals(2008, availableBook.getYear());
+        assertEquals("John Doe", availableBook.getAuthors().getFirst().name());
+        assertEquals(2008, availableBook.getPublicationYear());
         assertEquals(BookStatus.AVAILABLE, availableBook.getStatus());
 
-        verify(bookRepository, times(1)).search(IsbnStr, null);
+        verify(bookRepository, times(1)).getById(bookId);
     }
 
     @Test
     @DisplayName("Should throw BookNotFoundException when the repository returns an empty set")
     void shouldThrowBookNotFoundException_whenBookIsNotFound() {
         // Arrange
-        String isbnStr = "9780132350884";
-        when(bookRepository.search(isbnStr, null)).thenReturn(Collections.emptySet());
+        String bookId = "481-18-70121-40-3";
+        when(bookRepository.getById(bookId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(BookNotFoundException.class, () -> bookAvailabilityValidator.validate(isbnStr));
-        verify(bookRepository, times(1)).search(isbnStr, null);
+        assertThrows(BookNotFoundException.class, () -> bookAvailabilityValidator.validate(bookId));
+        verify(bookRepository, times(1)).getById(bookId);
     }
 
     @Test
     @DisplayName("Should throw BookUnavailableException when the book is found but its status is not available")
     void shouldThrowBookUnavailableException_whenBookIsFoundButNotAvailable() {
         // Arrange
-        String isbnStr = Isbn.generate().value();
+        String isbnStr = "978-65-86015-01-0";
+        Book borrowedBook = Book.create(isbnStr, "Book Test", "John Doe", 2008, "BORROWED", "", "");
+        String bookId = borrowedBook.getId().toString();
 
-        Book borrowedBook = new Book.Builder()
-                .setISBN(isbnStr)
-                .setTitle("Book Test")
-                .setAuthor("John Doe")
-                .setYear(2008)
-                .setStatus(BookStatus.BORROWED)
-                .build();
-
-        when(bookRepository.search(isbnStr, null)).thenReturn(Set.of(borrowedBook));
+        when(bookRepository.getById(bookId)).thenReturn(Optional.of(borrowedBook));
 
         // Act & Assert
-        assertThrows(BookUnavailableException.class, () -> bookAvailabilityValidator.validate(isbnStr));
-        verify(bookRepository, times(1)).search(isbnStr, null);
+        assertThrows(BookUnavailableException.class, () -> bookAvailabilityValidator.validate(bookId));
+        verify(bookRepository, times(1)).getById(bookId);
     }
 }

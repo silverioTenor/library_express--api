@@ -1,0 +1,17 @@
+---
+description: Commit message format, commit grouping, branches and release rules. Use when creating commits, branches or release changes
+alwaysApply: false
+---
+
+# Git and commits
+
+- Format: `<type>(<scope>): <US-ID> <imperative description>`
+  e.g. `refactor(application): US-1503 return ordered lists from use cases`.
+  Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
+- Commits are **grouped by theme**, as a developer would do in practice: one commit may cover several tasks of the
+  same theme, with a body describing what was done. Do not slice into tiny per-step commits.
+- **Never create empty commits** (no `--allow-empty`, no marker commits). Only commit real diffs.
+- Never push to `main` (protected; PR + `build-and-test` check required). `develop` is the working branch.
+- **Never bump the version in `pom.xml`, create tags, or touch the release/CD flow** unless explicitly asked.
+  Releases are manual: release branch from `main`, version bump before the PR, tag pushed locally by the developer.
+- Do not commit `.env`, credentials or generated artifacts (`target/`).

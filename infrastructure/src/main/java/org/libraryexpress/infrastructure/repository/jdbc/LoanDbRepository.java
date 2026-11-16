@@ -4,13 +4,17 @@ import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
+import org.libraryexpress.domain.loan.repository.LoanFilter;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.sql.Date;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
 
 public class LoanDbRepository implements LoanRepository {
 
@@ -23,19 +27,20 @@ public class LoanDbRepository implements LoanRepository {
     @Override
     public void create(Loan loan) {
         String query =
-                "INSERT INTO tb_loan (id, isbn, customer_id, status, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)";
+                "INSERT INTO loan (id, book_id, customer_id, status, start_date, end_date) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)
         ) {
 
-            statement.setString(1, loan.getId());
-            statement.setString(2, loan.getISBN().value());
-            statement.setString(3, loan.getCustomerId());
+            statement.setObject(1, UUID.fromString(loan.getId()));
+            statement.setObject(2, UUID.fromString(loan.getBookId()));
+            statement.setObject(3, UUID.fromString(loan.getCustomerId()));
             statement.setString(4, loan.getStatus().name());
-            statement.setDate(5, Date.valueOf(loan.getStartDate()));
-            statement.setDate(6, Date.valueOf(loan.getEndDate()));
+            statement.setObject(5, loan.getStartDate());
+            statement.setObject(6, loan.getEndDate());
 
             statement.executeUpdate();
 
@@ -46,20 +51,36 @@ public class LoanDbRepository implements LoanRepository {
 
     @Override
     public void update(Loan loan) {
-        String query =
-                "UPDATE tb_loan SET isbn = ?, customer_id = ?, status = ?, start_date = ?, end_date = ? WHERE id = ?";
+        StringBuilder queryBuilder = new StringBuilder(
+                "UPDATE loan SET book_id = ?, customer_id = ?, " +
+                        "status = ?, start_date = ?, end_date = ?"
+        );
+
+        if (loan.getClosedAt() != null) {
+            queryBuilder.append(", closed_at = ? ");
+        }
+
+        queryBuilder.append(" WHERE id::text = ?;");
+        String query = queryBuilder.toString();
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)
         ) {
 
-            statement.setString(1, loan.getISBN().value());
-            statement.setString(2, loan.getCustomerId());
-            statement.setString(3, loan.getStatus().name());
-            statement.setDate(4, Date.valueOf(loan.getStartDate()));
-            statement.setDate(5, Date.valueOf(loan.getEndDate()));
-            statement.setString(6, loan.getId());
+            int parameterIndex = 1;
+
+            statement.setObject(parameterIndex++, UUID.fromString(loan.getBookId()));
+            statement.setObject(parameterIndex++, UUID.fromString(loan.getCustomerId()));
+            statement.setString(parameterIndex++, loan.getStatus().name());
+            statement.setObject(parameterIndex++, loan.getStartDate());
+            statement.setObject(parameterIndex++, loan.getEndDate());
+
+            if (loan.getClosedAt() != null) {
+                statement.setObject(parameterIndex++, loan.getClosedAt().atOffset(ZoneOffset.UTC));
+            }
+
+            statement.setString(parameterIndex, loan.getId());
 
             statement.executeUpdate();
 
@@ -70,7 +91,8 @@ public class LoanDbRepository implements LoanRepository {
 
     @Override
     public Optional<Loan> findById(String id) {
-        String query = "SELECT id, isbn, customer_id, status, start_date, end_date FROM tb_loan WHERE id = ?";
+        String query = "SELECT l.id, l.book_id, l.customer_id, l.status, l.start_date, l.end_date, l.closed_at " +
+                "FROM loan l WHERE l.id::text = ?";
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -93,28 +115,28 @@ public class LoanDbRepository implements LoanRepository {
     }
 
     @Override
-    public QueryResult<Loan> search(
-            String customerId,
-            String ISBN,
-            Set<LoanStatus> statuses,
-            InputPaginationDto paginationDto
-    ) {
-        boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
+    public QueryResult<Loan> search(LoanFilter filter) {
+        boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
         var query = shouldPaginate
-                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM tb_loan WHERE 1=1 LIMIT ? OFFSET ?")
-                : new StringBuilder("SELECT * FROM tb_loan WHERE 1=1");
+                ? new StringBuilder("SELECT l.id, l.book_id, l.customer_id, l.status, l.start_date, l.end_date, l.closed_at, COUNT(*) OVER() as full_count FROM loan l WHERE 1=1")
+                : new StringBuilder("SELECT l.id, l.book_id, l.customer_id, l.status, l.start_date, l.end_date, l.closed_at FROM loan l WHERE 1=1");
 
-        Set<Loan> loans = new HashSet<>();
+        List<Loan> loans = new ArrayList<>();
         long totalElements;
 
-        boolean hasCustomerIdFilter = customerId != null && !customerId.isEmpty();
-        boolean hasISBNFilter = ISBN != null && !ISBN.isEmpty();
-        boolean hasStatusesFilter = statuses != null && !statuses.isEmpty();
+        boolean hasId = filter.id() != null && !filter.id().isBlank();
+        boolean hasCustomerId = filter.customerId() != null && !filter.customerId().isBlank();
+        boolean hasBookId = filter.bookId() != null && !filter.bookId().isBlank();
+        boolean hasStatuses = filter.statuses() != null && !filter.statuses().isEmpty();
 
-        if (hasCustomerIdFilter) query.append(" AND customer_id = ?");
-        if (hasISBNFilter) query.append(" AND isbn = ?");
-        if (hasStatusesFilter) query.append(" AND status = ANY(?)");
+        if (hasId) query.append(" AND l.id::text = ?");
+        if (hasCustomerId) query.append(" AND l.customer_id::text = ?");
+        if (hasBookId) query.append(" AND l.book_id::text = ?");
+        if (hasStatuses) query.append(" AND l.status = ANY(?)");
+
+        if (shouldPaginate) query.append(" ORDER BY l.created_at, l.id DESC LIMIT ? OFFSET ?;");
+        else query.append(" ORDER BY l.created_at DESC;");
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -122,24 +144,25 @@ public class LoanDbRepository implements LoanRepository {
         ) {
             int parameterIndex = 1;
 
-            if (shouldPaginate) {
-                statement.setInt(parameterIndex++, paginationDto.limit());
-                statement.setInt(parameterIndex++, paginationDto.offset());
-            } else {
-                connection.setAutoCommit(false);
-                statement.setFetchSize(500);
-            }
+            if (hasId) statement.setString(parameterIndex++, filter.id());
+            if (hasCustomerId) statement.setString(parameterIndex++, filter.customerId());
+            if (hasBookId) statement.setString(parameterIndex++, filter.bookId());
 
-            if (hasCustomerIdFilter) statement.setString(parameterIndex++, customerId);
-            if (hasISBNFilter) statement.setString(parameterIndex++, ISBN);
-
-            if (hasStatusesFilter) {
-                String[] statusesStr = statuses.stream()
+            if (hasStatuses) {
+                String[] statusesStr = filter.statuses().stream()
                         .map(LoanStatus::name)
                         .toArray(String[]::new);
 
                 Array arrayStatus = connection.createArrayOf("varchar", statusesStr);
-                statement.setArray(parameterIndex, arrayStatus);
+                statement.setArray(parameterIndex++, arrayStatus);
+            }
+
+            if (shouldPaginate) {
+                statement.setInt(parameterIndex++, filter.paginationDto().limit());
+                statement.setInt(parameterIndex, filter.paginationDto().offset());
+            } else {
+                connection.setAutoCommit(false);
+                statement.setFetchSize(500);
             }
 
             boolean firstRow = true;
@@ -169,13 +192,17 @@ public class LoanDbRepository implements LoanRepository {
      * Map a loan tuple back into its respective clean domain model abstraction.
      */
     private Loan mapRowToLoan(ResultSet resultSet) throws SQLException {
-        return new Loan.Builder()
-                .setId(resultSet.getString("id"))
-                .setISBN(resultSet.getString("isbn"))
-                .setCustomerId(resultSet.getString("customer_id"))
-                .setStatus(LoanStatus.valueOf(resultSet.getString("status")))
-                .setStartDate(resultSet.getDate("start_date").toLocalDate())
-                .setEndDate(resultSet.getDate("end_date").toLocalDate())
-                .build();
+        OffsetDateTime closedAtOffset = resultSet.getObject("closed_at", OffsetDateTime.class);
+        Instant closedAtInstant = (closedAtOffset != null) ? closedAtOffset.toInstant() : null;
+
+        return Loan.restore(
+                resultSet.getString("id"),
+                resultSet.getString("book_id"),
+                resultSet.getString("customer_id"),
+                LoanStatus.valueOf(resultSet.getString("status")),
+                resultSet.getObject("start_date", LocalDate.class),
+                resultSet.getObject("end_date", LocalDate.class),
+                closedAtInstant
+        );
     }
 }

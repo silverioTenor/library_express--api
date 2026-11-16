@@ -1,0 +1,50 @@
+---
+description: Closed decisions for current and upcoming epics (E15, E16, E17) and project-wide out-of-scope list
+alwaysApply: true
+---
+
+# Roadmap guardrails
+
+Phase 2 order: E14 (closed) → **E15** → E16 → E17 → E11 → E12 → E13.
+Decisions below are already made. Do not contradict them, and do not anticipate a future epic unless asked.
+**Maintenance:** update this file whenever an epic closes (the developer does this at epic closure).
+
+## E15 — Domain & API Refinement
+
+- The interactive CLI is retired; the HTTP server is the **only** entrypoint. Never create or restore CLI code,
+  `Scanner` input, or TTY / `docker compose run` flows.
+- `created_at` / `updated_at` (`TIMESTAMPTZ`) are **database-only**: not in entities, DTOs or API responses, and no
+  persistence "model" package.
+  **PENDING DECISION (do not act on it):** migration `V3` already uses a trigger (`automatic_updated_at`) and adds
+  `created_by`/`updated_by`, which the epic file did not foresee (it specified explicit `updated_at = now()` in
+  the repositories and no trigger). Until the developer resolves this, do not edit `V3`, do not touch
+  `updated_at`/`created_by` handling in repositories, and ask before any work on audit columns.
+- Every listing uses `ORDER BY created_at, id` and returns `List`.
+- A paginated list plus a single-result "search" for the same resource are merged into one paginated endpoint with
+  optional filters (`GET /customers/search` goes away in favor of `GET /customers?id=&email=`).
+- Creation use cases return the created resource DTO (not `void`); handlers answer `201` + `Location` + body.
+- DTO validation is **hand-rolled** in `application`; violations become `400` through the central exception
+  handler, with violated fields listed in `message`. No new response fields.
+- ISBN: only ISBN-10/ISBN-13 accepted; canonical stored form is **ISBN-13, digits only**. Validation and
+  normalization live in the `Isbn` value object and apply at every entry point (body, path, query).
+- Book `status` is optional on registration (default `AVAILABLE`).
+- `closed_at` (nullable `TIMESTAMPTZ`) is business data and lives in the `Loan` entity.
+- Book metadata lookup goes through one port (`BookMetadataProvider`) with adapters: Open Library (default and
+  fallback); Google Books first only when `GOOGLE_BOOKS_API_KEY` is set. **Never use an LLM to resolve ISBNs.**
+  Never take the first search result blindly.
+
+## E16 — Authentication & RBAC (only when it is the active epic)
+
+Framework-free; hierarchy superAdmin → admin → supervisor/operator; Argon2id via Bouncy Castle; ES256 JWT via
+`nimbus-jose-jwt` with the algorithm pinned on verification; sessions in `tb_session` checked on every request;
+no hand-rolled cryptography; secrets never in the repository.
+
+## E17 — Multi-tenancy (only when it is the active epic)
+
+Shared schema with `tenant_id`; explicit `TenantId` value object passed as a parameter — **no `ThreadLocal` or
+implicit tenant context**; cross-tenant access answers `404`; no Row Level Security; no `ON DELETE CASCADE`.
+
+## Out of scope for the whole project
+
+Spring/any framework, Terraform/IaC, Fargate/ALB, microservices, marketplace, payments, subscriptions,
+customer-facing login, separate frontend, CORS, MFA.

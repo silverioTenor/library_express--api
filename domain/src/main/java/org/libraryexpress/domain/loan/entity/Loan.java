@@ -1,23 +1,24 @@
 package org.libraryexpress.domain.loan.entity;
 
-import org.libraryexpress.domain.book.valueobject.Isbn;
+import org.libraryexpress.domain.core.exception.DomainErrorType;
+import org.libraryexpress.domain.core.exception.DomainException;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
+import org.libraryexpress.domain.loan.exception.OverdueLoanException;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 public class Loan implements Comparable<Loan> {
 
     public static final int MAX_ACTIVE_LOANS = 2;
 
-    private static final int MAX_DAY_TO_RETURN = 15;
-
     private final String id;
 
-    private final Isbn ISBN;
+    private final String bookId;
 
     private final String customerId;
 
@@ -27,37 +28,90 @@ public class Loan implements Comparable<Loan> {
 
     private final LocalDate endDate;
 
+    private Instant closedAt;
+
     private Loan(
             String id,
-            Isbn ISBN,
+            String bookId,
             String customerId,
             LoanStatus status,
             LocalDate startDate,
-            LocalDate endDate
+            LocalDate endDate,
+            Instant closedAt
     ) {
-        Objects.requireNonNull(ISBN, "Book ISBN cannot be null");
         Objects.requireNonNull(status, "Loan status cannot be null");
         Objects.requireNonNull(startDate, "Start date cannot be null");
+        Objects.requireNonNull(endDate, "End date cannot be null");
 
         if (id == null || id.isBlank())
-            throw new IllegalArgumentException("Loan ID cannot be null or empty");
+            throw new InvalidArgumentException("Loan ID cannot be null or empty");
+        if (bookId == null || bookId.isBlank())
+            throw new InvalidArgumentException("Book ID cannot be null or empty");
         if (customerId == null || customerId.isBlank())
-            throw new IllegalArgumentException("Customer ID cannot be null or empty");
+            throw new InvalidArgumentException("Customer ID cannot be null or empty");
+        if (endDate.isBefore(startDate))
+            throw new DateOutOfBoundException("End date cannot be before start date");
 
         this.id = id;
-        this.ISBN = ISBN;
+        this.bookId = bookId;
         this.customerId = customerId;
         this.status = status;
         this.startDate = startDate;
-        this.endDate = validateAndReturnDueDate(endDate);
+        this.endDate = endDate;
+        this.closedAt = closedAt;
+    }
+
+    public static Loan create(
+            String id,
+            String bookId,
+            String customerId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        return new Loan(id, bookId, customerId, LoanStatus.ACTIVE, startDate, endDate, null);
+    }
+
+    public static Loan restore(
+            String id,
+            String bookId,
+            String customerId,
+            LoanStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Instant closedAt
+    ) {
+        return new Loan(id, bookId, customerId, status, startDate, endDate, closedAt);
+    }
+
+    public void processReturn(Clock clock, boolean isOverdueFlow) {
+        if (this.closedAt != null && this.status.equals(LoanStatus.FINISHED)) {
+            throw new DomainException(DomainErrorType.DATA_CONFLICT, "Loan already returned");
+        }
+
+        // TODO: Apply a late fee if the loan is returned overdue.
+        if (this.isOverdue(clock) && !isOverdueFlow) {
+            this.changeStatus(LoanStatus.OVERDUE);
+            return;
+        }
+
+        this.changeStatus(LoanStatus.FINISHED);
+        this.closedAt = Instant.now();
+    }
+
+    public void changeStatus(LoanStatus status) {
+        this.status = status;
+    }
+
+    public boolean isOverdue(Clock clock) {
+        return LocalDate.now(clock).isAfter(endDate);
     }
 
     public String getId() {
         return id;
     }
 
-    public Isbn getISBN() {
-        return ISBN;
+    public String getBookId() {
+        return bookId;
     }
 
     public String getCustomerId() {
@@ -68,10 +122,6 @@ public class Loan implements Comparable<Loan> {
         return status;
     }
 
-    public void changeStatus(LoanStatus status) {
-        this.status = status;
-    }
-
     public LocalDate getStartDate() {
         return startDate;
     }
@@ -80,32 +130,15 @@ public class Loan implements Comparable<Loan> {
         return endDate;
     }
 
-    public boolean isOverdue(Clock clock) {
-        return ChronoUnit.DAYS.between(startDate, LocalDate.now(clock)) > MAX_DAY_TO_RETURN;
-    }
-
-    private LocalDate validateAndReturnDueDate(LocalDate dueDate) {
-        LocalDate maxDateLimit = startDate.plusDays(MAX_DAY_TO_RETURN);
-
-        if (dueDate != null) {
-            if (dueDate.isBefore(startDate))
-                throw new DateOutOfBoundException("End date cannot be before start date");
-
-//            TODO: Move logic to create loan use case
-            if (dueDate.isAfter(maxDateLimit))
-                throw new DateOutOfBoundException("End date cannot exceed the 15-day limit from start date");
-
-            return dueDate;
-        }
-
-        return maxDateLimit;
+    public Instant getClosedAt() {
+        return closedAt;
     }
 
     @Override
     public String toString() {
         return "{\n" +
                 " id: " + id + ",\n" +
-                " ISBN: " + ISBN + ",\n" +
+                " bookId: " + bookId + ",\n" +
                 " customerId: " + customerId + ",\n" +
                 " statuses: " + status.toString() + ",\n" +
                 " startDate: " + startDate + ",\n" +
@@ -129,52 +162,4 @@ public class Loan implements Comparable<Loan> {
         return Objects.compare(startDate, o.getStartDate(), LocalDate::compareTo);
     }
 
-    public static class Builder {
-
-        private String id;
-
-        private String ISBN;
-
-        private String customerId;
-
-        private LoanStatus status;
-
-        private LocalDate startDate;
-
-        private LocalDate endDate;
-
-        public Builder setId(String id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder setISBN(String ISBN) {
-            this.ISBN = ISBN;
-            return this;
-        }
-
-        public Builder setCustomerId(String customerId) {
-            this.customerId = customerId;
-            return this;
-        }
-
-        public Builder setStatus(LoanStatus status) {
-            this.status = status;
-            return this;
-        }
-
-        public Builder setStartDate(LocalDate startDate) {
-            this.startDate = startDate;
-            return this;
-        }
-
-        public Builder setEndDate(LocalDate endDate) {
-            this.endDate = endDate;
-            return this;
-        }
-
-        public Loan build() {
-            return new Loan(id, new Isbn(ISBN), customerId, status, startDate, endDate);
-        }
-    }
 }

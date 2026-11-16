@@ -1,7 +1,7 @@
 # ADR 0006: JaCoCo Coverage Metric Alignment and PL/pgSQL Function Exception for Overdue Bookkeeping
 
 ## Status
-Accepted (Amendment to US-703 and Exception to ADR 0002)
+Accepted (Amendment to US-703 and Exception to ADR 0002; Amendments 2 and 3 below)
 
 ## Context
 Following the closure of Epic E7 and during the refinement of Epic E12, two technical alignment needs emerged:
@@ -75,3 +75,16 @@ one-off high-water mark.
 | infrastructure | 80% | 65% |
 
 **Status:** TD08 formally resolved.
+
+### Amendment 3 — E15 `updated_at` Maintained by a Database Trigger
+
+**Date:** 2026-11-11
+**Context:** Epic E15 (US-1502) added `created_at` and `updated_at` to every business table. The first refinement kept `updated_at` out of the database logic: each `UPDATE` in the JDBC repositories would set `updated_at = now()` explicitly, because a trigger would widen the PL/pgSQL exception above, which is limited to overdue bookkeeping. During execution that approach proved fragile: every repository method that updates a row has to remember the assignment, and a forgotten one silently leaves a stale timestamp.
+
+**Decision:** `updated_at` is maintained by a `BEFORE UPDATE` trigger (`automatic_updated_at`) on the business tables, and the repositories no longer set it. The narrow exception to ADR 0002 is widened by exactly one purpose: **mechanical audit-timestamp maintenance**. The trigger only stamps the row's modification time; it contains no business decision, so the core tenet of ADR 0002 — business rules live in Java — is untouched.
+
+**Consequences:**
+
+- Positive: a single point of truth for `updated_at`; no repository can forget it; less boilerplate in the JDBC layer.
+- Negative: part of the persistence behavior now lives in a migration instead of the repository code, so it is covered by a Testcontainers integration test asserting that `updated_at` advances on update.
+- Anything beyond mechanical bookkeeping (overdue recording, audit timestamps) in the database still requires a new amendment or ADR.

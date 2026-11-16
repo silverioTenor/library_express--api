@@ -4,6 +4,7 @@ import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.repository.CustomerFilter;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
 
 import javax.sql.DataSource;
@@ -11,9 +12,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class CustomerDbRepository implements CustomerRepository {
 
@@ -25,13 +24,13 @@ public class CustomerDbRepository implements CustomerRepository {
 
     @Override
     public void create(Customer customer) {
-        String query = "INSERT INTO tb_customer (id, name, email) VALUES (?, ?, ?)";
+        String query = "INSERT INTO customer (id, name, email) VALUES (?, ?, ?)";
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)
         ) {
-            statement.setString(1, customer.getId());
+            statement.setObject(1, UUID.fromString(customer.getId()));
             statement.setString(2, customer.getName());
             statement.setString(3, customer.getEmail().value());
             statement.execute();
@@ -43,7 +42,7 @@ public class CustomerDbRepository implements CustomerRepository {
 
     @Override
     public void update(Customer customer) {
-        String query = "UPDATE tb_customer SET name = ?, email = ? WHERE id = ?";
+        String query = "UPDATE customer SET name = ?, email = ? WHERE id::text = ?";
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -61,7 +60,7 @@ public class CustomerDbRepository implements CustomerRepository {
 
     @Override
     public Optional<Customer> getById(String id) {
-        String query = "SELECT * FROM tb_customer WHERE id = ?";
+        String query = "SELECT * FROM customer WHERE id::text = ?";
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -83,7 +82,7 @@ public class CustomerDbRepository implements CustomerRepository {
 
     @Override
     public Optional<Customer> getByEmail(String email) {
-        String query = "SELECT * FROM tb_customer WHERE email = ?";
+        String query = "SELECT * FROM customer WHERE email = ?";
 
         try (
                 Connection connection = dataSource.getConnection();
@@ -104,23 +103,48 @@ public class CustomerDbRepository implements CustomerRepository {
     }
 
     @Override
-    public QueryResult<Customer> findAll(InputPaginationDto paginationDto) {
-        boolean shouldPaginate = paginationDto != null && paginationDto.isPaginated();
+    public QueryResult<Customer> search(CustomerFilter filter) {
+        boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
-        String query = shouldPaginate
-                ? "SELECT *, COUNT(*) OVER() as full_count FROM tb_customer LIMIT ? OFFSET ?"
-                : "SELECT * FROM tb_customer";
+        var query = shouldPaginate
+                ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM customer WHERE 1=1")
+                : new StringBuilder("SELECT * FROM customer WHERE 1=1");
 
-        Set<Customer> customers = new HashSet<>();
+        List<Customer> customers = new ArrayList<>();
         long totalElements;
+
+        boolean hasId = filter.id() != null && !filter.id().isBlank();
+        boolean hasName = filter.name() != null && !filter.name().isBlank();
+        boolean hasEmail = filter.email() != null && !filter.email().isBlank();
+
+        if (hasId) query.append(" AND id::text = ?");
+        if (hasName) query.append(" AND name LIKE ?");
+        if (hasEmail) query.append(" AND email LIKE ?");
+
+        if (shouldPaginate) query.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?;");
+        else query.append(" ORDER BY created_at, id DESC;");
 
         try (
                 Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query);
+                PreparedStatement statement = connection.prepareStatement(query.toString());
         ) {
+            int parameterIndex = 1;
+
+            if (hasId) {
+                statement.setString(parameterIndex++, filter.id());
+            }
+
+            if (hasName) {
+                statement.setString(parameterIndex++, filter.name());
+            }
+
+            if (hasEmail) {
+                statement.setString(parameterIndex++, filter.email());
+            }
+
             if (shouldPaginate) {
-                statement.setInt(1, paginationDto.limit());
-                statement.setInt(2, paginationDto.offset());
+                statement.setInt(parameterIndex++, filter.paginationDto().limit());
+                statement.setInt(parameterIndex, filter.paginationDto().offset());
             } else {
                 connection.setAutoCommit(false);
                 statement.setFetchSize(500);
@@ -153,10 +177,10 @@ public class CustomerDbRepository implements CustomerRepository {
      * Map a customer tuple back into its respective clean domain model abstraction.
      */
     private Customer mapRowToCustomer(ResultSet resultSet) throws SQLException {
-        return new Customer.Builder()
-                .setId(resultSet.getString("id"))
-                .setName(resultSet.getString("name"))
-                .setEmail(resultSet.getString("email"))
-                .build();
+        return Customer.restore(
+                resultSet.getString("id"),
+                resultSet.getString("name"),
+                resultSet.getString("email")
+        );
     }
 }

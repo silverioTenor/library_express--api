@@ -1,0 +1,51 @@
+---
+description: Clean Architecture module boundaries, framework-free rule, business-rule placement, exceptions and approved stack
+alwaysApply: true
+---
+
+# Architecture (non-negotiable)
+
+Maven multi-module build; each layer is its own module:
+
+```
+domain          pure business logic and contracts; depends on NOTHING else
+application     use cases, DTOs, mappers, validators, ports; depends on domain only
+infrastructure  JDBC repositories, HTTP server, config, adapters; depends on application (and domain)
+coverage-report packaging pom, no source code; only aggregates JaCoCo reports
+```
+
+- Dependency direction is `infrastructure → application → domain`. Never add a reverse dependency, and never add
+  a library to `domain` other than the JDK (and test libraries).
+- **Framework-free for the whole lifecycle (ADR 0001).** Do NOT introduce Spring (Boot, Data, Security, Test),
+  Quarkus, Micronaut, Guice, Dagger, Hibernate/JPA, Lombok, Javalin or any DI/application framework.
+  Dependency wiring is manual, at the application entrypoint.
+- **Do not add any new dependency** that is not in the approved stack below without explicit approval.
+- **Business rules live in `domain` or in `application` use cases/validators — never in repositories, HTTP
+  handlers or SQL.** Entity invariants stay in the entity; creation *policies* live in a validator used by the
+  use case. Example: "due date not before start date" is an invariant (entity); "max 15 days" is a creation
+  policy (validator, US-1507). The overdue-status rule stays in the domain (ADR 0002).
+- Existing eligibility validators (`BookAvailabilityValidator`, `LoanEligibilityValidator`) live in
+  `domain/<aggregate>/validator`. New creation-policy validators go where the active epic says
+  (US-1507: `application/loan/validator`). Do not move existing ones on your own.
+- Aggregates reference each other **by id (String/value object), never by object reference**.
+- **Error model:** every business failure is a `DomainException` subclass carrying a `DomainErrorType`
+  (`INVALID_DATA`→400, `RESOURCE_NOT_FOUND`→404, `DATA_CONFLICT`→409, `BUSINESS_VIOLATION`→422), which
+  `GlobalExceptionHandler` maps to HTTP. New exceptions extend `DomainException` with the right type. Never throw
+  HTTP concepts from domain/application, and never map status codes outside the handler.
+- **Exception placement:** an exception lives in the lowest layer that throws it (generic ones in
+  `domain/core/exception`, aggregate-specific ones next to their aggregate). Business-rule enforcement belongs in
+  the use case or validator, not the repository.
+- MapStruct is used **without Spring**: `Mappers.getMapper(...)` / `INSTANCE`. DTOs and generated mappers are
+  excluded from coverage.
+- Keep the `equals`/`hashCode` contract already established for Book, Customer and Loan (TD01).
+- Collections returned by repositories and use cases are ordered `List`, not `Set`.
+
+## Approved stack (anything else needs approval)
+
+Java 21 · Maven (multi-module, `maven-shade-plugin` fat JAR, `exec-maven-plugin`, `maven-antrun-plugin`) ·
+PostgreSQL 17 (pure JDBC) · HikariCP · Flyway (`flyway-core` + `flyway-database-postgresql`) · `dotenv-java` ·
+Jackson (`databind`, `jsr310`; `annotations` in `application`) · Docker/Docker Compose (`compose.yml`) ·
+JUnit 5 · Mockito · REST Assured (E2E) · Testcontainers (PostgreSQL) · MapStruct · JaCoCo · GitHub Actions ·
+SLF4J + Logback + `logstash-logback-encoder` · OpenAPI via `swagger-jaxrs2-jakarta`, `swagger-maven-plugin-jakarta`,
+`jakarta.ws.rs-api` (build-time annotations only) and `swagger-ui` · `java.net.http` (E15 metadata adapters) ·
+`nimbus-jose-jwt` and Bouncy Castle (only when E16 is the active epic).

@@ -1,0 +1,44 @@
+---
+description: Working agreement, language, security baseline and final checklist for every task in Library Express
+alwaysApply: true
+---
+
+# Library Express — Working Agreement
+
+Library Express is a Java 21 library-management backend, built as a learning/portfolio project.
+The rules in `.cursor/rules/` encode decisions that are already **closed**. Do not violate them.
+If a task seems to require breaking one, STOP and ask the developer instead of working around it.
+
+## How to work with the developer
+
+- Conversation with the developer: Portuguese (pt-BR). Everything written into the repository (code, comments,
+  Javadoc, commit messages, README, ADRs, backlog, OpenAPI text): **English**. Never create Portuguese copies of documents.
+- **Discuss before deciding.** For anything architectural, a new dependency, a new endpoint contract, a schema change
+  or a business rule not already written in `docs/BACKLOG.md` or the active epic file, propose options and wait for
+  approval. Do not silently pick one.
+- **Explain the "why"** behind every non-trivial suggestion (language feature, API choice, design rationale).
+  This is a learning project; the explanation is part of the deliverable.
+- Prefer explicit, readable solutions over clever abstractions. Keep each change minimal and inside the scope of the
+  current user story. No drive-by refactors, no reformatting of untouched files, no renames outside the task.
+- The active scope is defined by `docs/epics/<ID>-<slug>.md` (Gherkin scenarios + tasks) and `docs/BACKLOG.md`.
+  Read the relevant epic file before implementing a story. If the epic file is not in the repository, ask the
+  developer for the story's scenarios and tasks — never invent requirements. Do not implement future epics ahead
+  of time.
+
+## Security baseline
+
+- Secrets come from environment variables / AWS Secrets Manager only. Never hard-code, commit or log them.
+- Never weaken validation, error handling or authentication to make a test pass.
+- Treat all external input (body, path, query, headers, third-party API responses) as untrusted; validate and
+  normalize at the boundary.
+
+## Before finishing any task
+
+1. Does the change stay within the active user story and the layer boundaries?
+2. No new dependency, framework or out-of-scope feature?
+3. Business rule placed in domain/use case, not in repository/handler/SQL?
+4. Tests added per Gherkin scenario; `mvn -B clean verify` green; coverage thresholds untouched?
+5. Docs/ADR/backlog/CI/infra files untouched unless the task required it?
+6. Commit message follows the convention, grouped by theme, with a real diff?
+
+If any answer is "no" or "unsure": stop and ask.

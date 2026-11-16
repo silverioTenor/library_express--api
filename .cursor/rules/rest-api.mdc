@@ -1,0 +1,21 @@
+---
+description: REST API conventions — URIs, pagination, error body, Trace ID, OpenAPI, central exception handler
+globs: infrastructure/src/main/java/**/api/**/*.java
+alwaysApply: false
+---
+
+# REST API conventions
+
+- Served by the JDK embedded `HttpServer` on `API_PORT` (default `3000`). Do not swap the server library.
+- Resource-based URIs, **no version prefix** (`/books`, not `/v1/books`). Keep RMM Level 2 consistency
+  (e.g. `POST /loans/{loanId}/returns`, `PATCH /loans/{loanId}/close-overdue`).
+- Pagination: `page` (0-indexed, default `0`) and `size` (default `20`).
+- Every 4xx/5xx returns the structured JSON error body (`status`, `message`, `timestamp`) **through the central
+  exception handler** — never craft error responses ad hoc in a handler.
+- Every response carries `X-Trace-Id` (echo the client value or generate one). The project uses **Trace ID**, not
+  "Correlation ID" / `X-Correlation-Id`.
+- OpenAPI comes from JAX-RS **annotations used as build-time metadata only** (ADR 0008, Amendment 1). Do not add a
+  JAX-RS runtime. Keep `/docs` and `/openapi.json` working and in sync with every contract change.
+- The Router's path-parameter regex is `[^}]+` — never reintroduce restrictive character classes.
+- Breaking contract changes are acceptable only inside the documented epic (`0.y.z`); never introduce one on your own.
+- Handlers only translate HTTP ↔ use case. No business rules in handlers.

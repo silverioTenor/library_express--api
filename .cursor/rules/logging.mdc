@@ -1,0 +1,14 @@
+---
+description: Logging rules — SLF4J/Logback, MDC trace id, no secrets, no GET INFO logs
+globs: **/src/main/java/**/*.java
+alwaysApply: false
+---
+
+# Logging
+
+- Log through the project's `CustomLogger` / `CustomLoggerFactory` (port in `domain/core/logging`); the SLF4J +
+  Logback implementation is `Slf4jLoggerAdapter` in `infrastructure`. Never import SLF4J/Logback in `domain` or
+  `application`. Output is structured JSON with MDC-based correlation (`trace_id`, via `LogTrace`/`LogTraceFilter`).
+  No `System.out` or `printStackTrace` anywhere.
+- **Never log secrets** (passwords, tokens, API keys, DB credentials, bootstrap secrets).
+- `GET` requests deliberately do **not** produce INFO logs (volume/cost in CloudWatch). Do not add per-read logging.
