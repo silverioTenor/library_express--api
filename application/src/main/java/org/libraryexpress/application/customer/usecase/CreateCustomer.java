@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public class CreateCustomer {
 
-    private static final CustomLogger logger = CustomLoggerFactory.getLogger(CreateCustomer.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(CreateCustomer.class);
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper mapper;
@@ -24,19 +24,19 @@ public class CreateCustomer {
     }
 
     public CreateCustomerResponseDTO execute(CreateCustomerDTO createCustomerDto) {
-        logger.info("Starting customer registration...");
+        LOG.info("Starting customer registration...");
 
         Optional<Customer> hasClient = this.customerRepository.getByEmail(createCustomerDto.email());
 
         if (hasClient.isPresent()) {
-            logger.warn("ABORTED: Customer with email [{}] already exists", createCustomerDto.email());
+            LOG.warn("ABORTED: Customer with email [{}] already exists", createCustomerDto.email());
             throw new UniqueEmailViolationException();
         }
 
         Customer customer = mapper.toEntity(createCustomerDto);
         this.customerRepository.create(customer);
 
-        logger.info("Customer successfully registered! Customer ID: [{}]", customer.getId());
+        LOG.info("Customer successfully registered! Customer ID: [{}]", customer.getId());
 
         return new CreateCustomerResponseDTO(customer.getId());
     }

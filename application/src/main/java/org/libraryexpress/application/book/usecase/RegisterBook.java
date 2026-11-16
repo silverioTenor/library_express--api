@@ -4,7 +4,6 @@ import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
 import org.libraryexpress.application.book.dto.response.RegisterBookResponseDTO;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
-import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.exception.UniqueIsbnViolationException;
 import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
@@ -17,7 +16,7 @@ import java.util.Optional;
 
 public class RegisterBook {
 
-    private static final CustomLogger log =  CustomLoggerFactory.getLogger(RegisterBook.class);
+    private static final CustomLogger LOG =  CustomLoggerFactory.getLogger(RegisterBook.class);
 
     private final BookRepository bookRepository;
 
@@ -32,14 +31,14 @@ public class RegisterBook {
     }
 
     public RegisterBookResponseDTO execute(RegisterBookDTO registerBookDto) {
-        log.info("Starting book registration...");
+        LOG.info("Starting book registration...");
 
         Book book = registerBookDto.isManualRegistration()
                 ? processManualRegistration(registerBookDto)
                 : processExternalRegistration(registerBookDto);
 
         this.bookRepository.create(book);
-        log.info("Book registered.");
+        LOG.info("Book registered.");
 
         return new RegisterBookResponseDTO(book.getId().toString());
     }
@@ -54,7 +53,7 @@ public class RegisterBook {
         Optional<BookMetadata> bookMetadata = this.bookGateway.fetch(dto.title(), dto.author());
 
         if (bookMetadata.isEmpty()) {
-            log.warn("External book lookup returned empty. Title: [{}], Author: [{}]", dto.title(), dto.author());
+            LOG.warn("External book lookup returned empty. Title: [{}], Author: [{}]", dto.title(), dto.author());
             throw new BookNotFoundException(
                     "No book matches the provided title and author in the external registry. Please review the search data or fill in the complete details manually."
             );
@@ -68,7 +67,7 @@ public class RegisterBook {
     private void ensureIsbnIsUnique(Book book) {
         String isbn = book.getIsbn().value();
         if (this.bookRepository.getByIsbn(isbn).isPresent()) {
-            log.warn("ABORTED: Book already exists. isbn: {}", isbn);
+            LOG.warn("ABORTED: Book already exists. isbn: {}", isbn);
             throw new UniqueIsbnViolationException();
         }
     }

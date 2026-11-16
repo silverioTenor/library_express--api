@@ -20,7 +20,7 @@ import java.time.LocalDate;
 
 public class CreateLoan {
 
-    private static final CustomLogger logger =  CustomLoggerFactory.getLogger(CreateLoan.class);
+    private static final CustomLogger LOG =  CustomLoggerFactory.getLogger(CreateLoan.class);
 
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
@@ -46,7 +46,7 @@ public class CreateLoan {
     }
 
     public CreateLoanResponseDTO execute(CreateLoanDTO createLoanDto) {
-        logger.info("Initiating loan creation. loan DTO: [{}]", createLoanDto);
+        LOG.info("Initiating loan creation. loan DTO: [{}]", createLoanDto);
 
         this.loanEligibilityValidator.validate(createLoanDto.customerId());
         Book book = this.bookAvailabilityValidator.validate(createLoanDto.bookId());
@@ -70,7 +70,7 @@ public class CreateLoan {
         this.loanRepository.create(loan);
         this.bookRepository.update(book);
 
-        logger.info("Created loan flow finished successfully! Loan ID: [{}]", id);
+        LOG.info("Created loan flow finished successfully! Loan ID: [{}]", id);
 
         return new CreateLoanResponseDTO(id);
     }

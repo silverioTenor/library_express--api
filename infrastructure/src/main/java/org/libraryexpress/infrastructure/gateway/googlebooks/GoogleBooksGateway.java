@@ -18,7 +18,7 @@ import static org.libraryexpress.infrastructure.exception.InfrastructureErrorTyp
 
 public final class GoogleBooksGateway implements BookMetadataGateway {
 
-    private static final CustomLogger log = CustomLoggerFactory.getLogger(GoogleBooksGateway.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(GoogleBooksGateway.class);
 
     private final CustomHttpClient customHttpClient;
 
@@ -27,10 +27,10 @@ public final class GoogleBooksGateway implements BookMetadataGateway {
     }
 
     public Optional<BookMetadata> fetch(String titleParam, String authorParam) {
-        log.info("Searching in External Registry...");
+        LOG.info("Searching in External Registry...");
 
         if ((titleParam == null || titleParam.isBlank()) || (authorParam == null || authorParam.isBlank())) {
-            log.error("Search failed. missing required parameters: Title: {}, Author: {}", titleParam, authorParam);
+            LOG.error("Search failed. missing required parameters: Title: {}, Author: {}", titleParam, authorParam);
             throw new IllegalArgumentException("Title and author parameters cannot be null or empty");
         }
 
@@ -42,37 +42,37 @@ public final class GoogleBooksGateway implements BookMetadataGateway {
         String secureUrl = "https://www.googleapis.com/books/v1/volumes?q=" +
                 encodedTitle + "&inauthor=" + encodedAuthor + "&key=" + apiKey;
 
-        log.info("Google API URL: {}", secureUrl.replace(apiKey, "*****"));
+        LOG.info("Google API URL: {}", secureUrl.replace(apiKey, "*****"));
 
         try {
             ClientResponse response = this.customHttpClient.get(secureUrl);
 
             return switch (response.statusCode()) {
                 case 200 -> {
-                    log.info("Search completed.");
+                    LOG.info("Search completed.");
                     yield GoogleBookMetadataParser.parse(response.body());
                 }
                 case 400, 409 -> {
-                    log.warn("External service error during book search. HTTP response [{}]", response.body());
+                    LOG.warn("External service error during book search. HTTP response [{}]", response.body());
                     throw new InfrastructureException(INVALID_DATA, response.body());
                 }
                 case 404 -> {
-                    log.warn("The provided information does not match any book in our external registry. "
+                    LOG.warn("The provided information does not match any book in our external registry. "
                             + "Please review the search data or fill in all required fields manually. HTTP response [{}]", response.body());
                     throw new InfrastructureException(RESOURCE_NOT_FOUND, response.body());
                 }
                 case 500, 502, 504, 503 -> {
-                    log.error("External service error during book search. HTTP response: [{}]", response.body());
+                    LOG.error("External service error during book search. HTTP response: [{}]", response.body());
                     throw new InfrastructureException(SERVICE_UNAVAILABLE, response.body());
                 }
                 default -> {
-                    log.error("Unexpected HTTP response received from external API: [{}]", response.body());
+                    LOG.error("Unexpected HTTP response received from external API: [{}]", response.body());
                     throw new IllegalStateException("Unexpected value: " + response.body());
                 }
             };
 
         } catch (IOException | InterruptedException e) {
-            log.error("Fatal error during external API communication: [{}]" + e.getMessage(), e);
+            LOG.error("Fatal error during external API communication: [{}]" + e.getMessage(), e);
 
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
