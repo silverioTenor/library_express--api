@@ -46,6 +46,7 @@ public final class BookController implements BookApiMapping {
     public void search(HttpContextRequest request, HttpContextResponse response) throws Exception {
         Pagination.PageRequest pageRequest = request.getPageRequest();
 
+        String id = request.getQueryParam("id");
         String ISBN = request.getQueryParam("isbn");
         String title = request.getQueryParam("title");
         String author = request.getQueryParam("author");
@@ -53,7 +54,7 @@ public final class BookController implements BookApiMapping {
         String publishedYear = request.getQueryParam("publishedYear");
 
         var filterBookDto = new BookFilterDTO(
-                ISBN, title, author, statuses, publishedYear, pageRequest.page(), pageRequest.size()
+                id, ISBN, title, author, statuses, publishedYear, pageRequest.page(), pageRequest.size()
         );
 
         OutputPaginationDto<BookDTO> outputDto = context.getListBooks().execute(filterBookDto);

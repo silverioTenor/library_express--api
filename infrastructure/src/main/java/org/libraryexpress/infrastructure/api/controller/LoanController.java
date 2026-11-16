@@ -41,10 +41,10 @@ public final class LoanController implements LoanApiMapping {
 
         String id = request.getQueryParam("id");
         String customerId = request.getQueryParam("customerId");
-        String ISBN = request.getQueryParam("isbn");
+        String bookId = request.getQueryParam("bookId");
         String statuses = request.getQueryParam("statuses");
 
-        var filterDTO = new LoanFilterDTO(id, customerId, ISBN, statuses, pageRequest.page(), pageRequest.size());
+        var filterDTO = new LoanFilterDTO(id, customerId, bookId, statuses, pageRequest.page(), pageRequest.size());
         OutputPaginationDto<LoanDTO> outputDto = context.getSearchLoans().execute(filterDTO);
 
         response.status(SUCCESS).json(outputDto);

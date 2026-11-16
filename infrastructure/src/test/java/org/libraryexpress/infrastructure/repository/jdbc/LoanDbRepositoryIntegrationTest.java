@@ -24,9 +24,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
     private LoanDbRepository loanRepository;
+    private String validBookId;
 
     // Standard business entities required to fulfill foreign key constraints
-    private static final String VALID_ISBN = "978-16-14841-20-0"; // Task Requirement: Matching your custom formatting rule
+    private static final String VALID_ISBN = "978-16-14841-20-0";
     private static final String VALID_CUSTOMER_ID = "20000000-0000-4000-8000-000000000001";
 
     @BeforeEach
@@ -45,6 +46,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         Book parentBook = Book.create(VALID_ISBN, "Continuous Delivery Baseline", "Jez Humble", 2010, "AVAILABLE", "", "");
         bookRepository.create(parentBook);
+        validBookId = parentBook.getId().toString();
     }
 
     @Test
@@ -54,7 +56,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         String loanId = "30000000-0000-4000-8000-000000000001";
         Loan newLoan = Loan.restore(
                 loanId,
-                VALID_ISBN,
+                validBookId,
                 VALID_CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
@@ -68,8 +70,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         // Assert
         assertTrue(retrieved.isPresent(), "Persisted loan transaction metadata must be located inside the database");
-        assertFalse(retrieved.get().getISBN().value().contains("-"));
-        assertEquals(13, retrieved.get().getISBN().value().length());
+        assertEquals(validBookId, retrieved.get().getBookId());
         assertEquals(VALID_CUSTOMER_ID, retrieved.get().getCustomerId());
         assertEquals(LoanStatus.ACTIVE, retrieved.get().getStatus());
         assertEquals(LocalDate.now(), retrieved.get().getStartDate(), "Temporal state mappings must preserve date alignments");
@@ -82,7 +83,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         String loanId = "30000000-0000-4000-8000-000000000002";
         Loan loan = Loan.restore(
                 loanId,
-                VALID_ISBN,
+                validBookId,
                 VALID_CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.now().minusDays(5),
@@ -94,7 +95,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         // Reconstructing entity representing a standard business return execution lifecycle
         Loan returnedLoan = Loan.restore(
                 loanId,
-                VALID_ISBN,
+                validBookId,
                 VALID_CUSTOMER_ID,
                 LoanStatus.FINISHED,
                 // Mutating business state
@@ -123,7 +124,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         Loan activeLoan = Loan.restore(
                 loanId1,
-                VALID_ISBN,
+                validBookId,
                 VALID_CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
@@ -133,7 +134,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         Loan overdueLoan = Loan.restore(
                 loanId2,
-                VALID_ISBN,
+                validBookId,
                 VALID_CUSTOMER_ID,
                 LoanStatus.OVERDUE,
                 LocalDate.now().minusDays(20),
@@ -152,6 +153,9 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         assertNotNull(matchedLoans);
         assertEquals(1, matchedLoans.size(), "Filter must pinpoint exactly the OVERDUE entry based on native array unpacking");
         assertTrue(matchedLoans.stream().anyMatch(l -> l.getId().equals(loanId2)), "The correctly mapped target id must match records data");
+
+        var bookIdFilter = new LoanFilter(null, null, validBookId, Set.of(LoanStatus.OVERDUE), null);
+        assertEquals(1, loanRepository.search(bookIdFilter).items().size());
     }
 
 }

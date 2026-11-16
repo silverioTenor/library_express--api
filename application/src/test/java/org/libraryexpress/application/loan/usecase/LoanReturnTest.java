@@ -41,7 +41,8 @@ class LoanReturnTest {
     private LoanReturn loanReturn;
 
     private static final String LOAN_ID = "loan-uuid-123";
-    private static final String ISBN_STR = "9788535902778";
+    private static final String BOOK_ID = "00000000-0000-4000-8000-000000000001";
+    private static final String BOOK_ISBN = "9788535902778";
     private static final String CUSTOMER_ID = "customer-uuid-123";
 
     @Test
@@ -51,7 +52,7 @@ class LoanReturnTest {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         Loan activeLoan = Loan.restore(
                 LOAN_ID,
-                ISBN_STR,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 startDate,
@@ -59,14 +60,14 @@ class LoanReturnTest {
                 null
         );
 
-        Book borrowedBook = Book.create(ISBN_STR, "Clean Architecture", "Robert C. Martin", 0, "BORROWED", "", "");
+        Book borrowedBook = Book.create(BOOK_ISBN, "Clean Architecture", "Robert C. Martin", 0, "BORROWED", "", "");
 
         // Clock paused within the 15-day period (Day 10)
         Clock fixedClock = Clock.fixed(Instant.parse("2026-08-10T12:00:00Z"), ZoneId.of("UTC"));
         LoanReturn useCaseOnTime = new LoanReturn(loanRepository, bookRepository, fixedClock);
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
-        when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(borrowedBook));
+        when(bookRepository.getById(BOOK_ID)).thenReturn(Optional.of(borrowedBook));
 
         // Act
         useCaseOnTime.execute(LOAN_ID);
@@ -87,7 +88,7 @@ class LoanReturnTest {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         Loan activeLoan = Loan.restore(
                 LOAN_ID,
-                ISBN_STR,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 startDate,
@@ -95,14 +96,14 @@ class LoanReturnTest {
                 null
         );
 
-        Book borrowedBook = Book.create(ISBN_STR, "Clean Architecture", "Robert C. Martin", 0, "BORROWED", "", "");
+        Book borrowedBook = Book.create(BOOK_ISBN, "Clean Architecture", "Robert C. Martin", 0, "BORROWED", "", "");
 
         // Clock frozen past the deadline (Day 20 -> 19 days later)
         Clock fixedClock = Clock.fixed(Instant.parse("2026-08-20T12:00:00Z"), ZoneId.of("UTC"));
         LoanReturn useCaseOverdue = new LoanReturn(loanRepository, bookRepository, fixedClock);
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
-        when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(borrowedBook));
+        when(bookRepository.getById(BOOK_ID)).thenReturn(Optional.of(borrowedBook));
 
         // Act
         useCaseOverdue.execute(LOAN_ID);
@@ -136,7 +137,7 @@ class LoanReturnTest {
         // Arrange
         Loan finishedLoan = Loan.restore(
                 LOAN_ID,
-                ISBN_STR,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.FINISHED,
                 // Forbidden status in the Use Case's Set.of
@@ -161,7 +162,7 @@ class LoanReturnTest {
         // Arrange
         Loan activeLoan = Loan.restore(
                 LOAN_ID,
-                ISBN_STR,
+                BOOK_ID,
                 CUSTOMER_ID,
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
@@ -170,7 +171,7 @@ class LoanReturnTest {
         );
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
-        when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.empty()); // Livro sumiu da base externa
+        when(bookRepository.getById(BOOK_ID)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(BookNotFoundException.class, () -> loanReturn.execute(LOAN_ID));

@@ -94,6 +94,7 @@ public interface BookApiMapping {
             requestBody = @RequestBody(content = @Content())
     )
     @Parameters({
+            @Parameter(name = "id", in = ParameterIn.QUERY),
             @Parameter(name = "isbn", in = ParameterIn.QUERY),
             @Parameter(name = "title", in = ParameterIn.QUERY),
             @Parameter(name = "author", in = ParameterIn.QUERY),

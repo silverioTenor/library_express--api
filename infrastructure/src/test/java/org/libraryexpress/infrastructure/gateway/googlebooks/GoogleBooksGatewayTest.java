@@ -1,5 +1,6 @@
 package org.libraryexpress.infrastructure.gateway.googlebooks;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,6 +26,11 @@ class GoogleBooksGatewayTest {
 
     private final CustomHttpClient httpClient = mock(CustomHttpClient.class);
     private final GoogleBooksGateway gateway = new GoogleBooksGateway(httpClient);
+
+    @BeforeAll
+    static void setUp() {
+        System.setProperty("GOOGLE_BOOKS_API_KEY", "testApiKey");
+    }
 
     @Test
     @DisplayName("Fetches and parses a matching result")

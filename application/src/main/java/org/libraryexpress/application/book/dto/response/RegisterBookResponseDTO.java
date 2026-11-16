@@ -1,4 +1,4 @@
 package org.libraryexpress.application.book.dto.response;
 
-public record RegisterBookResponseDTO(String isbn) {
+public record RegisterBookResponseDTO(String id) {
 }

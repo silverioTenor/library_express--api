@@ -44,11 +44,11 @@ public class LoanReturn {
             throw new InvalidArgumentException("The Loan cannot be completed with the current status.");
         }
 
-        Book book = this.bookRepository.getByIsbn(loan.getISBN().value())
+        Book book = this.bookRepository.getById(loan.getBookId())
                 .orElseThrow(() -> {
                     logger.error(
-                            "CRITICAL: Book record missing for an active loan. isbn: [{}], Loan ID: [{}]",
-                            loan.getISBN().value(), loanId);
+                            "CRITICAL: Book record missing for an active loan. bookId: [{}], Loan ID: [{}]",
+                            loan.getBookId(), loanId);
                     return new BookNotFoundException();
                 });
 
