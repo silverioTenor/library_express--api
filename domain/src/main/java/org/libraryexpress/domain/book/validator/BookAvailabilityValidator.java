@@ -14,7 +14,7 @@ public class BookAvailabilityValidator {
     }
 
     public Book validate(String bookId) {
-        Book book = this.bookRepository.getById(bookId)
+        Book book = this.bookRepository.getByIdForUpdate(bookId)
                 .orElseThrow(BookNotFoundException::new);
 
         if (book.getStatus() != BookStatus.AVAILABLE) {

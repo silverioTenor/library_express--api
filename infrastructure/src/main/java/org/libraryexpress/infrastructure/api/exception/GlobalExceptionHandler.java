@@ -68,6 +68,7 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
             case BAD_GATEWAY -> BAD_GATEWAY;
             case GATEWAY_TIMEOUT -> GATEWAY_TIMEOUT;
             case SERVICE_UNAVAILABLE -> SERVICE_UNAVAILABLE;
+            case SQL_TRANSACTION, SQL_TRANSACTION_LOCK -> INTERNAL_SERVER_ERROR;
         };
     }
 }

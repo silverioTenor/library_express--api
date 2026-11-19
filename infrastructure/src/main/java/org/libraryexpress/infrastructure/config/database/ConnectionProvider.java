@@ -33,6 +33,7 @@ public class ConnectionProvider implements AutoCloseable {
         config.setIdleTimeout(ConfigRegistry.getIdleTimeout());
         config.setConnectionTimeout(ConfigRegistry.getConnectionTimeout());
         config.setMaxLifetime(ConfigRegistry.getMaxLifetime());
+        config.setConnectionInitSql("SET lock_timeout = '" + ConfigRegistry.getDbLockTimeOut() + "ms'");
 
         this.dataSource = new HikariDataSource(config);
     }

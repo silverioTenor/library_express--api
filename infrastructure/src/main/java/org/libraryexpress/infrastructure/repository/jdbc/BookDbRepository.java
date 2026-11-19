@@ -5,6 +5,10 @@ import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.repository.BookRepository;
 import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.book.repository.BookFilter;
+import org.libraryexpress.infrastructure.config.ConfigRegistry;
+import org.libraryexpress.infrastructure.config.database.transaction.TransactionContext;
+import org.libraryexpress.infrastructure.exception.LockAcquisitionException;
+import org.libraryexpress.infrastructure.exception.TransactionException;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -80,6 +84,8 @@ public class BookDbRepository implements BookRepository {
     public Optional<Book> getById(String id) {
         String query = "SELECT id, isbn, title, author, publication_year, status, category, description FROM book WHERE id::text = ?";
 
+        if (TransactionContext.isTransactionActive()) query += " FOR UPDATE";
+
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)
@@ -93,7 +99,15 @@ public class BookDbRepository implements BookRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing book payload query by id: " + e.getMessage(), e);
+            if (TransactionContext.isTransactionActive()) {
+                if (ConfigRegistry.PG_LOCK_NOT_AVAILABLE.equals(e.getSQLState())) {
+                    throw new LockAcquisitionException(
+                            "The book [" + id + "] is currently being processed by another operation." + e.getMessage()
+                    );
+                }
+                throw new TransactionException("Database error while locking book with ID: [" + id + "] " + e.getMessage());
+            }
+            throw new RuntimeException("Fatal database error during unique loan query operation: " + e.getMessage(), e);
         }
 
         return Optional.empty();

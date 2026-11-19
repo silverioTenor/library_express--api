@@ -1,6 +1,5 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
-import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
@@ -9,7 +8,6 @@ import org.libraryexpress.domain.loan.repository.LoanRepository;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

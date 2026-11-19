@@ -11,6 +11,6 @@ import java.util.Set;
 public interface LoanRepository {
     void create(Loan loan);
     void update(Loan loanToUpdate);
-    Optional<Loan> findById(String loanId);
+    Optional<Loan> findById(String id);
     QueryResult<Loan> search(LoanFilter filter);
 }

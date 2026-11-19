@@ -4,6 +4,7 @@ import org.libraryexpress.application.loan.dto.response.CreateLoanResponseDTO;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
 import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
+import org.libraryexpress.domain.core.repository.TransactionManager;
 import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
@@ -22,6 +23,7 @@ public class CreateLoan {
 
     private static final CustomLogger LOG =  CustomLoggerFactory.getLogger(CreateLoan.class);
 
+    private final TransactionManager transaction;
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
     private final CustomerRepository customerRepository;
@@ -30,6 +32,7 @@ public class CreateLoan {
     private final LoanPeriodValidator loanPeriodValidator;
 
     public CreateLoan(
+            TransactionManager transaction,
             LoanRepository loanRepository,
             BookRepository bookRepository,
             CustomerRepository customerRepository,
@@ -37,6 +40,7 @@ public class CreateLoan {
             BookAvailabilityValidator bookAvailabilityValidator,
             LoanPeriodValidator loanPeriodValidator
     ) {
+        this.transaction = transaction;
         this.loanRepository = loanRepository;
         this.bookRepository = bookRepository;
         this.customerRepository = customerRepository;
@@ -48,30 +52,31 @@ public class CreateLoan {
     public CreateLoanResponseDTO execute(CreateLoanDTO createLoanDto) {
         LOG.info("Initiating loan creation. loan DTO: [{}]", createLoanDto);
 
-        this.loanEligibilityValidator.validate(createLoanDto.customerId());
-        Book book = this.bookAvailabilityValidator.validate(createLoanDto.bookId());
-
-        this.customerRepository
-                .getById(createLoanDto.customerId())
-                .orElseThrow(CustomerNotFoundException::new);
-
         LocalDate startDate = LocalDate.now();
         LocalDate dueDate = createLoanDto.dueDate() != null
                 ? createLoanDto.dueDate()
                 : startDate.plusDays(LoanPeriodValidator.MAX_LOAN_DAYS);
         this.loanPeriodValidator.validate(startDate, dueDate);
 
-        String id = RandomGenerator.UUID();
+        return this.transaction.execute(() -> {
+            this.customerRepository
+                    .getById(createLoanDto.customerId())
+                    .orElseThrow(CustomerNotFoundException::new);
 
-        Loan loan = createLoanDto.toEntity(id, startDate, dueDate);
+            Book book = this.bookAvailabilityValidator.validate(createLoanDto.bookId());
 
-        book.changeStatus(BookStatus.BORROWED);
+            this.loanEligibilityValidator.validate(createLoanDto.customerId());
 
-        this.loanRepository.create(loan);
-        this.bookRepository.update(book);
+            String id = RandomGenerator.UUID();
+            Loan loan = createLoanDto.toEntity(id, startDate, dueDate);
 
-        LOG.info("Created loan flow finished successfully! Loan ID: [{}]", id);
+            book.changeStatus(BookStatus.BORROWED);
 
-        return new CreateLoanResponseDTO(id);
+            this.loanRepository.create(loan);
+            this.bookRepository.update(book);
+
+            LOG.info("Created loan flow finished successfully! Loan ID: [{}]", id);
+            return new CreateLoanResponseDTO(id);
+        });
     }
 }

@@ -6,6 +6,7 @@ import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
+import org.libraryexpress.domain.core.repository.TransactionManager;
 import org.libraryexpress.domain.loan.exception.LoanNotFoundException;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.book.enums.BookStatus;
@@ -19,11 +20,17 @@ public class LoanReturn {
 
     private static final CustomLogger LOG = CustomLoggerFactory.getLogger(LoanReturn.class);
 
+    private final TransactionManager transaction;
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
     private final Clock clock;
 
-    public LoanReturn(LoanRepository loanRepository, BookRepository bookRepository, Clock clock) {
+    public LoanReturn(TransactionManager transaction,
+                      LoanRepository loanRepository,
+                      BookRepository bookRepository,
+                      Clock clock
+    ) {
+        this.transaction = transaction;
         this.loanRepository = loanRepository;
         this.bookRepository = bookRepository;
         this.clock = clock;
@@ -32,38 +39,40 @@ public class LoanReturn {
     public LoanReturnResponseDTO execute(String loanId) {
         LOG.info("Starting loan return. Loan ID: [{}]", loanId);
 
-        Loan loan = this.loanRepository.findById(loanId)
-                .orElseThrow(() -> {
-                    LOG.warn("ABORTED: No loan found matching the provided parameters. Loan ID: [{}]", loanId);
-                    return new LoanNotFoundException("No loan found matching the provided parameters.");
-                });
+        return this.transaction.execute(() -> {
+            Loan loan = this.loanRepository.findById(loanId)
+                    .orElseThrow(() -> {
+                        LOG.warn("ABORTED: No loan found matching the provided parameters. Loan ID: [{}]", loanId);
+                        return new LoanNotFoundException("No loan found matching the provided parameters.");
+                    });
 
-        if (!loan.getStatus().equals(LoanStatus.ACTIVE)) {
-            LOG.warn("ABORTED: Loan status not allowed. Loan ID: [{}]", loan.getStatus());
-            throw new InvalidArgumentException("The Loan cannot be completed with the current status.");
-        }
+            if (!loan.getStatus().equals(LoanStatus.ACTIVE)) {
+                LOG.warn("ABORTED: Loan status not allowed. Loan ID: [{}]", loan.getStatus());
+                throw new InvalidArgumentException("The Loan cannot be completed with the current status.");
+            }
 
-        Book book = this.bookRepository.getById(loan.getBookId())
-                .orElseThrow(() -> {
-                    LOG.error(
-                            "CRITICAL: Book record missing for an active loan. bookId: [{}], Loan ID: [{}]",
-                            loan.getBookId(), loanId);
-                    return new BookNotFoundException();
-                });
+            Book book = this.bookRepository.getById(loan.getBookId())
+                    .orElseThrow(() -> {
+                        LOG.error(
+                                "CRITICAL: Book record missing for an active loan. bookId: [{}], Loan ID: [{}]",
+                                loan.getBookId(), loanId);
+                        return new BookNotFoundException();
+                    });
 
-        // TODO - v2 - use JOB to change LOAN status and then send e-mail/notification
-        loan.processReturn(this.clock, false);
-        book.changeStatus(BookStatus.AVAILABLE);
+            // TODO - v2 - use JOB to change LOAN status and then send e-mail/notification
+            loan.processReturn(this.clock, false);
+            book.changeStatus(BookStatus.AVAILABLE);
 
-        this.loanRepository.update(loan);
-        this.bookRepository.update(book);
+            this.loanRepository.update(loan);
+            this.bookRepository.update(book);
 
-        if (loan.getStatus() == LoanStatus.OVERDUE) {
-            LOG.info("Book returned with outstanding late fees. Loan ID: [{}]", loanId);
-            return new LoanReturnResponseDTO("warning", "Book returned, but a late fee is pending.");
-        }
+            if (loan.getStatus() == LoanStatus.OVERDUE) {
+                LOG.info("Book returned with outstanding late fees. Loan ID: [{}]", loanId);
+                return new LoanReturnResponseDTO("warning", "Book returned, but a late fee is pending.");
+            }
 
-        LOG.info("Loan successfully completed!. Loan ID: [{}]", loanId);
-        return new LoanReturnResponseDTO("success", "Book returned.");
+            LOG.info("Loan successfully completed!. Loan ID: [{}]", loanId);
+            return new LoanReturnResponseDTO("success", "Book returned.");
+        });
     }
 }

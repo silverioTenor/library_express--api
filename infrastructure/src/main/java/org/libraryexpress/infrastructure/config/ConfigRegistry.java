@@ -18,6 +18,8 @@ public final class ConfigRegistry {
     private static final Dotenv dotenv;
     private static final Properties properties;
 
+    public static final String PG_LOCK_NOT_AVAILABLE = "55P03";
+
     static {
         dotenv = Dotenv.configure()
                 .ignoreIfMissing()
@@ -82,6 +84,10 @@ public final class ConfigRegistry {
 
     public static long getMaxLifetime() {
         return Long.parseLong(resolve("hikari.max-lifetime", "900000"));
+    }
+
+    public static long getDbLockTimeOut() {
+        return Long.parseLong(resolve("db.lock.timeout-ms", "3000"));
     }
 
     public static String getAppEnv() {

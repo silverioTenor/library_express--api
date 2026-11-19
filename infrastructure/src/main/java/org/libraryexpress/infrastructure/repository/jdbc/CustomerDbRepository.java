@@ -1,7 +1,5 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
-import org.libraryexpress.domain.core.dto.InputPaginationDto;
-import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.repository.CustomerFilter;
