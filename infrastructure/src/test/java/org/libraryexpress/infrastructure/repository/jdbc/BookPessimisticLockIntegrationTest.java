@@ -20,7 +20,7 @@ import org.libraryexpress.infrastructure.exception.LockAcquisitionException;
 @DisplayName("BookDbRepository - Pessimistic Lock Integration Test")
 class BookPessimisticLockIntegrationTest extends PostgresTestContainerConfig {
 
-    private static final String ISBN = "978-0-321-35668-0";
+    private static final String ISBN = "9780321356680";
 
     private BookDbRepository bookRepository;
     private String bookId;
@@ -91,6 +91,24 @@ class BookPessimisticLockIntegrationTest extends PostgresTestContainerConfig {
     }
 
     @Test
+    @DisplayName("Should lock a book by ISBN when a transaction is active")
+    void shouldThrowLockAcquisitionException_whenBookIsbnRowIsAlreadyLocked() throws Exception {
+        try (Connection holder = dataSource.getConnection()) {
+            holder.setAutoCommit(false);
+            setLockTimeout(holder);
+
+            try (PreparedStatement lockStatement =
+                            holder.prepareStatement("SELECT id FROM book WHERE isbn = ? FOR UPDATE");
+                    ResultSet ignored = lockBookByIsbn(lockStatement)) {
+                assertTrue(ignored.next());
+                assertBookIsbnLockTimesOut();
+            } finally {
+                holder.rollback();
+            }
+        }
+    }
+
+    @Test
     @DisplayName("Should not use FOR UPDATE when no transaction is active")
     void shouldNotRequireLock_whenNoTransactionIsActive() {
         assertFalse(TransactionContext.isTransactionActive());
@@ -98,5 +116,34 @@ class BookPessimisticLockIntegrationTest extends PostgresTestContainerConfig {
         Book book = bookRepository.getById(bookId).orElseThrow();
 
         assertEquals(BookStatus.AVAILABLE, book.getStatus());
+    }
+
+    private ResultSet lockBookByIsbn(PreparedStatement statement) throws Exception {
+        statement.setString(1, ISBN);
+        return statement.executeQuery();
+    }
+
+    private void assertBookIsbnLockTimesOut() throws Exception {
+        try (Connection contender = dataSource.getConnection()) {
+            contender.setAutoCommit(false);
+            setLockTimeout(contender);
+            TransactionContext.bind(contender);
+
+            try {
+                LockAcquisitionException exception =
+                        assertThrows(LockAcquisitionException.class, () -> bookRepository.getByIsbn(ISBN));
+
+                assertTrue(exception.getMessage().contains(ISBN));
+            } finally {
+                TransactionContext.clear();
+                contender.rollback();
+            }
+        }
+    }
+
+    private static void setLockTimeout(Connection connection) throws Exception {
+        try (var statement = connection.createStatement()) {
+            statement.execute("SET LOCAL lock_timeout = '500ms'");
+        }
     }
 }

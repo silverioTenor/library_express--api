@@ -113,6 +113,8 @@ public class BookDbRepository implements BookRepository {
         String query =
                 "SELECT id, isbn, title, author, publication_year, status, category, description FROM book WHERE isbn = ?";
 
+        if (TransactionContext.isTransactionActive()) query += " FOR UPDATE";
+
         try (Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)) {
 
@@ -125,6 +127,14 @@ public class BookDbRepository implements BookRepository {
             }
 
         } catch (SQLException e) {
+            if (TransactionContext.isTransactionActive()) {
+                if (ConfigRegistry.PG_LOCK_NOT_AVAILABLE.equals(e.getSQLState())) {
+                    throw new LockAcquisitionException("The book with ISBN [" + ISBN
+                            + "] is currently being processed by another operation." + e.getMessage());
+                }
+                throw new TransactionException(
+                        "Database error while locking book with ISBN: [" + ISBN + "] " + e.getMessage());
+            }
             throw new RuntimeException(
                     "Fatal database error executing book payload query by isbn: " + e.getMessage(), e);
         }

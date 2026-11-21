@@ -10,6 +10,10 @@ import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.repository.CustomerFilter;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
+import org.libraryexpress.infrastructure.config.ConfigRegistry;
+import org.libraryexpress.infrastructure.config.database.transaction.TransactionContext;
+import org.libraryexpress.infrastructure.exception.LockAcquisitionException;
+import org.libraryexpress.infrastructure.exception.TransactionException;
 
 public class CustomerDbRepository implements CustomerRepository {
 
@@ -56,6 +60,8 @@ public class CustomerDbRepository implements CustomerRepository {
     public Optional<Customer> getById(String id) {
         String query = "SELECT * FROM customer WHERE id::text = ?";
 
+        if (TransactionContext.isTransactionActive()) query += " FOR UPDATE";
+
         try (Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, id);
@@ -66,6 +72,14 @@ public class CustomerDbRepository implements CustomerRepository {
                 }
             }
         } catch (SQLException e) {
+            if (TransactionContext.isTransactionActive()) {
+                if (ConfigRegistry.PG_LOCK_NOT_AVAILABLE.equals(e.getSQLState())) {
+                    throw new LockAcquisitionException("The customer [" + id
+                            + "] is currently being processed by another operation." + e.getMessage());
+                }
+                throw new TransactionException(
+                        "Database error while locking customer with ID: [" + id + "] " + e.getMessage());
+            }
             throw new RuntimeException(
                     "Fatal database error executing customer payload query by ID: " + e.getMessage(), e);
         }
