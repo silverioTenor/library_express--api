@@ -49,23 +49,35 @@ public class LoanDbRepository implements LoanRepository {
 
     @Override
     public void update(Loan loan) {
+        executeUpdate(loan, null);
+    }
+
+    @Override
+    public boolean updateIfCurrentStatus(Loan loan, LoanStatus expectedStatus) {
+        return executeUpdate(loan, expectedStatus) == 1;
+    }
+
+    private int executeUpdate(Loan loan, LoanStatus expectedStatus) {
         StringBuilder queryBuilder = new StringBuilder(
-                "UPDATE loan SET book_id = ?, customer_id = ?, " +
-                        "status = ?, start_date = ?, end_date = ?"
+                "UPDATE loan SET book_id = ?, customer_id = ?, status = ?, start_date = ?, end_date = ?"
         );
 
         if (loan.getClosedAt() != null) {
             queryBuilder.append(", closed_at = ? ");
         }
 
-        queryBuilder.append(" WHERE id::text = ?;");
-        String query = queryBuilder.toString();
+        queryBuilder.append(" WHERE id::text = ?");
+
+        if (expectedStatus != null) {
+            queryBuilder.append(" AND status = ?");
+        }
+
+        String query = queryBuilder.append(';').toString();
 
         try (
                 Connection connection = dataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(query)
         ) {
-
             int parameterIndex = 1;
 
             statement.setObject(parameterIndex++, UUID.fromString(loan.getBookId()));
@@ -78,9 +90,13 @@ public class LoanDbRepository implements LoanRepository {
                 statement.setObject(parameterIndex++, loan.getClosedAt().atOffset(ZoneOffset.UTC));
             }
 
-            statement.setString(parameterIndex, loan.getId());
+            statement.setString(parameterIndex++, loan.getId());
 
-            statement.executeUpdate();
+            if (expectedStatus != null) {
+                statement.setString(parameterIndex, expectedStatus.name());
+            }
+
+            return statement.executeUpdate();
 
         } catch (SQLException e) {
             throw new RuntimeException("Fatal database error during loan record modification: " + e.getMessage(), e);

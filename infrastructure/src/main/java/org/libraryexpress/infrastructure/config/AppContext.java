@@ -104,7 +104,7 @@ public class AppContext {
                 loanPeriodValidator
         );
         this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE);
-        this.loanReturn = new LoanReturn(loanRepository, bookRepository, Clock.systemDefaultZone());
+        this.loanReturn = new LoanReturn(transactionManager, loanRepository, bookRepository, Clock.systemDefaultZone());
         this.closeOverdueLoan = new CloseOverdueLoan(loanRepository, Clock.systemDefaultZone());
         this.loanController = new LoanController(this);
 

@@ -29,11 +29,9 @@ public class TransactionDb implements TransactionManager {
         }
 
         Connection connection = null;
-        boolean originalAutoCommit = true;
 
         try {
             connection = dataSource.getConnection();
-            originalAutoCommit = connection.getAutoCommit();
             connection.setAutoCommit(false);
 
             TransactionContext.bind(connection);
@@ -63,7 +61,8 @@ public class TransactionDb implements TransactionManager {
 
             if (connection != null) {
                 try {
-                    connection.setAutoCommit(originalAutoCommit);
+                    connection.setAutoCommit(true);
+                    connection.close();
                 } catch (SQLException e) {
                     LOG.error("Failed to reset autoCommit or close connection", e);
                 }

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
 import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
+import org.libraryexpress.application.support.PassthroughTransactionManager;
 import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
@@ -59,6 +60,7 @@ class CreateLoanTest {
     @BeforeEach
     void setUp() {
         createLoan = new CreateLoan(
+                new PassthroughTransactionManager(),
                 loanRepository,
                 bookRepository,
                 customerRepository,
@@ -79,6 +81,7 @@ class CreateLoanTest {
 
         assertEquals(BookStatus.BORROWED, availableBook.getStatus(), "Book status must transition to BORROWED");
         verify(bookRepository).update(availableBook);
+
         ArgumentCaptor<Loan> loanCaptor = ArgumentCaptor.forClass(Loan.class);
         verify(loanRepository).create(loanCaptor.capture());
         assertEquals(BOOK_ID, loanCaptor.getValue().getBookId());
@@ -94,6 +97,7 @@ class CreateLoanTest {
 
         ArgumentCaptor<Loan> loanCaptor = ArgumentCaptor.forClass(Loan.class);
         verify(loanRepository).create(loanCaptor.capture());
+
         Loan created = loanCaptor.getValue();
         assertEquals(LocalDate.now(), created.getStartDate());
         assertEquals(LocalDate.now().plusDays(LoanPeriodValidator.MAX_LOAN_DAYS), created.getEndDate());
@@ -108,7 +112,6 @@ class CreateLoanTest {
                 BOOK_ID,
                 startDate.plusDays(LoanPeriodValidator.MAX_LOAN_DAYS + 1)
         );
-        stubHappyPath(availableBook());
 
         DateOutOfBoundException exception = assertThrows(
                 DateOutOfBoundException.class,
@@ -116,6 +119,9 @@ class CreateLoanTest {
         );
 
         assertEquals("End date cannot exceed the 15-day limit from start date", exception.getMessage());
+        verifyNoInteractions(customerRepository);
+        verifyNoInteractions(bookAvailabilityValidator);
+        verifyNoInteractions(loanEligibilityValidator);
         verifyNoInteractions(loanRepository);
         verifyNoInteractions(bookRepository);
     }
@@ -124,27 +130,41 @@ class CreateLoanTest {
     @DisplayName("Should throw CustomerNotFoundException when the customer does not exist")
     void shouldThrowCustomerNotFoundException_whenCustomerIsUnknown() {
         CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, BOOK_ID, null);
-        doNothing().when(loanEligibilityValidator).validate(CUSTOMER_ID);
-        when(bookAvailabilityValidator.validate(BOOK_ID)).thenReturn(availableBook());
         when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.empty());
 
         assertThrows(CustomerNotFoundException.class, () -> createLoan.execute(requestDto));
 
+        verifyNoInteractions(bookAvailabilityValidator);
+        verifyNoInteractions(loanEligibilityValidator);
         verifyNoInteractions(loanRepository);
         verifyNoInteractions(bookRepository);
+    }
+
+    @Test
+    @DisplayName("Should throw BookUnavailableException and prevent loan creation when book is not available")
+    void shouldThrowBookUnavailableException_whenBookIsUnavailable() {
+        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, BOOK_ID, null);
+        when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.of(sampleCustomer()));
+        when(bookAvailabilityValidator.validate(BOOK_ID)).thenThrow(new BookUnavailableException());
+
+        assertThrows(BookUnavailableException.class, () -> createLoan.execute(requestDto));
+
+        verifyNoInteractions(loanEligibilityValidator);
+        verifyNoInteractions(bookRepository);
+        verifyNoInteractions(loanRepository);
     }
 
     @Test
     @DisplayName("Should throw LoanLimitReachedException and abort execution when customer reaches active loan limit")
     void shouldThrowLoanLimitReachedException_whenCustomerReachesActiveLoanLimit() {
         CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, BOOK_ID, null);
-
+        when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.of(sampleCustomer()));
+        when(bookAvailabilityValidator.validate(BOOK_ID)).thenReturn(availableBook());
         doThrow(new LoanLimitReachedException("Customer has reached the maximum limit of active loans."))
                 .when(loanEligibilityValidator).validate(CUSTOMER_ID);
 
         assertThrows(LoanLimitReachedException.class, () -> createLoan.execute(requestDto));
 
-        verifyNoInteractions(bookAvailabilityValidator);
         verifyNoInteractions(bookRepository);
         verifyNoInteractions(loanRepository);
     }
@@ -153,37 +173,25 @@ class CreateLoanTest {
     @DisplayName("Should throw OverdueLoanException and abort execution when customer has a pending overdue loan")
     void shouldThrowOverdueLoanException_whenCustomerHasOverdueLoan() {
         CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, BOOK_ID, null);
-
+        when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.of(sampleCustomer()));
+        when(bookAvailabilityValidator.validate(BOOK_ID)).thenReturn(availableBook());
         doThrow(new OverdueLoanException("Customer has a pending overdue return."))
                 .when(loanEligibilityValidator).validate(CUSTOMER_ID);
 
         assertThrows(OverdueLoanException.class, () -> createLoan.execute(requestDto));
-
-        verifyNoInteractions(bookAvailabilityValidator);
-        verifyNoInteractions(bookRepository);
-        verifyNoInteractions(loanRepository);
-    }
-
-    @Test
-    @DisplayName("Should throw BookUnavailableException and prevent loan creation when book is not available")
-    void shouldThrowBookUnavailableException_whenBookIsUnavailable() {
-        CreateLoanDTO requestDto = new CreateLoanDTO(CUSTOMER_ID, BOOK_ID, null);
-
-        doNothing().when(loanEligibilityValidator).validate(CUSTOMER_ID);
-        when(bookAvailabilityValidator.validate(BOOK_ID)).thenThrow(new BookUnavailableException());
-
-        assertThrows(BookUnavailableException.class, () -> createLoan.execute(requestDto));
 
         verifyNoInteractions(bookRepository);
         verifyNoInteractions(loanRepository);
     }
 
     private void stubHappyPath(Book availableBook) {
-        Customer customer = Customer.restore(CUSTOMER_ID, "John Doe", "test@test.com");
-
-        doNothing().when(loanEligibilityValidator).validate(CUSTOMER_ID);
+        when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.of(sampleCustomer()));
         when(bookAvailabilityValidator.validate(BOOK_ID)).thenReturn(availableBook);
-        when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.ofNullable(customer));
+        doNothing().when(loanEligibilityValidator).validate(CUSTOMER_ID);
+    }
+
+    private static Customer sampleCustomer() {
+        return Customer.restore(CUSTOMER_ID, "John Doe", "test@test.com");
     }
 
     private static Book availableBook() {

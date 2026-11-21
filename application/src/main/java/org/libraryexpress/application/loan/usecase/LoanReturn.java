@@ -20,6 +20,9 @@ public class LoanReturn {
 
     private static final CustomLogger LOG = CustomLoggerFactory.getLogger(LoanReturn.class);
 
+    private static final String SUCCESS_MESSAGE = "Book returned.";
+    private static final String WARNING_MESSAGE = "Book returned, but a late fee is pending.";
+
     private final TransactionManager transaction;
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
@@ -46,8 +49,15 @@ public class LoanReturn {
                         return new LoanNotFoundException("No loan found matching the provided parameters.");
                     });
 
-            if (!loan.getStatus().equals(LoanStatus.ACTIVE)) {
-                LOG.warn("ABORTED: Loan status not allowed. Loan ID: [{}]", loan.getStatus());
+            // Repeated return requests for an already-processed loan are treated as idempotent.
+            if (loan.getStatus() == LoanStatus.FINISHED || loan.getStatus() == LoanStatus.OVERDUE) {
+                LOG.info("Idempotent loan return. Loan already processed. Loan ID: [{}], status: [{}]",
+                        loanId, loan.getStatus());
+                return responseFor(loan);
+            }
+
+            if (loan.getStatus() != LoanStatus.ACTIVE) {
+                LOG.warn("ABORTED: Loan status not allowed. Loan ID: [{}], status: [{}]", loanId, loan.getStatus());
                 throw new InvalidArgumentException("The Loan cannot be completed with the current status.");
             }
 
@@ -63,16 +73,32 @@ public class LoanReturn {
             loan.processReturn(this.clock, false);
             book.changeStatus(BookStatus.AVAILABLE);
 
-            this.loanRepository.update(loan);
+            boolean applied = this.loanRepository.updateIfCurrentStatus(loan, LoanStatus.ACTIVE);
+            if (!applied) {
+                // Another concurrent request already completed the return.
+                Loan current = this.loanRepository.findById(loanId)
+                        .orElseThrow(LoanNotFoundException::new);
+                LOG.info("Idempotent loan return after concurrent update. Loan ID: [{}], status: [{}]",
+                        loanId, current.getStatus());
+                return responseFor(current);
+            }
+
             this.bookRepository.update(book);
 
             if (loan.getStatus() == LoanStatus.OVERDUE) {
                 LOG.info("Book returned with outstanding late fees. Loan ID: [{}]", loanId);
-                return new LoanReturnResponseDTO("warning", "Book returned, but a late fee is pending.");
+                return responseFor(loan);
             }
 
             LOG.info("Loan successfully completed!. Loan ID: [{}]", loanId);
-            return new LoanReturnResponseDTO("success", "Book returned.");
+            return responseFor(loan);
         });
+    }
+
+    private static LoanReturnResponseDTO responseFor(Loan loan) {
+        if (loan.getStatus() == LoanStatus.OVERDUE) {
+            return new LoanReturnResponseDTO("warning", WARNING_MESSAGE);
+        }
+        return new LoanReturnResponseDTO("success", SUCCESS_MESSAGE);
     }
 }

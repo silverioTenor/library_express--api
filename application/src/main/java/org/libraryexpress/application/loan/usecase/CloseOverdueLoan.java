@@ -38,13 +38,24 @@ public class CloseOverdueLoan {
                     return new LoanNotFoundException();
                 });
 
-        if (!loan.getStatus().equals(LoanStatus.OVERDUE)) {
-            LOG.warn("ABORTED: The loan was already overdue");
+        // Repeated close requests for an already-finished loan are treated as idempotent.
+        if (loan.getStatus() == LoanStatus.FINISHED) {
+            LOG.info("Idempotent overdue close. Loan already finished. Loan ID: [{}]", loanId);
+            return;
+        }
+
+        if (loan.getStatus() != LoanStatus.OVERDUE) {
+            LOG.warn("ABORTED: Loan status is not OVERDUE. Loan ID: [{}], status: [{}]", loanId, loan.getStatus());
             throw new OverdueLoanException();
         }
 
         loan.processReturn(clock, true);
-        this.loanRepository.update(loan);
+
+        boolean applied = this.loanRepository.updateIfCurrentStatus(loan, LoanStatus.OVERDUE);
+        if (!applied) {
+            LOG.info("Idempotent overdue close after concurrent update. Loan ID: [{}]", loanId);
+            return;
+        }
 
         LOG.info("Loan successfully completed! Loan ID: [{}]", loanId);
     }

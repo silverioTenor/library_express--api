@@ -116,6 +116,68 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     }
 
     @Test
+    @DisplayName("Should update loan when persisted status still matches the expected status")
+    void shouldUpdateLoan_whenCurrentStatusMatchesExpected() {
+        String loanId = "30000000-0000-4000-8000-000000000005";
+        Loan loan = Loan.restore(
+                loanId,
+                validBookId,
+                VALID_CUSTOMER_ID,
+                LoanStatus.ACTIVE,
+                LocalDate.now().minusDays(3),
+                LocalDate.now().plusDays(12),
+                null
+        );
+        loanRepository.create(loan);
+
+        Loan finishedLoan = Loan.restore(
+                loanId,
+                validBookId,
+                VALID_CUSTOMER_ID,
+                LoanStatus.FINISHED,
+                loan.getStartDate(),
+                loan.getEndDate(),
+                null
+        );
+
+        boolean applied = loanRepository.updateIfCurrentStatus(finishedLoan, LoanStatus.ACTIVE);
+
+        assertTrue(applied);
+        assertEquals(LoanStatus.FINISHED, loanRepository.findById(loanId).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("Should skip update when persisted status no longer matches the expected status")
+    void shouldSkipUpdate_whenCurrentStatusDoesNotMatchExpected() {
+        String loanId = "30000000-0000-4000-8000-000000000006";
+        Loan loan = Loan.restore(
+                loanId,
+                validBookId,
+                VALID_CUSTOMER_ID,
+                LoanStatus.FINISHED,
+                LocalDate.now().minusDays(10),
+                LocalDate.now().minusDays(1),
+                null
+        );
+        loanRepository.create(loan);
+
+        Loan conflictingUpdate = Loan.restore(
+                loanId,
+                validBookId,
+                VALID_CUSTOMER_ID,
+                LoanStatus.OVERDUE,
+                loan.getStartDate(),
+                loan.getEndDate(),
+                null
+        );
+
+        boolean applied = loanRepository.updateIfCurrentStatus(conflictingUpdate, LoanStatus.ACTIVE);
+
+        assertFalse(applied, "Conditional update must refuse to overwrite a loan that left ACTIVE");
+        assertEquals(LoanStatus.FINISHED, loanRepository.findById(loanId).orElseThrow().getStatus());
+    }
+
+    @Test
     @DisplayName("Should fetch isolated multi-criteria results when utilizing high-performance array clauses")
     void shouldReturnFilteredSet_whenSearchingByJointRelationalKeysAndNativeStatusArrays() {
         // Arrange
