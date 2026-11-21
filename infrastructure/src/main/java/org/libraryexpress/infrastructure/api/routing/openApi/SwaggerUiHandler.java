@@ -13,13 +13,13 @@ public final class SwaggerUiHandler implements CustomHttpHandler {
     private static final String WEBJAR_VERSION = "5.17.14";
     private static final String WEBJAR_BASE = "/META-INF/resources/webjars/swagger-ui/" + WEBJAR_VERSION + "/";
 
-    // Força toda resolução de caminho relativo (./swagger-ui.css, ./swagger-ui-bundle.js etc.)
-    // a ser feita a partir de /docs/, independente de o navegador estar em /docs ou /docs/.
+    // Forces every relative-path resolution (./swagger-ui.css, ./swagger-ui-bundle.js, etc.)
+    // to start from /docs/, regardless of whether the browser is at /docs or /docs/.
     private static final String BASE_TAG = "<base href=\"/docs/\">";
 
-    // O webjar traz um swagger-initializer.js apontando pro petstore de exemplo.
-    // Interceptamos esse arquivo específico e servimos nossa própria versão,
-    // apontando para o contrato real gerado no passo anterior.
+    // The webjar includes a swagger-initializer.js pointing to the example Petstore.
+    // Intercept that specific file and serve our own version,
+    // pointing to the real contract generated in the previous step.
     private static final String CUSTOM_INITIALIZER = """
         window.onload = function() {
           window.ui = SwaggerUIBundle({
