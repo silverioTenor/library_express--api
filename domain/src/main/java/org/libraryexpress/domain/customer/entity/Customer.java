@@ -1,9 +1,8 @@
 package org.libraryexpress.domain.customer.entity;
 
+import java.util.Objects;
 import org.libraryexpress.domain.core.util.RandomGenerator;
 import org.libraryexpress.domain.customer.valueobject.Email;
-
-import java.util.Objects;
 
 public class Customer implements Comparable<Customer> {
 
@@ -45,11 +44,7 @@ public class Customer implements Comparable<Customer> {
 
     @Override
     public String toString() {
-        return "{\n" +
-                " Id: " + id + ",\n" +
-                " name: " + name + ",\n" +
-                " email: " + email + "\n" +
-                '}';
+        return "{\n" + " Id: " + id + ",\n" + " name: " + name + ",\n" + " email: " + email + "\n" + '}';
     }
 
     @Override
@@ -67,5 +62,4 @@ public class Customer implements Comparable<Customer> {
     public int compareTo(Customer otherCustomer) {
         return Objects.compare(this.name, otherCustomer.getName(), String::compareTo);
     }
-
 }

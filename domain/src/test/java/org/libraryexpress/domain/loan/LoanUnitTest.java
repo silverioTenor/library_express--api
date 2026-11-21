@@ -1,21 +1,19 @@
 package org.libraryexpress.domain.loan;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.libraryexpress.domain.UnitTest;
-import org.libraryexpress.domain.book.valueobject.Isbn;
-import org.libraryexpress.domain.core.exception.InvalidArgumentException;
-import org.libraryexpress.domain.loan.entity.Loan;
-import org.libraryexpress.domain.loan.enums.LoanStatus;
-import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.libraryexpress.domain.UnitTest;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
+import org.libraryexpress.domain.loan.entity.Loan;
+import org.libraryexpress.domain.loan.enums.LoanStatus;
+import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
 
 @UnitTest
 @DisplayName("Loan Entity - Unit Test")
@@ -29,17 +27,9 @@ public class LoanUnitTest {
     void shouldThrowException_whenEndDateIsNull() {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
 
-        assertThrows(NullPointerException.class, () ->
-                Loan.restore(
-                        "loan-1",
-                        BOOK_ID,
-                        CUSTOMER_ID,
-                        LoanStatus.ACTIVE,
-                        startDate,
-                        null,
-                        null
-                )
-        );
+        assertThrows(
+                NullPointerException.class,
+                () -> Loan.restore("loan-1", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, startDate, null, null));
     }
 
     @Test
@@ -48,15 +38,7 @@ public class LoanUnitTest {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         LocalDate customEndDate = LocalDate.of(2026, 8, 5);
 
-        Loan loan = Loan.restore(
-                "loan-1",
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.ACTIVE,
-                startDate,
-                customEndDate,
-                null
-        );
+        Loan loan = Loan.restore("loan-1", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, startDate, customEndDate, null);
 
         assertEquals(customEndDate, loan.getEndDate());
     }
@@ -66,134 +48,54 @@ public class LoanUnitTest {
     void shouldThrowException_whenMandatoryFieldsAreInvalid() {
         LocalDate now = LocalDate.of(2026, 8, 12);
 
-        assertThrows(InvalidArgumentException.class, () ->
-                        Loan.restore(
-                                null,
-                                BOOK_ID,
-                                CUSTOMER_ID,
-                                LoanStatus.ACTIVE,
-                                now,
-                                now.plusDays(15),
-                                null
-                        ),
-                "Should throw exception for null Loan ID"
-        );
-        assertThrows(InvalidArgumentException.class, () ->
-                        Loan.restore(
-                                "",
-                                BOOK_ID,
-                                CUSTOMER_ID,
-                                LoanStatus.ACTIVE,
-                                now,
-                                now.plusDays(15),
-                                null
-                        ),
-                "Should throw exception for empty Loan ID"
-        );
-        assertThrows(InvalidArgumentException.class, () ->
-                        Loan.restore(
-                                "   ",
-                                BOOK_ID,
-                                CUSTOMER_ID,
-                                LoanStatus.ACTIVE,
-                                now,
-                                now.plusDays(15),
-                                null
-                        ),
-                "Should throw exception for blank Loan ID"
-        );
+        assertThrows(
+                InvalidArgumentException.class,
+                () -> Loan.restore(null, BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, now, now.plusDays(15), null),
+                "Should throw exception for null Loan ID");
+        assertThrows(
+                InvalidArgumentException.class,
+                () -> Loan.restore("", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, now, now.plusDays(15), null),
+                "Should throw exception for empty Loan ID");
+        assertThrows(
+                InvalidArgumentException.class,
+                () -> Loan.restore("   ", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, now, now.plusDays(15), null),
+                "Should throw exception for blank Loan ID");
 
-        assertThrows(InvalidArgumentException.class, () ->
-                        Loan.restore(
-                                "loan-1",
-                                BOOK_ID,
-                                null,
-                                LoanStatus.ACTIVE,
-                                now,
-                                now.plusDays(15),
-                                null
-                        ),
-                "Should throw exception for null Customer ID"
-        );
-        assertThrows(InvalidArgumentException.class, () ->
-                        Loan.restore(
-                                "loan-1",
-                                BOOK_ID,
-                                "",
-                                LoanStatus.ACTIVE,
-                                now,
-                                now.plusDays(15),
-                                null
-                        ),
-                "Should throw exception for empty Customer ID"
-        );
-        assertThrows(InvalidArgumentException.class, () ->
-                        Loan.restore(
-                                "loan-1",
-                                BOOK_ID,
-                                "   ",
-                                LoanStatus.ACTIVE,
-                                now,
-                                now.plusDays(15),
-                                null
-                        ),
-                "Should throw exception for blank Customer ID"
-        );
+        assertThrows(
+                InvalidArgumentException.class,
+                () -> Loan.restore("loan-1", BOOK_ID, null, LoanStatus.ACTIVE, now, now.plusDays(15), null),
+                "Should throw exception for null Customer ID");
+        assertThrows(
+                InvalidArgumentException.class,
+                () -> Loan.restore("loan-1", BOOK_ID, "", LoanStatus.ACTIVE, now, now.plusDays(15), null),
+                "Should throw exception for empty Customer ID");
+        assertThrows(
+                InvalidArgumentException.class,
+                () -> Loan.restore("loan-1", BOOK_ID, "   ", LoanStatus.ACTIVE, now, now.plusDays(15), null),
+                "Should throw exception for blank Customer ID");
 
-        assertThrows(NullPointerException.class, () ->
-                        Loan.restore(
-                                "loan-1",
-                                BOOK_ID,
-                                CUSTOMER_ID,
-                                null,
-                                now,
-                                now.plusDays(15),
-                                null
-                        ),
-                "Should throw exception for null Loan Status"
-        );
+        assertThrows(
+                NullPointerException.class,
+                () -> Loan.restore("loan-1", BOOK_ID, CUSTOMER_ID, null, now, now.plusDays(15), null),
+                "Should throw exception for null Loan Status");
 
-        assertThrows(InvalidArgumentException.class, () ->
-                        Loan.restore(
-                                "loan-1",
-                                null,
-                                CUSTOMER_ID,
-                                LoanStatus.ACTIVE,
-                                now,
-                                now.plusDays(15),
-                                null
-                        ),
-                "Should throw exception for null Book ID"
-        );
+        assertThrows(
+                InvalidArgumentException.class,
+                () -> Loan.restore("loan-1", null, CUSTOMER_ID, LoanStatus.ACTIVE, now, now.plusDays(15), null),
+                "Should throw exception for null Book ID");
 
-        assertThrows(NullPointerException.class, () ->
-                        Loan.restore(
-                                "loan-1",
-                                BOOK_ID,
-                                CUSTOMER_ID,
-                                LoanStatus.ACTIVE,
-                                null,
-                                now.plusDays(15),
-                                null
-                        ),
-                "Should throw exception for null start date"
-        );
+        assertThrows(
+                NullPointerException.class,
+                () -> Loan.restore("loan-1", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, null, now.plusDays(15), null),
+                "Should throw exception for null start date");
     }
-
 
     @Test
     @DisplayName("Should return false for isOverdue when current date is within the due date")
     void shouldReturnFalseForIsOverdue_whenCurrentDateIsWithinLimit() {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         Loan loan = Loan.restore(
-                "loan-1",
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.ACTIVE,
-                startDate,
-                startDate.plusDays(15),
-                null
-        );
+                "loan-1", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, startDate, startDate.plusDays(15), null);
 
         Instant fixedInstant = Instant.parse("2026-08-10T12:00:00Z");
         Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("UTC"));
@@ -206,14 +108,7 @@ public class LoanUnitTest {
     void shouldReturnFalseForIsOverdue_whenCurrentDateIsExactlyOnTheLimitDay() {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         Loan loan = Loan.restore(
-                "loan-1",
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.ACTIVE,
-                startDate,
-                startDate.plusDays(15),
-                null
-        );
+                "loan-1", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, startDate, startDate.plusDays(15), null);
 
         Instant fixedInstant = Instant.parse("2026-08-16T12:00:00Z");
         Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("UTC"));
@@ -226,14 +121,7 @@ public class LoanUnitTest {
     void shouldReturnTrueForIsOverdue_whenCurrentDateIsPastLimit() {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         Loan loan = Loan.restore(
-                "loan-1",
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.ACTIVE,
-                startDate,
-                startDate.plusDays(15),
-                null
-        );
+                "loan-1", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, startDate, startDate.plusDays(15), null);
 
         Instant fixedInstant = Instant.parse("2026-08-17T12:00:00Z");
         Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("UTC"));
@@ -251,8 +139,7 @@ public class LoanUnitTest {
                 LoanStatus.ACTIVE,
                 LocalDate.of(2026, 8, 1),
                 LocalDate.of(2026, 8, 16),
-                null
-        );
+                null);
 
         Loan lateLoan = Loan.restore(
                 "2",
@@ -261,8 +148,7 @@ public class LoanUnitTest {
                 LoanStatus.ACTIVE,
                 LocalDate.of(2026, 8, 15),
                 LocalDate.of(2026, 8, 30),
-                null
-        );
+                null);
 
         assertTrue(earlyLoan.compareTo(lateLoan) < 0, "Early loan should come before late loan");
         assertTrue(lateLoan.compareTo(earlyLoan) > 0, "Late loan should come after early loan");
@@ -275,17 +161,10 @@ public class LoanUnitTest {
         LocalDate startDate = LocalDate.of(2026, 8, 10);
         LocalDate invalidBeforeDate = LocalDate.of(2026, 8, 9);
 
-        DateOutOfBoundException exception = assertThrows(DateOutOfBoundException.class, () ->
-                Loan.restore(
-                        "loan-1",
-                        BOOK_ID,
-                        CUSTOMER_ID,
-                        LoanStatus.ACTIVE,
-                        startDate,
-                        invalidBeforeDate,
-                        null
-                )
-        );
+        DateOutOfBoundException exception = assertThrows(
+                DateOutOfBoundException.class,
+                () -> Loan.restore(
+                        "loan-1", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, startDate, invalidBeforeDate, null));
 
         assertEquals("End date cannot be before start date", exception.getMessage());
     }
@@ -296,15 +175,7 @@ public class LoanUnitTest {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         LocalDate endDate = LocalDate.of(2026, 8, 16);
 
-        Loan loan = Loan.restore(
-                "loan-1",
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.OVERDUE,
-                startDate,
-                endDate,
-                null
-        );
+        Loan loan = Loan.restore("loan-1", BOOK_ID, CUSTOMER_ID, LoanStatus.OVERDUE, startDate, endDate, null);
 
         Clock afterDueDate = Clock.fixed(Instant.parse("2026-08-20T12:00:00Z"), ZoneId.of("UTC"));
 
@@ -318,14 +189,7 @@ public class LoanUnitTest {
         LocalDate timestamp = LocalDate.now();
 
         Loan loan = Loan.restore(
-                "sdasdasdasd",
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.ACTIVE,
-                timestamp,
-                timestamp.plusDays(15),
-                null
-        );
+                "sdasdasdasd", BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, timestamp, timestamp.plusDays(15), null);
 
         Clock clock = Clock.fixed(Instant.now().plus(5, ChronoUnit.DAYS), ZoneId.of("UTC"));
         loan.processReturn(clock, false);
@@ -345,15 +209,7 @@ public class LoanUnitTest {
         LocalDate endDate = startDate.plusDays(15);
         Instant instant = Instant.now().plus(20, ChronoUnit.DAYS);
 
-        Loan loan = Loan.restore(
-                "sdasdasdasd",
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.OVERDUE,
-                startDate,
-                endDate,
-                null
-        );
+        Loan loan = Loan.restore("sdasdasdasd", BOOK_ID, CUSTOMER_ID, LoanStatus.OVERDUE, startDate, endDate, null);
 
         Clock clock = Clock.fixed(instant, ZoneId.of("UTC"));
         loan.processReturn(clock, true);
@@ -373,15 +229,7 @@ public class LoanUnitTest {
         LocalDate endDate = startDate.plusDays(15);
         Instant instant = Instant.now().plus(20, ChronoUnit.DAYS);
 
-        Loan loan = Loan.restore(
-                "sdasdasdasd",
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.OVERDUE,
-                startDate,
-                endDate,
-                null
-        );
+        Loan loan = Loan.restore("sdasdasdasd", BOOK_ID, CUSTOMER_ID, LoanStatus.OVERDUE, startDate, endDate, null);
 
         Clock clock = Clock.fixed(instant, ZoneId.of("UTC"));
         loan.processReturn(clock, false);

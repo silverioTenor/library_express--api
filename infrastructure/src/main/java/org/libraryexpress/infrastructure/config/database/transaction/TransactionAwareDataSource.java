@@ -1,6 +1,5 @@
 package org.libraryexpress.infrastructure.config.database.transaction;
 
-import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -8,8 +7,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
+import javax.sql.DataSource;
 
-public class TransactionAwareDataSource  implements DataSource {
+public class TransactionAwareDataSource implements DataSource {
 
     private final DataSource targetDataSource;
 
@@ -28,8 +28,8 @@ public class TransactionAwareDataSource  implements DataSource {
     }
 
     /**
-     * Creates a lightweight proxy that intercepts the close() method to prevent
-     * repository try-with-resources blocks from closing the connection prior to commit/rollback.
+     * Creates a lightweight proxy that intercepts the close() method to prevent repository try-with-resources blocks
+     * from closing the connection prior to commit/rollback.
      */
     private Connection createNonClosingProxy(Connection targetConnection) {
         InvocationHandler handler = (proxy, method, args) -> {
@@ -45,11 +45,8 @@ public class TransactionAwareDataSource  implements DataSource {
             return method.invoke(targetConnection, args);
         };
 
-        return (Connection) Proxy.newProxyInstance(
-                Connection.class.getClassLoader(),
-                new Class<?>[]{Connection.class},
-                handler
-        );
+        return (Connection)
+                Proxy.newProxyInstance(Connection.class.getClassLoader(), new Class<?>[] {Connection.class}, handler);
     }
 
     @Override

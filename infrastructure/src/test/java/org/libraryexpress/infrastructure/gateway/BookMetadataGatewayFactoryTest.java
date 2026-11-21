@@ -1,16 +1,15 @@
 package org.libraryexpress.infrastructure.gateway;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.book.valueobject.BookMetadata;
 import org.libraryexpress.infrastructure.UnitTest;
 import org.libraryexpress.infrastructure.gateway.adapter.CustomHttpClient;
 import org.libraryexpress.infrastructure.gateway.googlebooks.GoogleBooksGateway;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @DisplayName("Book metadata gateway factory")

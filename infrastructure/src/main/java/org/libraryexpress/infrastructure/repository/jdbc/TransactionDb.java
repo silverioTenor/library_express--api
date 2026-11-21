@@ -1,22 +1,20 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.function.Supplier;
+import javax.sql.DataSource;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.domain.core.repository.TransactionManager;
 import org.libraryexpress.infrastructure.config.database.transaction.TransactionContext;
-import org.libraryexpress.infrastructure.exception.InfrastructureException;
 import org.libraryexpress.infrastructure.exception.TransactionException;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.function.Supplier;
 
 public class TransactionDb implements TransactionManager {
 
     private static final CustomLogger LOG = CustomLoggerFactory.getLogger(TransactionDb.class);
 
-    private  final DataSource dataSource;
+    private final DataSource dataSource;
 
     public TransactionDb(DataSource dataSource) {
         this.dataSource = dataSource;

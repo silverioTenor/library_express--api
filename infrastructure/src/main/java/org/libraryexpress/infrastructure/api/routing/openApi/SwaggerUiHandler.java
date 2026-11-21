@@ -1,13 +1,12 @@
 package org.libraryexpress.infrastructure.api.routing.openApi;
 
-import org.libraryexpress.infrastructure.api.routing.CustomHttpHandler;
-import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
-import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
+import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-
-import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
+import org.libraryexpress.infrastructure.api.routing.CustomHttpHandler;
+import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
+import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
 
 public final class SwaggerUiHandler implements CustomHttpHandler {
 
@@ -52,8 +51,7 @@ public final class SwaggerUiHandler implements CustomHttpHandler {
             byte[] bytes = is.readAllBytes();
 
             if (file.equals("index.html")) {
-                String html = new String(bytes, StandardCharsets.UTF_8)
-                        .replaceFirst("<head>", "<head>" + BASE_TAG);
+                String html = new String(bytes, StandardCharsets.UTF_8).replaceFirst("<head>", "<head>" + BASE_TAG);
                 bytes = html.getBytes(StandardCharsets.UTF_8);
             }
 

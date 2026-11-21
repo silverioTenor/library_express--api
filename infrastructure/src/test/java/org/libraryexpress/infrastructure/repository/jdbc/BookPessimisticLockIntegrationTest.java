@@ -1,5 +1,10 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,12 +15,6 @@ import org.libraryexpress.infrastructure.config.database.PostgresTestContainerCo
 import org.libraryexpress.infrastructure.config.database.transaction.TransactionAwareDataSource;
 import org.libraryexpress.infrastructure.config.database.transaction.TransactionContext;
 import org.libraryexpress.infrastructure.exception.LockAcquisitionException;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @IntegrationTest
 @DisplayName("BookDbRepository - Pessimistic Lock Integration Test")
@@ -30,15 +29,7 @@ class BookPessimisticLockIntegrationTest extends PostgresTestContainerConfig {
     void setUp() {
         bookRepository = new BookDbRepository(new TransactionAwareDataSource(dataSource));
 
-        Book book = Book.create(
-                ISBN,
-                "Effective Java",
-                "Joshua Bloch",
-                2018,
-                BookStatus.AVAILABLE.name(),
-                "",
-                ""
-        );
+        Book book = Book.create(ISBN, "Effective Java", "Joshua Bloch", 2018, BookStatus.AVAILABLE.name(), "", "");
         bookRepository.create(book);
         bookId = book.getId().toString();
     }
@@ -70,9 +61,8 @@ class BookPessimisticLockIntegrationTest extends PostgresTestContainerConfig {
         holder.setAutoCommit(false);
         holder.createStatement().execute("SET LOCAL lock_timeout = '500ms'");
 
-        try (PreparedStatement lockStatement = holder.prepareStatement(
-                "SELECT id FROM book WHERE id::text = ? FOR UPDATE"
-        )) {
+        try (PreparedStatement lockStatement =
+                holder.prepareStatement("SELECT id FROM book WHERE id::text = ? FOR UPDATE")) {
             lockStatement.setString(1, bookId);
 
             try (ResultSet ignored = lockStatement.executeQuery()) {
@@ -82,15 +72,12 @@ class BookPessimisticLockIntegrationTest extends PostgresTestContainerConfig {
                 TransactionContext.bind(contender);
 
                 try {
-                    LockAcquisitionException exception = assertThrows(
-                            LockAcquisitionException.class,
-                            () -> bookRepository.getById(bookId)
-                    );
+                    LockAcquisitionException exception =
+                            assertThrows(LockAcquisitionException.class, () -> bookRepository.getById(bookId));
 
                     assertTrue(
                             exception.getMessage().contains(bookId),
-                            "Lock failure message should identify the contested book"
-                    );
+                            "Lock failure message should identify the contested book");
                 } finally {
                     TransactionContext.clear();
                     contender.rollback();

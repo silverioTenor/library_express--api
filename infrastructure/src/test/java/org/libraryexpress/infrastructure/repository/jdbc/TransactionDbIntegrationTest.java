@@ -1,5 +1,12 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.sql.Connection;
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,14 +20,6 @@ import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
 import org.libraryexpress.infrastructure.config.database.transaction.TransactionAwareDataSource;
 import org.libraryexpress.infrastructure.config.database.transaction.TransactionContext;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.time.LocalDate;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @IntegrationTest
 @DisplayName("TransactionDb - Atomicity and Connection Sharing Integration Test")
@@ -46,7 +45,8 @@ class TransactionDbIntegrationTest extends PostgresTestContainerConfig {
         CustomerDbRepository customerRepository = new CustomerDbRepository(transactionAwareDataSource);
         customerRepository.create(Customer.restore(CUSTOMER_ID, "Txn Tester", "txn.tester@libraryexpress.com"));
 
-        Book book = Book.create(ISBN, "Designing Data-Intensive Applications", "Martin Kleppmann", 2017, "AVAILABLE", "", "");
+        Book book = Book.create(
+                ISBN, "Designing Data-Intensive Applications", "Martin Kleppmann", 2017, "AVAILABLE", "", "");
         bookRepository.create(book);
         bookId = book.getId().toString();
     }
@@ -65,8 +65,7 @@ class TransactionDbIntegrationTest extends PostgresTestContainerConfig {
                     LoanStatus.ACTIVE,
                     LocalDate.now(),
                     LocalDate.now().plusDays(14),
-                    null
-            );
+                    null);
 
             loanRepository.create(loan);
             bookRepository.update(book);
@@ -87,8 +86,9 @@ class TransactionDbIntegrationTest extends PostgresTestContainerConfig {
     void shouldRollbackLoanAndBookChanges_whenTransactionalBlockThrows() {
         RuntimeException boom = new RuntimeException("Simulated failure after writes");
 
-        RuntimeException thrown = assertThrows(RuntimeException.class, () ->
-                transactionManager.execute(() -> {
+        RuntimeException thrown = assertThrows(
+                RuntimeException.class,
+                () -> transactionManager.execute(() -> {
                     Book book = bookRepository.getById(bookId).orElseThrow();
                     book.changeStatus(BookStatus.BORROWED);
 
@@ -99,22 +99,19 @@ class TransactionDbIntegrationTest extends PostgresTestContainerConfig {
                             LoanStatus.ACTIVE,
                             LocalDate.now(),
                             LocalDate.now().plusDays(14),
-                            null
-                    );
+                            null);
 
                     loanRepository.create(loan);
                     bookRepository.update(book);
                     throw boom;
-                })
-        );
+                }));
 
         assertSame(boom, thrown);
         assertTrue(loanRepository.findById(LOAN_ID).isEmpty(), "Loan insert must be rolled back");
         assertEquals(
                 BookStatus.AVAILABLE,
                 bookRepository.getById(bookId).orElseThrow().getStatus(),
-                "Book status update must be rolled back"
-        );
+                "Book status update must be rolled back");
     }
 
     @Test
@@ -138,8 +135,7 @@ class TransactionDbIntegrationTest extends PostgresTestContainerConfig {
         assertSame(
                 outerConnection.get(),
                 nestedConnection.get(),
-                "Nested execute must join the active transaction instead of opening another connection"
-        );
+                "Nested execute must join the active transaction instead of opening another connection");
     }
 
     @Test

@@ -1,5 +1,13 @@
 package org.libraryexpress.application.loan.usecase;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,15 +24,6 @@ import org.libraryexpress.domain.loan.exception.LoanNotFoundException;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -54,7 +53,8 @@ class LoanReturnTest {
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
         when(bookRepository.getById(BOOK_ID)).thenReturn(Optional.of(borrowedBook));
-        when(loanRepository.updateIfCurrentStatus(activeLoan, LoanStatus.ACTIVE)).thenReturn(true);
+        when(loanRepository.updateIfCurrentStatus(activeLoan, LoanStatus.ACTIVE))
+                .thenReturn(true);
 
         LoanReturnResponseDTO response = useCase.execute(LOAN_ID);
 
@@ -80,7 +80,8 @@ class LoanReturnTest {
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
         when(bookRepository.getById(BOOK_ID)).thenReturn(Optional.of(borrowedBook));
-        when(loanRepository.updateIfCurrentStatus(activeLoan, LoanStatus.ACTIVE)).thenReturn(true);
+        when(loanRepository.updateIfCurrentStatus(activeLoan, LoanStatus.ACTIVE))
+                .thenReturn(true);
 
         LoanReturnResponseDTO response = useCase.execute(LOAN_ID);
 
@@ -103,8 +104,7 @@ class LoanReturnTest {
                 LoanStatus.FINISHED,
                 LocalDate.now().minusDays(10),
                 LocalDate.now().minusDays(1),
-                Instant.now()
-        );
+                Instant.now());
 
         LoanReturn useCase = newLoanReturn(Clock.systemUTC());
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(finishedLoan));
@@ -128,8 +128,7 @@ class LoanReturnTest {
                 LoanStatus.OVERDUE,
                 LocalDate.now().minusDays(20),
                 LocalDate.now().minusDays(5),
-                null
-        );
+                null);
 
         LoanReturn useCase = newLoanReturn(Clock.systemUTC());
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(overdueLoan));
@@ -157,8 +156,7 @@ class LoanReturnTest {
                 LoanStatus.FINISHED,
                 startDate,
                 startDate.plusDays(15),
-                Instant.parse("2026-08-10T12:00:00Z")
-        );
+                Instant.parse("2026-08-10T12:00:00Z"));
 
         Clock fixedClock = Clock.fixed(Instant.parse("2026-08-10T12:00:00Z"), ZoneId.of("UTC"));
         LoanReturn useCase = newLoanReturn(fixedClock);
@@ -167,7 +165,8 @@ class LoanReturnTest {
                 .thenReturn(Optional.of(activeLoan))
                 .thenReturn(Optional.of(alreadyFinished));
         when(bookRepository.getById(BOOK_ID)).thenReturn(Optional.of(borrowedBook));
-        when(loanRepository.updateIfCurrentStatus(activeLoan, LoanStatus.ACTIVE)).thenReturn(false);
+        when(loanRepository.updateIfCurrentStatus(activeLoan, LoanStatus.ACTIVE))
+                .thenReturn(false);
 
         LoanReturnResponseDTO response = useCase.execute(LOAN_ID);
 
@@ -204,24 +203,11 @@ class LoanReturnTest {
     }
 
     private LoanReturn newLoanReturn(Clock clock) {
-        return new LoanReturn(
-                new PassthroughTransactionManager(),
-                loanRepository,
-                bookRepository,
-                clock
-        );
+        return new LoanReturn(new PassthroughTransactionManager(), loanRepository, bookRepository, clock);
     }
 
     private static Loan activeLoan(LocalDate startDate, LocalDate endDate) {
-        return Loan.restore(
-                LOAN_ID,
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.ACTIVE,
-                startDate,
-                endDate,
-                null
-        );
+        return Loan.restore(LOAN_ID, BOOK_ID, CUSTOMER_ID, LoanStatus.ACTIVE, startDate, endDate, null);
     }
 
     private static Book borrowedBook() {

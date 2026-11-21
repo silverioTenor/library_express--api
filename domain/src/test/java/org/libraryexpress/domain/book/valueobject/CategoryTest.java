@@ -1,12 +1,11 @@
 package org.libraryexpress.domain.book.valueobject;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @UnitTest
 @DisplayName("Category value object")
@@ -17,8 +16,7 @@ class CategoryTest {
     void shouldParseManyCategories_whenInputIsValid() {
         assertEquals(
                 List.of(new Category("Science"), new Category("Technology")),
-                Category.parseMany(" Science, Technology ")
-        );
+                Category.parseMany(" Science, Technology "));
     }
 
     @Test

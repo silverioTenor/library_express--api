@@ -1,5 +1,11 @@
 package org.libraryexpress.infrastructure.gateway.googlebooks;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,13 +18,6 @@ import org.libraryexpress.infrastructure.exception.InfrastructureException;
 import org.libraryexpress.infrastructure.gateway.adapter.CustomHttpClient;
 import org.libraryexpress.infrastructure.gateway.contract.ClientResponse;
 import org.mockito.ArgumentCaptor;
-
-import java.io.IOException;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @DisplayName("Google Books gateway")
@@ -46,9 +45,8 @@ class GoogleBooksGatewayTest {
 
         Optional<BookMetadata> result = gateway.fetch("Clean Code", "Robert C. Martin");
 
-        assertEquals(Optional.of(new BookMetadata(
-                "9780132350884", "Clean Code", "Robert C. Martin", 2008, "", ""
-        )), result);
+        assertEquals(
+                Optional.of(new BookMetadata("9780132350884", "Clean Code", "Robert C. Martin", 2008, "", "")), result);
         ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
         verify(httpClient).get(urlCaptor.capture());
         assertTrue(urlCaptor.getValue().contains("q=Clean+Code&inauthor=Robert+C.+Martin&key="));
@@ -76,10 +74,8 @@ class GoogleBooksGatewayTest {
     void shouldThrowResourceNotFound_whenGoogleBooksResponds404() throws Exception {
         when(httpClient.get(anyString())).thenReturn(new ClientResponse(404, "not found"));
 
-        InfrastructureException exception = assertThrows(
-                InfrastructureException.class,
-                () -> gateway.fetch("Missing", "Author")
-        );
+        InfrastructureException exception =
+                assertThrows(InfrastructureException.class, () -> gateway.fetch("Missing", "Author"));
 
         assertEquals(InfrastructureErrorType.RESOURCE_NOT_FOUND, exception.getErrorType());
         assertEquals("not found", exception.getMessage());
@@ -91,10 +87,8 @@ class GoogleBooksGatewayTest {
     void shouldThrowServiceUnavailable_whenGoogleBooksHasServerError(int statusCode) throws Exception {
         when(httpClient.get(anyString())).thenReturn(new ClientResponse(statusCode, "upstream failure"));
 
-        InfrastructureException exception = assertThrows(
-                InfrastructureException.class,
-                () -> gateway.fetch("Title", "Author")
-        );
+        InfrastructureException exception =
+                assertThrows(InfrastructureException.class, () -> gateway.fetch("Title", "Author"));
 
         assertEquals(InfrastructureErrorType.SERVICE_UNAVAILABLE, exception.getErrorType());
     }
@@ -104,10 +98,7 @@ class GoogleBooksGatewayTest {
     void shouldWrapIOException_whenHttpRequestFails() throws Exception {
         when(httpClient.get(anyString())).thenThrow(new IOException("network unavailable"));
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> gateway.fetch("Title", "Author")
-        );
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> gateway.fetch("Title", "Author"));
 
         assertTrue(exception.getMessage().contains("internal communication error"));
         assertInstanceOf(IOException.class, exception.getCause());
@@ -131,10 +122,8 @@ class GoogleBooksGatewayTest {
     void shouldThrowIllegalStateException_whenHttpResponseIsUnexpected() throws Exception {
         when(httpClient.get(anyString())).thenReturn(new ClientResponse(401, "unauthorized"));
 
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> gateway.fetch("Title", "Author")
-        );
+        IllegalStateException exception =
+                assertThrows(IllegalStateException.class, () -> gateway.fetch("Title", "Author"));
 
         assertTrue(exception.getMessage().contains("unauthorized"));
     }

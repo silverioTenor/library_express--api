@@ -1,13 +1,13 @@
 package org.libraryexpress.domain.book;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.valueobject.Isbn;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @UnitTest
 @DisplayName("Book Entity - Unit Test")
@@ -20,7 +20,8 @@ public class BookUnitTest {
     @DisplayName("Should build a book instance successfully with search provided attributes")
     void shouldBuildBook_whenAllAttributesAreProvided() {
         // Arrange & Act
-        Book book = Book.create(VALID_ISBN_1, "Book Test", "John Doe", 2008, "AVAILABLE", "Software", "A test description");
+        Book book =
+                Book.create(VALID_ISBN_1, "Book Test", "John Doe", 2008, "AVAILABLE", "Software", "A test description");
 
         // Assert
         assertNotNull(book);

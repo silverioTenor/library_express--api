@@ -2,13 +2,6 @@ package org.libraryexpress.infrastructure.api.routing;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import org.libraryexpress.infrastructure.api.exception.GlobalExceptionHandler;
-import org.libraryexpress.infrastructure.api.server.SunHttpServer;
-import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
-import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
-import org.libraryexpress.infrastructure.api.enums.HttpVerb;
-import org.libraryexpress.infrastructure.util.JsonPrinter;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -17,6 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
+import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
+import org.libraryexpress.infrastructure.api.enums.HttpVerb;
+import org.libraryexpress.infrastructure.api.exception.GlobalExceptionHandler;
+import org.libraryexpress.infrastructure.api.server.SunHttpServer;
+import org.libraryexpress.infrastructure.util.JsonPrinter;
 
 public final class Router implements HttpHandler {
 
@@ -59,7 +58,6 @@ public final class Router implements HttpHandler {
         // Java 21 Feature: Advanced Pattern Matching Switch evaluating custom records and destructuring them in-line
         switch (activeMatch) {
             case RouteMatch.Found(RouteEntry entry, Map<String, String> routeParams) -> {
-
                 HttpContextRequest request = SunHttpServer.adaptRequest(exchange, routeParams);
                 HttpContextResponse response = SunHttpServer.adaptResponse(exchange);
 
@@ -70,7 +68,7 @@ public final class Router implements HttpHandler {
                 }
             }
             case RouteMatch.NotFound e ->
-                    sendError(exchange, HttpStatusCode.NOT_FOUND, "Resource path or method execution context not found.");
+                sendError(exchange, HttpStatusCode.NOT_FOUND, "Resource path or method execution context not found.");
         }
     }
 
@@ -103,18 +101,12 @@ public final class Router implements HttpHandler {
         }
     }
 
-    private record RouteEntry(
-            String method,
-            Pattern pattern,
-            List<String> parameterNames,
-            CustomHttpHandler handler
-    ) {}
+    private record RouteEntry(String method, Pattern pattern, List<String> parameterNames, CustomHttpHandler handler) {}
 
-    /**
-     * Java 21 Sealed Interface governing strict polymorphic state match tokens.
-     */
+    /** Java 21 Sealed Interface governing strict polymorphic state match tokens. */
     private sealed interface RouteMatch permits RouteMatch.Found, RouteMatch.NotFound {
         record Found(RouteEntry entry, Map<String, String> params) implements RouteMatch {}
+
         record NotFound() implements RouteMatch {}
     }
 }

@@ -1,14 +1,13 @@
 package org.libraryexpress.application.book.dto.request;
 
-import org.libraryexpress.domain.book.enums.BookStatus;
-import org.libraryexpress.domain.book.valueobject.Isbn;
-import org.libraryexpress.domain.core.dto.InputPaginationDto;
-import org.libraryexpress.domain.core.exception.InvalidArgumentException;
-import org.libraryexpress.domain.book.repository.BookFilter;
-
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.libraryexpress.domain.book.enums.BookStatus;
+import org.libraryexpress.domain.book.repository.BookFilter;
+import org.libraryexpress.domain.book.valueobject.Isbn;
+import org.libraryexpress.domain.core.dto.InputPaginationDto;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 
 public record BookFilterDTO(
         String id,
@@ -17,8 +16,7 @@ public record BookFilterDTO(
         String author,
         Integer publishedYear,
         Set<BookStatus> statuses,
-        InputPaginationDto paginationDto
-) {
+        InputPaginationDto paginationDto) {
     public BookFilterDTO(
             String id,
             String ISBN,
@@ -27,29 +25,19 @@ public record BookFilterDTO(
             String strStatuses,
             String publishedYear,
             int page,
-            int size
-    ) {
+            int size) {
         this(
-            id,
-            parseIsbn(ISBN),
-            title,
-            author,
-            parsePublishedYear(publishedYear),
-            parseStatuses(strStatuses),
-            new InputPaginationDto(page, size)
-        );
+                id,
+                parseIsbn(ISBN),
+                title,
+                author,
+                parsePublishedYear(publishedYear),
+                parseStatuses(strStatuses),
+                new InputPaginationDto(page, size));
     }
 
     public BookFilter toBookFilter() {
-        return new BookFilter(
-                id(),
-                ISBN(),
-                title(),
-                author(),
-                publishedYear(),
-                statuses(),
-                paginationDto()
-        );
+        return new BookFilter(id(), ISBN(), title(), author(), publishedYear(), statuses(), paginationDto());
     }
 
     private static Isbn parseIsbn(String ISBN) {

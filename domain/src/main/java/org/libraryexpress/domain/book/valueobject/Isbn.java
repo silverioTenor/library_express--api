@@ -22,8 +22,8 @@ public record Isbn(String value) {
     }
 
     /**
-     * Converts an ISBN-10 to the ISBN-13 standard.
-     * If the input is already a valid ISBN-13, returns the cleaned input itself.
+     * Converts an ISBN-10 to the ISBN-13 standard. If the input is already a valid ISBN-13, returns the cleaned input
+     * itself.
      *
      * @param isbn The ISBN code (with or without hyphens/spaces)
      * @return The formatted ISBN-13 code containing only numbers

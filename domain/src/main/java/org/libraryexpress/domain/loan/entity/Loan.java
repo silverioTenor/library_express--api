@@ -1,16 +1,14 @@
 package org.libraryexpress.domain.loan.entity;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Objects;
 import org.libraryexpress.domain.core.exception.DomainErrorType;
 import org.libraryexpress.domain.core.exception.DomainException;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
-import org.libraryexpress.domain.loan.exception.OverdueLoanException;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Objects;
 
 public class Loan implements Comparable<Loan> {
 
@@ -37,20 +35,16 @@ public class Loan implements Comparable<Loan> {
             LoanStatus status,
             LocalDate startDate,
             LocalDate endDate,
-            Instant closedAt
-    ) {
+            Instant closedAt) {
         Objects.requireNonNull(status, "Loan status cannot be null");
         Objects.requireNonNull(startDate, "Start date cannot be null");
         Objects.requireNonNull(endDate, "End date cannot be null");
 
-        if (id == null || id.isBlank())
-            throw new InvalidArgumentException("Loan ID cannot be null or empty");
-        if (bookId == null || bookId.isBlank())
-            throw new InvalidArgumentException("Book ID cannot be null or empty");
+        if (id == null || id.isBlank()) throw new InvalidArgumentException("Loan ID cannot be null or empty");
+        if (bookId == null || bookId.isBlank()) throw new InvalidArgumentException("Book ID cannot be null or empty");
         if (customerId == null || customerId.isBlank())
             throw new InvalidArgumentException("Customer ID cannot be null or empty");
-        if (endDate.isBefore(startDate))
-            throw new DateOutOfBoundException("End date cannot be before start date");
+        if (endDate.isBefore(startDate)) throw new DateOutOfBoundException("End date cannot be before start date");
 
         this.id = id;
         this.bookId = bookId;
@@ -61,13 +55,7 @@ public class Loan implements Comparable<Loan> {
         this.closedAt = closedAt;
     }
 
-    public static Loan create(
-            String id,
-            String bookId,
-            String customerId,
-            LocalDate startDate,
-            LocalDate endDate
-    ) {
+    public static Loan create(String id, String bookId, String customerId, LocalDate startDate, LocalDate endDate) {
         return new Loan(id, bookId, customerId, LoanStatus.ACTIVE, startDate, endDate, null);
     }
 
@@ -78,8 +66,7 @@ public class Loan implements Comparable<Loan> {
             LoanStatus status,
             LocalDate startDate,
             LocalDate endDate,
-            Instant closedAt
-    ) {
+            Instant closedAt) {
         return new Loan(id, bookId, customerId, status, startDate, endDate, closedAt);
     }
 
@@ -136,14 +123,13 @@ public class Loan implements Comparable<Loan> {
 
     @Override
     public String toString() {
-        return "{\n" +
-                " id: " + id + ",\n" +
-                " bookId: " + bookId + ",\n" +
-                " customerId: " + customerId + ",\n" +
-                " statuses: " + status.toString() + ",\n" +
-                " startDate: " + startDate + ",\n" +
-                " endDate: " + endDate + ",\n" +
-                "}";
+        return "{\n" + " id: "
+                + id + ",\n" + " bookId: "
+                + bookId + ",\n" + " customerId: "
+                + customerId + ",\n" + " statuses: "
+                + status.toString() + ",\n" + " startDate: "
+                + startDate + ",\n" + " endDate: "
+                + endDate + ",\n" + "}";
     }
 
     @Override
@@ -161,5 +147,4 @@ public class Loan implements Comparable<Loan> {
     public int compareTo(Loan o) {
         return Objects.compare(startDate, o.getStartDate(), LocalDate::compareTo);
     }
-
 }

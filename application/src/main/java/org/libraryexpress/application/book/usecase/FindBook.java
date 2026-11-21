@@ -1,13 +1,12 @@
 package org.libraryexpress.application.book.usecase;
 
+import java.util.Optional;
 import org.libraryexpress.application.book.dto.response.BookDTO;
-import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.domain.book.entity.Book;
+import org.libraryexpress.domain.book.exception.BookNotFoundException;
 import org.libraryexpress.domain.book.repository.BookRepository;
 import org.libraryexpress.domain.book.valueobject.Isbn;
-
-import java.util.Optional;
 
 public class FindBook {
 
@@ -24,8 +23,6 @@ public class FindBook {
 
         Optional<Book> book = this.bookRepository.getByIsbn(isbn.value());
 
-        return book
-                .map(mapper::toResponseDto)
-                .orElseThrow(BookNotFoundException::new);
+        return book.map(mapper::toResponseDto).orElseThrow(BookNotFoundException::new);
     }
 }

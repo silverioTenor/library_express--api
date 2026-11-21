@@ -1,15 +1,14 @@
 package org.libraryexpress.infrastructure.api.server;
 
 import com.sun.net.httpserver.HttpServer;
+import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.infrastructure.api.routes.RouteOrchestrator;
 import org.libraryexpress.infrastructure.api.routing.Router;
 import org.libraryexpress.infrastructure.config.AppContext;
 import org.libraryexpress.infrastructure.config.ConfigRegistry;
-
-import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
 
 public final class EmbeddedHttpServer {
 

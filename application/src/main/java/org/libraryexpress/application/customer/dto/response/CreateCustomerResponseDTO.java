@@ -1,4 +1,3 @@
 package org.libraryexpress.application.customer.dto.response;
 
-public record CreateCustomerResponseDTO(String id) {
-}
+public record CreateCustomerResponseDTO(String id) {}

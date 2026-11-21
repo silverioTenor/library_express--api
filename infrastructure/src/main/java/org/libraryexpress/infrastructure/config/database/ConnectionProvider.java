@@ -2,9 +2,8 @@ package org.libraryexpress.infrastructure.config.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.libraryexpress.infrastructure.config.ConfigRegistry;
-
 import javax.sql.DataSource;
+import org.libraryexpress.infrastructure.config.ConfigRegistry;
 
 public class ConnectionProvider implements AutoCloseable {
 
@@ -13,10 +12,7 @@ public class ConnectionProvider implements AutoCloseable {
     public ConnectionProvider() {
         String jdbcUrl = String.format(
                 "jdbc:postgresql://%s:%s/%s",
-                ConfigRegistry.getDbHost(),
-                ConfigRegistry.getDbPort(),
-                ConfigRegistry.getDbName()
-        );
+                ConfigRegistry.getDbHost(), ConfigRegistry.getDbPort(), ConfigRegistry.getDbName());
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(jdbcUrl);
@@ -38,16 +34,12 @@ public class ConnectionProvider implements AutoCloseable {
         this.dataSource = new HikariDataSource(config);
     }
 
-    /**
-     * Exposes the configured DataSource abstraction to repositories or migration tools.
-     */
+    /** Exposes the configured DataSource abstraction to repositories or migration tools. */
     public DataSource getDataSource() {
         return this.dataSource;
     }
 
-    /**
-     * Implements AutoCloseable to ensure thread-safe cleanup during shutdown hooks or test tearing steps.
-     */
+    /** Implements AutoCloseable to ensure thread-safe cleanup during shutdown hooks or test tearing steps. */
     @Override
     public void close() {
         if (this.dataSource != null && !this.dataSource.isClosed()) {

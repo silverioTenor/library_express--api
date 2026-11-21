@@ -1,27 +1,26 @@
 package org.libraryexpress.application.loan.usecase;
 
+import java.time.LocalDate;
+import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
 import org.libraryexpress.application.loan.dto.response.CreateLoanResponseDTO;
 import org.libraryexpress.domain.book.entity.Book;
+import org.libraryexpress.domain.book.enums.BookStatus;
+import org.libraryexpress.domain.book.repository.BookRepository;
 import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
-import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
-import org.libraryexpress.domain.core.repository.TransactionManager;
-import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
+import org.libraryexpress.domain.core.repository.TransactionManager;
+import org.libraryexpress.domain.core.util.RandomGenerator;
 import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
-import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.libraryexpress.domain.loan.entity.Loan;
-import org.libraryexpress.domain.book.enums.BookStatus;
-import org.libraryexpress.domain.core.util.RandomGenerator;
-import org.libraryexpress.domain.book.repository.BookRepository;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
-
-import java.time.LocalDate;
+import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
+import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 
 public class CreateLoan {
 
-    private static final CustomLogger LOG =  CustomLoggerFactory.getLogger(CreateLoan.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(CreateLoan.class);
 
     private final TransactionManager transaction;
     private final LoanRepository loanRepository;
@@ -38,8 +37,7 @@ public class CreateLoan {
             CustomerRepository customerRepository,
             LoanEligibilityValidator loanEligibilityValidator,
             BookAvailabilityValidator bookAvailabilityValidator,
-            LoanPeriodValidator loanPeriodValidator
-    ) {
+            LoanPeriodValidator loanPeriodValidator) {
         this.transaction = transaction;
         this.loanRepository = loanRepository;
         this.bookRepository = bookRepository;
@@ -59,9 +57,7 @@ public class CreateLoan {
         this.loanPeriodValidator.validate(startDate, dueDate);
 
         return this.transaction.execute(() -> {
-            this.customerRepository
-                    .getById(createLoanDto.customerId())
-                    .orElseThrow(CustomerNotFoundException::new);
+            this.customerRepository.getById(createLoanDto.customerId()).orElseThrow(CustomerNotFoundException::new);
 
             Book book = this.bookAvailabilityValidator.validate(createLoanDto.bookId());
 

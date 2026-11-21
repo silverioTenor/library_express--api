@@ -1,16 +1,10 @@
 package org.libraryexpress.domain.book.entity;
 
+import java.util.*;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.valueobject.Author;
 import org.libraryexpress.domain.book.valueobject.Category;
 import org.libraryexpress.domain.book.valueobject.Isbn;
-import org.libraryexpress.domain.core.exception.InvalidArgumentException;
-import org.libraryexpress.domain.core.util.RandomGenerator;
-
-import java.util.*;
-import java.util.function.Predicate;
-
-import static java.util.function.Predicate.not;
 
 public class Book implements Comparable<Book> {
 
@@ -38,8 +32,7 @@ public class Book implements Comparable<Book> {
             int publicationYear,
             BookStatus status,
             List<Category> categories,
-            String description
-    ) {
+            String description) {
         this.id = id;
         this.isbn = isbn;
         this.title = title;
@@ -57,8 +50,7 @@ public class Book implements Comparable<Book> {
             int publicationYear,
             String strStatus,
             String strCategories,
-            String description
-    ) {
+            String description) {
         return new Book(
                 UUID.randomUUID(),
                 new Isbn(isbn),
@@ -67,8 +59,7 @@ public class Book implements Comparable<Book> {
                 publicationYear,
                 BookStatus.from(strStatus),
                 Category.parseMany(strCategories),
-                description
-        );
+                description);
     }
 
     public static Book restore(
@@ -79,8 +70,7 @@ public class Book implements Comparable<Book> {
             int publicationYear,
             String strStatus,
             String[] categoryArray,
-            String description
-    ) {
+            String description) {
         return new Book(
                 UUID.fromString(id),
                 new Isbn(isbn),
@@ -89,8 +79,7 @@ public class Book implements Comparable<Book> {
                 publicationYear,
                 BookStatus.from(strStatus),
                 Category.parseMany(categoryArray),
-                description
-        );
+                description);
     }
 
     public void changeStatus(BookStatus newStatus) {
@@ -116,9 +105,7 @@ public class Book implements Comparable<Book> {
     }
 
     public String[] getAuthorsAsArray() {
-        return this.authors.stream()
-                .map(Author::name)
-                .toArray(String[]::new);
+        return this.authors.stream().map(Author::name).toArray(String[]::new);
     }
 
     public int getPublicationYear() {
@@ -130,9 +117,7 @@ public class Book implements Comparable<Book> {
     }
 
     public String[] getCategoriesAsArray() {
-        return this.categories.stream()
-                .map(Category::name)
-                .toArray(String[]::new);
+        return this.categories.stream().map(Category::name).toArray(String[]::new);
     }
 
     public BookStatus getStatus() {

@@ -1,5 +1,9 @@
 package org.libraryexpress.application.book.usecase;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,11 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -49,16 +48,17 @@ class RegisterBookTest {
         Book expectedBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE", "", "");
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.empty());
 
-        try (MockedStatic<Book> bookMocked  =mockStatic(Book.class)) {
-            bookMocked.when(() -> Book.create(
-                    eq(ISBN_STR),
-                    eq("Clean Code"),
-                    eq("Robert C. Martin"),
-                    eq(2008),
-                    eq("AVAILABLE"),
-                    eq(""),
-                    eq("")
-            )).thenReturn(expectedBook);
+        try (MockedStatic<Book> bookMocked = mockStatic(Book.class)) {
+            bookMocked
+                    .when(() -> Book.create(
+                            eq(ISBN_STR),
+                            eq("Clean Code"),
+                            eq("Robert C. Martin"),
+                            eq(2008),
+                            eq("AVAILABLE"),
+                            eq(""),
+                            eq("")))
+                    .thenReturn(expectedBook);
 
             RegisterBookResponseDTO response = registerBook.execute(requestDto);
 
@@ -85,8 +85,10 @@ class RegisterBookTest {
     @DisplayName("Registers an externally looked-up book when its metadata is found")
     void shouldRegisterBook_whenExternalMetadataIsFound() {
         RegisterBookDTO requestDto = new RegisterBookDTO(null, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE");
-        BookMetadata metadata = new BookMetadata(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "Software", "A guide");
-        Book expectedBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE", "Software", "A guide");
+        BookMetadata metadata =
+                new BookMetadata(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "Software", "A guide");
+        Book expectedBook =
+                Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 2008, "AVAILABLE", "Software", "A guide");
 
         when(bookGateway.fetch(requestDto.title(), requestDto.author())).thenReturn(Optional.of(metadata));
         when(mapper.toEntity(metadata, requestDto.status())).thenReturn(expectedBook);

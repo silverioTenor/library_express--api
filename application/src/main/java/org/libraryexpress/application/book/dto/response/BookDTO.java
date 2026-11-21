@@ -1,8 +1,7 @@
 package org.libraryexpress.application.book.dto.response;
 
-import org.libraryexpress.domain.book.enums.BookStatus;
-
 import java.util.List;
+import org.libraryexpress.domain.book.enums.BookStatus;
 
 public record BookDTO(
         String id,
@@ -12,6 +11,4 @@ public record BookDTO(
         int publicationYear,
         BookStatus status,
         List<String> categories,
-        String description
-) {
-}
+        String description) {}

@@ -1,5 +1,6 @@
 package org.libraryexpress.application.book.usecase;
 
+import java.util.Optional;
 import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
 import org.libraryexpress.application.book.dto.response.RegisterBookResponseDTO;
 import org.libraryexpress.application.book.mapper.BookMapper;
@@ -12,11 +13,9 @@ import org.libraryexpress.domain.book.valueobject.BookMetadata;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 
-import java.util.Optional;
-
 public class RegisterBook {
 
-    private static final CustomLogger LOG =  CustomLoggerFactory.getLogger(RegisterBook.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(RegisterBook.class);
 
     private final BookRepository bookRepository;
 
@@ -55,8 +54,7 @@ public class RegisterBook {
         if (bookMetadata.isEmpty()) {
             LOG.warn("External book lookup returned empty. Title: [{}], Author: [{}]", dto.title(), dto.author());
             throw new BookNotFoundException(
-                    "No book matches the provided title and author in the external registry. Please review the search data or fill in the complete details manually."
-            );
+                    "No book matches the provided title and author in the external registry. Please review the search data or fill in the complete details manually.");
         }
 
         Book book = this.mapper.toEntity(bookMetadata.get(), dto.status());

@@ -1,23 +1,21 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.book.entity.Book;
-import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.loan.entity.Loan;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.repository.LoanFilter;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @IntegrationTest
 @DisplayName("Loan Repository - Core Operations Integration Test")
@@ -37,20 +35,19 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         CustomerDbRepository customerRepository = new CustomerDbRepository(dataSource);
 
         // Task Solution: Seed structural parent records into the isolated database to prevent FK violations
-        Customer parentCustomer = Customer.restore(
-                VALID_CUSTOMER_ID,
-                "Loan Tester Customer",
-                "loan.tester@libraryexpress.com"
-        );
+        Customer parentCustomer =
+                Customer.restore(VALID_CUSTOMER_ID, "Loan Tester Customer", "loan.tester@libraryexpress.com");
         customerRepository.create(parentCustomer);
 
-        Book parentBook = Book.create(VALID_ISBN, "Continuous Delivery Baseline", "Jez Humble", 2010, "AVAILABLE", "", "");
+        Book parentBook =
+                Book.create(VALID_ISBN, "Continuous Delivery Baseline", "Jez Humble", 2010, "AVAILABLE", "", "");
         bookRepository.create(parentBook);
         validBookId = parentBook.getId().toString();
     }
 
     @Test
-    @DisplayName("Should successfully persist a new transactional loan and retrieve it back using its unique ID identity")
+    @DisplayName(
+            "Should successfully persist a new transactional loan and retrieve it back using its unique ID identity")
     void shouldPersistAndRetrieveLoan_whenPayloadIsValidAndFkConstraintsAreMet() {
         // Arrange (Testing create and findById)
         String loanId = "30000000-0000-4000-8000-000000000001";
@@ -61,8 +58,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
                 LocalDate.now().plusDays(14),
-                null
-        );
+                null);
 
         // Act
         loanRepository.create(newLoan);
@@ -73,7 +69,10 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         assertEquals(validBookId, retrieved.get().getBookId());
         assertEquals(VALID_CUSTOMER_ID, retrieved.get().getCustomerId());
         assertEquals(LoanStatus.ACTIVE, retrieved.get().getStatus());
-        assertEquals(LocalDate.now(), retrieved.get().getStartDate(), "Temporal state mappings must preserve date alignments");
+        assertEquals(
+                LocalDate.now(),
+                retrieved.get().getStartDate(),
+                "Temporal state mappings must preserve date alignments");
     }
 
     @Test
@@ -88,8 +87,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 LoanStatus.ACTIVE,
                 LocalDate.now().minusDays(5),
                 LocalDate.now().plusDays(9),
-                null
-        );
+                null);
         loanRepository.create(loan);
 
         // Reconstructing entity representing a standard business return execution lifecycle
@@ -102,8 +100,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 LocalDate.now().minusDays(5),
                 LocalDate.now(),
                 // Modifying temporal fields
-                null
-        );
+                null);
 
         // Act
         loanRepository.update(returnedLoan);
@@ -126,8 +123,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 LoanStatus.ACTIVE,
                 LocalDate.now().minusDays(3),
                 LocalDate.now().plusDays(12),
-                null
-        );
+                null);
         loanRepository.create(loan);
 
         Loan finishedLoan = Loan.restore(
@@ -137,13 +133,14 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 LoanStatus.FINISHED,
                 loan.getStartDate(),
                 loan.getEndDate(),
-                null
-        );
+                null);
 
         boolean applied = loanRepository.updateIfCurrentStatus(finishedLoan, LoanStatus.ACTIVE);
 
         assertTrue(applied);
-        assertEquals(LoanStatus.FINISHED, loanRepository.findById(loanId).orElseThrow().getStatus());
+        assertEquals(
+                LoanStatus.FINISHED,
+                loanRepository.findById(loanId).orElseThrow().getStatus());
     }
 
     @Test
@@ -157,8 +154,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 LoanStatus.FINISHED,
                 LocalDate.now().minusDays(10),
                 LocalDate.now().minusDays(1),
-                null
-        );
+                null);
         loanRepository.create(loan);
 
         Loan conflictingUpdate = Loan.restore(
@@ -168,13 +164,14 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 LoanStatus.OVERDUE,
                 loan.getStartDate(),
                 loan.getEndDate(),
-                null
-        );
+                null);
 
         boolean applied = loanRepository.updateIfCurrentStatus(conflictingUpdate, LoanStatus.ACTIVE);
 
         assertFalse(applied, "Conditional update must refuse to overwrite a loan that left ACTIVE");
-        assertEquals(LoanStatus.FINISHED, loanRepository.findById(loanId).orElseThrow().getStatus());
+        assertEquals(
+                LoanStatus.FINISHED,
+                loanRepository.findById(loanId).orElseThrow().getStatus());
     }
 
     @Test
@@ -191,8 +188,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
                 LocalDate.now().plusDays(14),
-                null
-        );
+                null);
 
         Loan overdueLoan = Loan.restore(
                 loanId2,
@@ -201,8 +197,7 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 LoanStatus.OVERDUE,
                 LocalDate.now().minusDays(20),
                 LocalDate.now().minusDays(6),
-                null
-        );
+                null);
 
         loanRepository.create(activeLoan);
         loanRepository.create(overdueLoan);
@@ -213,11 +208,15 @@ class LoanDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         // Assert
         assertNotNull(matchedLoans);
-        assertEquals(1, matchedLoans.size(), "Filter must pinpoint exactly the OVERDUE entry based on native array unpacking");
-        assertTrue(matchedLoans.stream().anyMatch(l -> l.getId().equals(loanId2)), "The correctly mapped target id must match records data");
+        assertEquals(
+                1,
+                matchedLoans.size(),
+                "Filter must pinpoint exactly the OVERDUE entry based on native array unpacking");
+        assertTrue(
+                matchedLoans.stream().anyMatch(l -> l.getId().equals(loanId2)),
+                "The correctly mapped target id must match records data");
 
         var bookIdFilter = new LoanFilter(null, null, validBookId, Set.of(LoanStatus.OVERDUE), null);
         assertEquals(1, loanRepository.search(bookIdFilter).items().size());
     }
-
 }

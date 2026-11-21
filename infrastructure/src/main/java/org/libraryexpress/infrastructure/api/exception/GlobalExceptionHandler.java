@@ -1,5 +1,9 @@
 package org.libraryexpress.infrastructure.api.exception;
 
+import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
+import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.BAD_GATEWAY;
+
+import java.io.IOException;
 import org.libraryexpress.domain.core.exception.DomainException;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
@@ -9,11 +13,6 @@ import org.libraryexpress.infrastructure.api.routing.CustomHttpHandler;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
 import org.libraryexpress.infrastructure.exception.InfrastructureException;
-
-import java.io.IOException;
-
-import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
-import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.BAD_GATEWAY;
 
 public class GlobalExceptionHandler implements CustomHttpHandler {
 
@@ -29,7 +28,7 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
     public void handle(HttpContextRequest request, HttpContextResponse response) throws Exception {
         try {
             this.httpHandler.handle(request, response);
-        }  catch (Exception e) {
+        } catch (Exception e) {
             resolveException(e, response);
         }
     }
@@ -44,11 +43,15 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
         if (statusCode.equals(INTERNAL_SERVER_ERROR)) {
             LOG.error("Internal error occurred while processing request", exception);
             response.status(INTERNAL_SERVER_ERROR)
-                    .json(ErrorResponse.of(500, "An unexpected internal server error occurred. Please contact support."));
+                    .json(ErrorResponse.of(
+                            500, "An unexpected internal server error occurred. Please contact support."));
             return;
         }
 
-        LOG.warn("Application execution request rejected. HTTP Status: [{}]. Reason: [{}]", statusCode, exception.getMessage());
+        LOG.warn(
+                "Application execution request rejected. HTTP Status: [{}]. Reason: [{}]",
+                statusCode,
+                exception.getMessage());
         response.status(statusCode).json(ErrorResponse.of(statusCode.getCode(), exception.getMessage()));
     }
 

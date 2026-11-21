@@ -1,12 +1,12 @@
 package org.libraryexpress.infrastructure.config.database;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.logging.LogTrace;
 import org.slf4j.MDC;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @IntegrationTest
 @DisplayName("MDC Trace ID - Lifecycle Integration Test")
@@ -28,7 +28,10 @@ class MdcTraceIdIntegrationTest {
 
         // Simulating twin statements executions sharing the exact same tracking scope references
         String secondaryVerificationToken = MDC.get("trace_id");
-        assertEquals(activeToken, secondaryVerificationToken, "Every log line in the current execution window must preserve identity trace");
+        assertEquals(
+                activeToken,
+                secondaryVerificationToken,
+                "Every log line in the current execution window must preserve identity trace");
 
         // When (Scenario 3)
         LogTrace.clear();

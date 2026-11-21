@@ -1,5 +1,14 @@
 package org.libraryexpress.application.loan.usecase;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,16 +20,6 @@ import org.libraryexpress.domain.loan.exception.OverdueLoanException;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -42,7 +41,8 @@ class CloseOverdueLoanTest {
         CloseOverdueLoan useCase = new CloseOverdueLoan(loanRepository, clock);
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(overdueLoan));
-        when(loanRepository.updateIfCurrentStatus(overdueLoan, LoanStatus.OVERDUE)).thenReturn(true);
+        when(loanRepository.updateIfCurrentStatus(overdueLoan, LoanStatus.OVERDUE))
+                .thenReturn(true);
 
         useCase.execute(LOAN_ID);
 
@@ -61,8 +61,7 @@ class CloseOverdueLoanTest {
                 LoanStatus.FINISHED,
                 LocalDate.now().minusDays(20),
                 LocalDate.now().minusDays(5),
-                Instant.now()
-        );
+                Instant.now());
 
         CloseOverdueLoan useCase = new CloseOverdueLoan(loanRepository, Clock.systemUTC());
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(finishedLoan));
@@ -81,7 +80,8 @@ class CloseOverdueLoanTest {
         CloseOverdueLoan useCase = new CloseOverdueLoan(loanRepository, clock);
 
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(overdueLoan));
-        when(loanRepository.updateIfCurrentStatus(overdueLoan, LoanStatus.OVERDUE)).thenReturn(false);
+        when(loanRepository.updateIfCurrentStatus(overdueLoan, LoanStatus.OVERDUE))
+                .thenReturn(false);
 
         assertDoesNotThrow(() -> useCase.execute(LOAN_ID));
 
@@ -111,8 +111,7 @@ class CloseOverdueLoanTest {
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
                 LocalDate.now().plusDays(15),
-                null
-        );
+                null);
 
         CloseOverdueLoan useCase = new CloseOverdueLoan(loanRepository, Clock.systemUTC());
         when(loanRepository.findById(LOAN_ID)).thenReturn(Optional.of(activeLoan));
@@ -131,7 +130,6 @@ class CloseOverdueLoanTest {
                 LoanStatus.OVERDUE,
                 LocalDate.now().minusDays(20),
                 LocalDate.now().minusDays(5),
-                null
-        );
+                null);
     }
 }

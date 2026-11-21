@@ -1,11 +1,11 @@
 package org.libraryexpress.infrastructure.config.logging;
 
-import org.slf4j.MDC;
 import java.util.UUID;
+import org.slf4j.MDC;
 
 /**
- * Technical helper governing the Mapped Diagnostic Context (MDC) lifecycle.
- * Manages unique correlation identifiers across thread execution frames.
+ * Technical helper governing the Mapped Diagnostic Context (MDC) lifecycle. Manages unique correlation identifiers
+ * across thread execution frames.
  */
 public final class LogTrace {
 
@@ -13,9 +13,7 @@ public final class LogTrace {
 
     private LogTrace() {}
 
-    /**
-     * Generates a unique tracking token and binds it into the active MDC thread scope.
-     */
+    /** Generates a unique tracking token and binds it into the active MDC thread scope. */
     public static String start() {
         String uniqueId = UUID.randomUUID().toString();
         MDC.put(TRACE_ID_KEY, uniqueId);
@@ -34,9 +32,7 @@ public final class LogTrace {
         return MDC.get(TRACE_ID_KEY);
     }
 
-    /**
-     * Clears the correlation key to protect the thread allocation pool from memory leakages.
-     */
+    /** Clears the correlation key to protect the thread allocation pool from memory leakages. */
     public static void clear() {
         MDC.remove(TRACE_ID_KEY);
     }

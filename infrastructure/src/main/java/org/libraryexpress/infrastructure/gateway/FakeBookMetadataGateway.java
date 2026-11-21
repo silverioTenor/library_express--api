@@ -1,11 +1,10 @@
 package org.libraryexpress.infrastructure.gateway;
 
-import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
-import org.libraryexpress.domain.book.valueobject.BookMetadata;
-
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Optional;
+import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
+import org.libraryexpress.domain.book.valueobject.BookMetadata;
 
 public final class FakeBookMetadataGateway implements BookMetadataGateway {
 
@@ -21,8 +20,7 @@ public final class FakeBookMetadataGateway implements BookMetadataGateway {
                 author.trim(),
                 LocalDate.now().getYear(),
                 "Test",
-                "Metadata returned by the test gateway."
-        ));
+                "Metadata returned by the test gateway."));
     }
 
     private String createIsbn(String title, String author) {

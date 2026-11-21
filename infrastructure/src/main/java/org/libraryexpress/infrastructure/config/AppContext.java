@@ -1,21 +1,23 @@
 package org.libraryexpress.infrastructure.config;
 
-import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
+import java.time.Clock;
+import javax.sql.DataSource;
 import org.libraryexpress.application.book.mapper.BookMapper;
 import org.libraryexpress.application.book.usecase.FindBook;
-import org.libraryexpress.application.book.usecase.SearchBooks;
 import org.libraryexpress.application.book.usecase.RegisterBook;
+import org.libraryexpress.application.book.usecase.SearchBooks;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.application.customer.usecase.CreateCustomer;
 import org.libraryexpress.application.customer.usecase.FindCustomer;
 import org.libraryexpress.application.customer.usecase.SearchCustomers;
 import org.libraryexpress.application.customer.usecase.UpdateCustomerEmail;
-import org.libraryexpress.domain.core.repository.TransactionManager;
-import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.libraryexpress.application.loan.mapper.LoanMapper;
 import org.libraryexpress.application.loan.usecase.*;
-import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
+import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
+import org.libraryexpress.domain.core.repository.TransactionManager;
+import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
+import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.api.controller.CustomerController;
 import org.libraryexpress.infrastructure.api.controller.LoanController;
@@ -23,15 +25,12 @@ import org.libraryexpress.infrastructure.api.routing.openApi.OpenApiContractHand
 import org.libraryexpress.infrastructure.api.routing.openApi.SwaggerUiHandler;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.config.database.transaction.TransactionAwareDataSource;
-import org.libraryexpress.infrastructure.gateway.adapter.NativeHttpClient;
 import org.libraryexpress.infrastructure.gateway.BookMetadataGatewayFactory;
+import org.libraryexpress.infrastructure.gateway.adapter.NativeHttpClient;
 import org.libraryexpress.infrastructure.repository.jdbc.BookDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.CustomerDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.LoanDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.TransactionDb;
-
-import javax.sql.DataSource;
-import java.time.Clock;
 
 public class AppContext {
 
@@ -56,7 +55,7 @@ public class AppContext {
     private final LoanController loanController;
 
     // DOCS
-    private final OpenApiContractHandler  openApiContractHandler;
+    private final OpenApiContractHandler openApiContractHandler;
     private final SwaggerUiHandler swaggerUiHandler;
 
     // GATEWAYS
@@ -101,8 +100,7 @@ public class AppContext {
                 customerRepository,
                 loanEligibilityValidator,
                 bookAvailabilityValidator,
-                loanPeriodValidator
-        );
+                loanPeriodValidator);
         this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE);
         this.loanReturn = new LoanReturn(transactionManager, loanRepository, bookRepository, Clock.systemDefaultZone());
         this.closeOverdueLoan = new CloseOverdueLoan(loanRepository, Clock.systemDefaultZone());

@@ -1,20 +1,19 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
-import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.domain.book.repository.BookFilter;
+import org.libraryexpress.domain.core.repository.QueryResult;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @IntegrationTest
 @DisplayName("Book Repository - Core Operations Integration Test")
@@ -55,16 +54,19 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         Book baseBook = createSampleBook(duplicatedIsbn, "Clean Code Core", BookStatus.AVAILABLE);
         bookRepository.create(baseBook);
 
-        Book collidingBook = createSampleBook(duplicatedIsbn, "Clean Code Duplicate Entry Attempt", BookStatus.AVAILABLE);
+        Book collidingBook =
+                createSampleBook(duplicatedIsbn, "Clean Code Duplicate Entry Attempt", BookStatus.AVAILABLE);
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> bookRepository.create(collidingBook),
-                "Repository layer must translate low-level SQL constraint violations into rich domain exception mappings"
-        );
+        assertThrows(
+                RuntimeException.class,
+                () -> bookRepository.create(collidingBook),
+                "Repository layer must translate low-level SQL constraint violations into rich domain exception mappings");
     }
 
     @Test
-    @DisplayName("Should successfully modify book fields and reflect state changes inside database during record updates")
+    @DisplayName(
+            "Should successfully modify book fields and reflect state changes inside database during record updates")
     void shouldUpdateBookState_whenModifyingExistingRecord() {
         // Arrange (Testing update)
         String isbn = "9788525034151";
@@ -76,12 +78,11 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
                 book.getId().toString(),
                 isbn,
                 "Clean Architecture - Final Release",
-                new String[]{"Robert C. Martin"},
+                new String[] {"Robert C. Martin"},
                 2017,
                 "BORROWED",
-                new String[]{"Software"},
-                "Updated description"
-        );
+                new String[] {"Software"},
+                "Updated description");
 
         // Act
         bookRepository.update(updatedBook);
@@ -96,7 +97,8 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     }
 
     @Test
-    @DisplayName("Should return a multi-criteria matched dataset when searching with high-performance native ANY clauses")
+    @DisplayName(
+            "Should return a multi-criteria matched dataset when searching with high-performance native ANY clauses")
     void shouldReturnFilteredSet_whenSearchingByCriteriaUsingNativeArrayFilters() {
         // Arrange (Testing search)
         Book book1 = createSampleBook("978-11-11111-01-1", "Design Patterns Base", BookStatus.AVAILABLE);
@@ -106,7 +108,6 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         bookRepository.create(book1);
         bookRepository.create(book2);
         bookRepository.create(book3);
-
 
         // Act - Searching using your awesome high-performance ANY arrays filter implementation
         BookFilter filter = new BookFilter(null, null, null, null, null, Set.of(BookStatus.AVAILABLE), null);
@@ -125,7 +126,8 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     }
 
     @Test
-    @DisplayName("Should successfully scan and retrieve the entire catalog collection payload without criteria constraints")
+    @DisplayName(
+            "Should successfully scan and retrieve the entire catalog collection payload without criteria constraints")
     void shouldReturnFindAllPersistedBooks_whenTriggeringUnrestrictedCatalogScan() {
         // Arrange (Testing search)
         Book book1 = createSampleBook("978-44-44444-40-4", "Domain-Driven Design", BookStatus.AVAILABLE);
@@ -140,13 +142,13 @@ class BookDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         // Assert
         assertNotNull(allBooks);
-        assertTrue(allBooks.size() >= 2, "Catalog set must retrieve search entries currently matching isolation scopes");
+        assertTrue(
+                allBooks.size() >= 2, "Catalog set must retrieve search entries currently matching isolation scopes");
     }
 
-    /**
-     * Clean helper method to encapsulate recurring builder initializations inside the test suite matrix.
-     */
+    /** Clean helper method to encapsulate recurring builder initializations inside the test suite matrix. */
     private Book createSampleBook(String isbn, String title, BookStatus status) {
-        return Book.create(isbn, title, "Test Author Reference", 2020, status.name(), "Testing", "Integration test book");
+        return Book.create(
+                isbn, title, "Test Author Reference", 2020, status.name(), "Testing", "Integration test book");
     }
 }

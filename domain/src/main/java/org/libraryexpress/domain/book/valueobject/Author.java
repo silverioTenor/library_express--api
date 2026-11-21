@@ -1,12 +1,11 @@
 package org.libraryexpress.domain.book.valueobject;
 
-import org.libraryexpress.domain.core.exception.InvalidArgumentException;
+import static java.util.function.Predicate.not;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
-import static java.util.function.Predicate.not;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 
 public record Author(String name) {
 

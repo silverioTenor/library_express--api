@@ -1,12 +1,11 @@
 package org.libraryexpress.application.customer.usecase;
 
+import java.util.List;
 import org.libraryexpress.application.customer.dto.request.CustomerFilterDTO;
 import org.libraryexpress.application.customer.dto.response.CustomerDTO;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
-
-import java.util.List;
 
 public class SearchCustomers {
 
@@ -23,18 +22,18 @@ public class SearchCustomers {
 
         List<CustomerDTO> customersDto = mapper.toResponseListDto(result.items());
 
-        if  (filterDto.paginationDto() == null || !filterDto.paginationDto().isPaginated()) {
+        if (filterDto.paginationDto() == null || !filterDto.paginationDto().isPaginated()) {
             return OutputPaginationDto.unpaginated(customersDto);
         }
 
-        int totalPages = Math.toIntExact(result.total() / filterDto.paginationDto().limit());
+        int totalPages =
+                Math.toIntExact(result.total() / filterDto.paginationDto().limit());
 
         return new OutputPaginationDto<>(
                 customersDto,
                 filterDto.paginationDto().page(),
                 filterDto.paginationDto().limit(),
                 totalPages,
-                result.total()
-        );
+                result.total());
     }
 }

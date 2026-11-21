@@ -1,5 +1,10 @@
 package org.libraryexpress.application.loan.usecase;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.time.LocalDate;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -7,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.libraryexpress.application.UnitTest;
 import org.libraryexpress.application.loan.dto.request.CreateLoanDTO;
 import org.libraryexpress.application.support.PassthroughTransactionManager;
-import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.libraryexpress.domain.book.entity.Book;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.exception.BookUnavailableException;
@@ -22,15 +26,10 @@ import org.libraryexpress.domain.loan.exception.LoanLimitReachedException;
 import org.libraryexpress.domain.loan.exception.OverdueLoanException;
 import org.libraryexpress.domain.loan.repository.LoanRepository;
 import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
+import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -66,8 +65,7 @@ class CreateLoanTest {
                 customerRepository,
                 loanEligibilityValidator,
                 bookAvailabilityValidator,
-                new LoanPeriodValidator()
-        );
+                new LoanPeriodValidator());
     }
 
     @Test
@@ -107,16 +105,11 @@ class CreateLoanTest {
     @DisplayName("Should reject loan creation when due date exceeds the 15-day limit")
     void shouldRejectLoan_whenDueDateExceeds15DayLimit() {
         LocalDate startDate = LocalDate.now();
-        CreateLoanDTO requestDto = new CreateLoanDTO(
-                CUSTOMER_ID,
-                BOOK_ID,
-                startDate.plusDays(LoanPeriodValidator.MAX_LOAN_DAYS + 1)
-        );
+        CreateLoanDTO requestDto =
+                new CreateLoanDTO(CUSTOMER_ID, BOOK_ID, startDate.plusDays(LoanPeriodValidator.MAX_LOAN_DAYS + 1));
 
-        DateOutOfBoundException exception = assertThrows(
-                DateOutOfBoundException.class,
-                () -> createLoan.execute(requestDto)
-        );
+        DateOutOfBoundException exception =
+                assertThrows(DateOutOfBoundException.class, () -> createLoan.execute(requestDto));
 
         assertEquals("End date cannot exceed the 15-day limit from start date", exception.getMessage());
         verifyNoInteractions(customerRepository);
@@ -161,7 +154,8 @@ class CreateLoanTest {
         when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.of(sampleCustomer()));
         when(bookAvailabilityValidator.validate(BOOK_ID)).thenReturn(availableBook());
         doThrow(new LoanLimitReachedException("Customer has reached the maximum limit of active loans."))
-                .when(loanEligibilityValidator).validate(CUSTOMER_ID);
+                .when(loanEligibilityValidator)
+                .validate(CUSTOMER_ID);
 
         assertThrows(LoanLimitReachedException.class, () -> createLoan.execute(requestDto));
 
@@ -176,7 +170,8 @@ class CreateLoanTest {
         when(customerRepository.getById(CUSTOMER_ID)).thenReturn(Optional.of(sampleCustomer()));
         when(bookAvailabilityValidator.validate(BOOK_ID)).thenReturn(availableBook());
         doThrow(new OverdueLoanException("Customer has a pending overdue return."))
-                .when(loanEligibilityValidator).validate(CUSTOMER_ID);
+                .when(loanEligibilityValidator)
+                .validate(CUSTOMER_ID);
 
         assertThrows(OverdueLoanException.class, () -> createLoan.execute(requestDto));
 
@@ -199,11 +194,10 @@ class CreateLoanTest {
                 BOOK_ID,
                 "9788535902778",
                 "Test-Driven Development",
-                new String[]{"Kent Beck"},
+                new String[] {"Kent Beck"},
                 0,
                 "AVAILABLE",
                 new String[0],
-                ""
-        );
+                "");
     }
 }

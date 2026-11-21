@@ -1,11 +1,10 @@
 package org.libraryexpress.application.loan.dto.request;
 
-import org.libraryexpress.domain.core.exception.InvalidArgumentException;
-import org.libraryexpress.domain.loan.entity.Loan;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
+import org.libraryexpress.domain.loan.entity.Loan;
 
 public record CreateLoanDTO(String customerId, String bookId, LocalDate dueDate) {
 

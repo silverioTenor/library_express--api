@@ -1,9 +1,9 @@
 package org.libraryexpress.domain.book.valueobject;
 
+import static java.util.function.Predicate.not;
+
 import java.util.Arrays;
 import java.util.List;
-
-import static java.util.function.Predicate.not;
 
 public record Category(String name) {
 
@@ -21,9 +21,9 @@ public record Category(String name) {
         return (categoryArray == null || categoryArray.length == 0)
                 ? List.of()
                 : Arrays.stream(categoryArray)
-                .map(String::trim)
-                .filter(not(String::isBlank))
-                .map(Category::new)
-                .toList();
+                        .map(String::trim)
+                        .filter(not(String::isBlank))
+                        .map(Category::new)
+                        .toList();
     }
 }

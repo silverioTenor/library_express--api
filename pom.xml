@@ -42,6 +42,7 @@
         <swagger.core.v3.version>2.2.25</swagger.core.v3.version>
         <swagger.ui.version>5.17.14</swagger.ui.version>
         <rest.assured.version>5.5.6</rest.assured.version>
+        <spotless.version>3.10.4</spotless.version>
 
         <exec.skip>true</exec.skip>
     </properties>
@@ -392,6 +393,26 @@
                             -Amapstruct.addGeneratedAnnotation=true
                         </arg>
                     </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <java>
+                        <removeUnusedImports/>
+<!--                        <forbidWildcardImports/>-->
+                        <shortenFullyQualifiedTypes/>
+                        <importOrder/>
+                        <palantirJavaFormat>
+                            <style>PALANTIR</style>
+                            <formatJavadoc>true</formatJavadoc>
+                        </palantirJavaFormat>
+                        <formatAnnotations/>
+                        <endWithNewline/>
+                    </java>
                 </configuration>
             </plugin>
         </plugins>

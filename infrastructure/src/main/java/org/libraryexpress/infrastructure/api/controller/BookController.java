@@ -1,5 +1,7 @@
 package org.libraryexpress.infrastructure.api.controller;
 
+import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
+
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -13,8 +15,6 @@ import org.libraryexpress.infrastructure.api.contract.openApi.BookApiMapping;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
 import org.libraryexpress.infrastructure.config.AppContext;
-
-import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
 
 @Path("/books")
 public final class BookController implements BookApiMapping {
@@ -36,8 +36,7 @@ public final class BookController implements BookApiMapping {
     @GET
     @Path("/{isbn}")
     public void get(HttpContextRequest request, HttpContextResponse response) throws Exception {
-        BookDTO outputDto = context.getFindBook()
-                .execute(request.getRouteParam("isbn"));
+        BookDTO outputDto = context.getFindBook().execute(request.getRouteParam("isbn"));
 
         response.status(SUCCESS).json(outputDto);
     }
@@ -54,8 +53,7 @@ public final class BookController implements BookApiMapping {
         String publishedYear = request.getQueryParam("publishedYear");
 
         var filterBookDto = new BookFilterDTO(
-                id, ISBN, title, author, statuses, publishedYear, pageRequest.page(), pageRequest.size()
-        );
+                id, ISBN, title, author, statuses, publishedYear, pageRequest.page(), pageRequest.size());
 
         OutputPaginationDto<BookDTO> outputDto = context.getListBooks().execute(filterBookDto);
 

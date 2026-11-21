@@ -1,25 +1,21 @@
 package org.libraryexpress.infrastructure.api.e2e;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
+import java.sql.DriverManager;
+import java.util.UUID;
 import org.junit.jupiter.api.*;
 import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.application.customer.dto.response.CustomerDTO;
 import org.libraryexpress.application.loan.dto.response.CreateLoanResponseDTO;
 import org.libraryexpress.application.loan.dto.response.LoanDTO;
-import org.libraryexpress.application.loan.dto.response.LoanReturnResponseDTO;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.E2ETest;
-
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.util.UUID;
-
-import static io.restassured.RestAssured.*;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.*;
 
 @E2ETest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -43,13 +39,12 @@ public class LoanE2ETest extends E2EBaseConfig {
                 }
                 """.formatted(customer.id(), book.id());
 
-        given()
-            .contentType(ContentType.JSON)
-            .body(payload)
-        .when()
-            .post("/loans")
-        .then()
-            .statusCode(201);
+        given().contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .post("/loans")
+                .then()
+                .statusCode(201);
     }
 
     @Test
@@ -59,30 +54,27 @@ public class LoanE2ETest extends E2EBaseConfig {
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
         var book = TestDataFactory.getBook("9788535902778");
 
-        given()
-            .contentType(ContentType.JSON)
-            .param("customerId", customer.id())
-        .when()
-            .get("/loans")
-        .then()
-            .statusCode(200);
+        given().contentType(ContentType.JSON)
+                .param("customerId", customer.id())
+                .when()
+                .get("/loans")
+                .then()
+                .statusCode(200);
 
-        given()
-            .contentType(ContentType.JSON)
-            .param("bookId", book.id())
-        .when()
-            .get("/loans")
-        .then()
-            .statusCode(200)
-            .body("items[0].bookId", is(book.id()));
+        given().contentType(ContentType.JSON)
+                .param("bookId", book.id())
+                .when()
+                .get("/loans")
+                .then()
+                .statusCode(200)
+                .body("items[0].bookId", is(book.id()));
 
-        given()
-            .contentType(ContentType.JSON)
-            .param("statuses", "ACTIVE")
-        .when()
-            .get("/loans")
-        .then()
-            .statusCode(200);
+        given().contentType(ContentType.JSON)
+                .param("statuses", "ACTIVE")
+                .when()
+                .get("/loans")
+                .then()
+                .statusCode(200);
     }
 
     @Test
@@ -102,28 +94,26 @@ public class LoanE2ETest extends E2EBaseConfig {
                 """.formatted(customer.id(), book.id());
 
         // Create new loan
-        given()
-            .contentType(ContentType.JSON)
-            .body(payload)
-        .when()
-            .post("/loans")
-        .then()
-            .statusCode(201);
+        given().contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .post("/loans")
+                .then()
+                .statusCode(201);
 
         // List all loans
-        given()
-            .contentType(ContentType.JSON)
-            .queryParam("page", 1)
-            .queryParam("limit", 1)
-        .when()
-            .get("/loans")
-        .then()
-            .statusCode(200)
-            .body("items.size()", is(1))
-            .body("page", is(1))
-            .body("limit", is(1))
-            .body("totalPages", is(2))
-            .body("total", is(2));
+        given().contentType(ContentType.JSON)
+                .queryParam("page", 1)
+                .queryParam("limit", 1)
+                .when()
+                .get("/loans")
+                .then()
+                .statusCode(200)
+                .body("items.size()", is(1))
+                .body("page", is(1))
+                .body("limit", is(1))
+                .body("totalPages", is(2))
+                .body("total", is(2));
     }
 
     @Test
@@ -146,26 +136,23 @@ public class LoanE2ETest extends E2EBaseConfig {
                 }
                 """.formatted(customer.id(), book.id());
 
-       var loanId = given()
-                       .contentType(ContentType.JSON)
-                       .body(payload)
-                   .when()
-                       .post("/loans")
-                       .as(CreateLoanResponseDTO.class);
+        var loanId = given().contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .post("/loans")
+                .as(CreateLoanResponseDTO.class);
 
-       assertNotNull(loanId);
+        assertNotNull(loanId);
 
-        given()
-            .contentType(ContentType.JSON)
-            .header("X-Trace-Id", "08004816-4be3-4d5f-96b8-119c78db1e52")
-            .pathParam("loanId", loanId.id())
-        .when()
-            .post("/loans/{loanId}/returns")
-        .then()
-            .statusCode(200)
-            .body("status", is("success"))
-            .body("message", is("Book returned."));
-
+        given().contentType(ContentType.JSON)
+                .header("X-Trace-Id", "08004816-4be3-4d5f-96b8-119c78db1e52")
+                .pathParam("loanId", loanId.id())
+                .when()
+                .post("/loans/{loanId}/returns")
+                .then()
+                .statusCode(200)
+                .body("status", is("success"))
+                .body("message", is("Book returned."));
     }
 
     @Test
@@ -184,17 +171,15 @@ public class LoanE2ETest extends E2EBaseConfig {
         assertNotNull(customer);
         assertNotNull(book);
 
-        given()
-            .contentType(ContentType.JSON)
-            .header("X-Trace-Id", "08004816-4be3-4d5f-96b8-119c78db1e52")
-            .pathParam("loanId", loanId)
-        .when()
-            .post("/loans/{loanId}/returns")
-        .then()
-            .statusCode(200)
-            .body("status", is("warning"))
-            .body("message", is("Book returned, but a late fee is pending."));
-
+        given().contentType(ContentType.JSON)
+                .header("X-Trace-Id", "08004816-4be3-4d5f-96b8-119c78db1e52")
+                .pathParam("loanId", loanId)
+                .when()
+                .post("/loans/{loanId}/returns")
+                .then()
+                .statusCode(200)
+                .body("status", is("warning"))
+                .body("message", is("Book returned, but a late fee is pending."));
     }
 
     @Test
@@ -207,15 +192,13 @@ public class LoanE2ETest extends E2EBaseConfig {
         String loanId = UUID.randomUUID().toString();
         TestDataFactory.createLoan(loanId, customer.id(), book.id(), "OVERDUE");
 
-        given()
-                .contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON)
                 .header("X-Trace-Id", "08004816-4be3-4d5f-96b8-119c78db1e52")
                 .pathParam("loanId", loanId)
                 .when()
                 .patch("/loans/{loanId}/close-overdue")
                 .then()
                 .statusCode(204);
-
     }
 
     @Test
@@ -235,14 +218,13 @@ public class LoanE2ETest extends E2EBaseConfig {
                 }
                 """.formatted(customer.id());
 
-        given()
-            .contentType(ContentType.JSON)
-            .body(firstPayload)
-        .when()
-            .post("/loans")
-        .then()
-            .statusCode(404)
-            .body("message", equalTo("Book not Found!"));
+        given().contentType(ContentType.JSON)
+                .body(firstPayload)
+                .when()
+                .post("/loans")
+                .then()
+                .statusCode(404)
+                .body("message", equalTo("Book not Found!"));
 
         String secondPayload = """
                 {
@@ -251,14 +233,13 @@ public class LoanE2ETest extends E2EBaseConfig {
                 }
                 """.formatted(book.id());
 
-        given()
-            .contentType(ContentType.JSON)
-            .body(secondPayload)
-        .when()
-            .post("/loans")
-        .then()
-            .statusCode(404)
-            .body("message", equalTo("Customer not found!"));
+        given().contentType(ContentType.JSON)
+                .body(secondPayload)
+                .when()
+                .post("/loans")
+                .then()
+                .statusCode(404)
+                .body("message", equalTo("Customer not found!"));
     }
 
     @Test
@@ -275,14 +256,13 @@ public class LoanE2ETest extends E2EBaseConfig {
                 }
                 """.formatted(customer.id(), book.id());
 
-        given()
-            .contentType(ContentType.JSON)
-            .body(firstPayload)
-        .when()
-            .post("/loans")
-        .then()
-            .statusCode(422)
-            .body("message", equalTo("Book is not available."));
+        given().contentType(ContentType.JSON)
+                .body(firstPayload)
+                .when()
+                .post("/loans")
+                .then()
+                .statusCode(422)
+                .body("message", equalTo("Book is not available."));
     }
 
     @Test
@@ -304,19 +284,19 @@ public class LoanE2ETest extends E2EBaseConfig {
                 }
                 """.formatted(customer.id(), book.id());
 
-        given()
-            .contentType(ContentType.JSON)
-            .body(payload)
-        .when()
-            .post("/loans")
-        .then()
-            .statusCode(422)
-            .body("message", equalTo("Customer has a pending overdue return."));
+        given().contentType(ContentType.JSON)
+                .body(payload)
+                .when()
+                .post("/loans")
+                .then()
+                .statusCode(422)
+                .body("message", equalTo("Customer has a pending overdue return."));
     }
 
     @Test
     @Order(8)
-    @DisplayName("Should throw an error when trying to create a loan for a customer has reached the maximum limit of active loans")
+    @DisplayName(
+            "Should throw an error when trying to create a loan for a customer has reached the maximum limit of active loans")
     void shouldThrowError_whenTryingCreateLoanForCustomerHasReachedTheMaximumLimitOfActiveLoans() {
         TestDataFactory.createBook("9788571641693");
 
@@ -330,8 +310,7 @@ public class LoanE2ETest extends E2EBaseConfig {
                 }
                 """.formatted(customer.id(), book.id());
 
-        given()
-                .contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON)
                 .body(payload)
                 .when()
                 .post("/loans")
@@ -344,51 +323,47 @@ public class LoanE2ETest extends E2EBaseConfig {
     @Order(9)
     @DisplayName("Should throw an error when trying to search with invalid parameters")
     void shouldThrowError_whenTryingSearchWithInvalidParameters() {
-        given()
-        .contentType(ContentType.JSON)
-            .queryParam("statuses", "PENDING")
-        .when()
-            .get("/loans")
-        .then()
-            .statusCode(400)
-            .body("message", equalTo("Invalid status values provided in query params."));
+        given().contentType(ContentType.JSON)
+                .queryParam("statuses", "PENDING")
+                .when()
+                .get("/loans")
+                .then()
+                .statusCode(400)
+                .body("message", equalTo("Invalid status values provided in query params."));
 
-        given()
-            .contentType(ContentType.JSON)
-            .queryParam("statuses", "invalid")
-        .when()
-            .get("/loans")
-        .then()
-            .statusCode(400)
-        .body("message", equalTo("Invalid status values provided in query params."));
+        given().contentType(ContentType.JSON)
+                .queryParam("statuses", "invalid")
+                .when()
+                .get("/loans")
+                .then()
+                .statusCode(400)
+                .body("message", equalTo("Invalid status values provided in query params."));
     }
 
     @Test
     @Order(10)
     @DisplayName("Should throw an error when trying return loan with an invalid ID")
     void shouldThrowError_whenTryingReturnLoanWithInvalidId() {
-        given()
-            .contentType(ContentType.JSON)
-            .pathParam("loanId", "invalid-loan-id")
-        .when()
-            .post("/loans/{loanId}/returns")
-        .then()
-            .statusCode(404)
-            .body("message", equalTo("No loan found matching the provided parameters."));
+        given().contentType(ContentType.JSON)
+                .pathParam("loanId", "invalid-loan-id")
+                .when()
+                .post("/loans/{loanId}/returns")
+                .then()
+                .statusCode(404)
+                .body("message", equalTo("No loan found matching the provided parameters."));
     }
 
     @Test
     @Order(11)
     @DisplayName("Should throw an error when trying close an overdue loan witch status is another")
     void shouldThrowError_whenTryingCloseOverdueLoan() {
-        given()
-            .contentType(ContentType.JSON)
-            .pathParam("loanId", "invalid-loan-id")
-        .when()
-            .patch("/loans/{loanId}/close-overdue")
-        .then()
-            .statusCode(404)
-            .body("message", equalTo("Loan not found!"));
+        given().contentType(ContentType.JSON)
+                .pathParam("loanId", "invalid-loan-id")
+                .when()
+                .patch("/loans/{loanId}/close-overdue")
+                .then()
+                .statusCode(404)
+                .body("message", equalTo("Loan not found!"));
 
         var customer = TestDataFactory.getCustomer("j.doe@test.com");
         var loans = TestDataFactory.getPagedLoans("", customer.id(), "ACTIVE");
@@ -396,14 +371,13 @@ public class LoanE2ETest extends E2EBaseConfig {
 
         if (loan.isEmpty()) throw new RuntimeException("TEST FAILED: No loan found!");
 
-        given()
-            .contentType(ContentType.JSON)
-            .pathParam("loanId", loan.get().id())
-        .when()
-            .patch("/loans/{loanId}/close-overdue")
-        .then()
-            .statusCode(422)
-            .body("message", equalTo("Only overdue loans can be closed through this flow."));
+        given().contentType(ContentType.JSON)
+                .pathParam("loanId", loan.get().id())
+                .when()
+                .patch("/loans/{loanId}/close-overdue")
+                .then()
+                .statusCode(422)
+                .body("message", equalTo("Only overdue loans can be closed through this flow."));
     }
 
     private static class TestDataFactory {
@@ -416,19 +390,17 @@ public class LoanE2ETest extends E2EBaseConfig {
                     }
                     """.formatted(email);
 
-            given()
-                .contentType(ContentType.JSON)
-            .header("X-Trace-Id", "e84830f5-a167-4748-9a31-7c3fb0f99165")
-                .body(payload)
-            .when()
-                .post("/customers")
-            .then()
-                .statusCode(201);
+            given().contentType(ContentType.JSON)
+                    .header("X-Trace-Id", "e84830f5-a167-4748-9a31-7c3fb0f99165")
+                    .body(payload)
+                    .when()
+                    .post("/customers")
+                    .then()
+                    .statusCode(201);
         }
 
         static CustomerDTO getCustomer(String email) {
-            var result = get("/customers?email=" + email).as(new TypeRef<OutputPaginationDto<CustomerDTO>>() {
-            });
+            var result = get("/customers?email=" + email).as(new TypeRef<OutputPaginationDto<CustomerDTO>>() {});
 
             assertNotNull(result.items());
 
@@ -446,14 +418,13 @@ public class LoanE2ETest extends E2EBaseConfig {
                     }
                     """.formatted(isbn);
 
-            given()
-                .contentType(ContentType.JSON)
-                .header("X-Trace-Id", "7278e119-b087-4528-87bd-a5e8809b9c49")
-                .body(payload)
-            .when()
-                .post("/books")
-            .then()
-                .statusCode(201);
+            given().contentType(ContentType.JSON)
+                    .header("X-Trace-Id", "7278e119-b087-4528-87bd-a5e8809b9c49")
+                    .body(payload)
+                    .when()
+                    .post("/books")
+                    .then()
+                    .statusCode(201);
         }
 
         static BookDTO getBook(String isbn) {
@@ -463,8 +434,7 @@ public class LoanE2ETest extends E2EBaseConfig {
         static OutputPaginationDto<LoanDTO> getPagedLoans(String... parameterValues) {
             String[] parameterNames = {"bookId", "customerId", "statuses"};
 
-            var request = given()
-                .contentType(ContentType.JSON);
+            var request = given().contentType(ContentType.JSON);
 
             int limit = Math.min(parameterValues.length, parameterNames.length);
 
@@ -473,11 +443,12 @@ public class LoanE2ETest extends E2EBaseConfig {
             }
 
             return request.when()
-                .get("/loans")
-            .then()
-                .statusCode(200)
-                .extract()
-                .body().as(new TypeRef<OutputPaginationDto<LoanDTO>>() {});
+                    .get("/loans")
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .body()
+                    .as(new TypeRef<OutputPaginationDto<LoanDTO>>() {});
         }
 
         static void createLoan(String loanId, String customerId, String bookId, String status) {
@@ -491,7 +462,7 @@ public class LoanE2ETest extends E2EBaseConfig {
             String dbPassword = postgres.getPassword();
 
             try (var conn = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword);
-                 var stmt = conn.prepareStatement(sql)) {
+                    var stmt = conn.prepareStatement(sql)) {
 
                 stmt.setObject(1, UUID.fromString(loanId));
                 stmt.setObject(2, UUID.fromString(bookId));
@@ -500,7 +471,8 @@ public class LoanE2ETest extends E2EBaseConfig {
                 stmt.executeUpdate();
 
             } catch (java.sql.SQLException e) {
-                throw new RuntimeException("Test execution collapse seeding overdue loan simulation record into container baseline", e);
+                throw new RuntimeException(
+                        "Test execution collapse seeding overdue loan simulation record into container baseline", e);
             }
         }
     }

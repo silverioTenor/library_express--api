@@ -1,5 +1,11 @@
 package org.libraryexpress.application.loan.usecase;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,13 +21,6 @@ import org.libraryexpress.domain.loan.repository.LoanRepository;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -54,8 +53,7 @@ class SearchLoansTest {
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
                 LocalDate.now().plusDays(15),
-                null
-        );
+                null);
 
         LoanDTO expectedDto = new LoanDTO(
                 "loan-1",
@@ -64,8 +62,7 @@ class SearchLoansTest {
                 LoanStatus.ACTIVE,
                 LocalDate.now(),
                 LocalDate.now().plusDays(15),
-                mockLoan.getClosedAt()
-        );
+                mockLoan.getClosedAt());
 
         // Stubbing repository query and mapper conversion layers
         when(loanRepository.search(validFilter.toLoanFilter())).thenReturn(new QueryResult<>(List.of(mockLoan), 1));
@@ -87,15 +84,8 @@ class SearchLoansTest {
         LocalDate endDate = startDate.plusDays(15);
         var overdueFilter = new LoanFilterDTO(null, CUSTOMER_ID, BOOK_ID, "overdue", 0, 0);
 
-        Loan overdueLoan = Loan.restore(
-                "loan-overdue-1",
-                BOOK_ID,
-                CUSTOMER_ID,
-                LoanStatus.OVERDUE,
-                startDate,
-                endDate,
-                null
-        );
+        Loan overdueLoan =
+                Loan.restore("loan-overdue-1", BOOK_ID, CUSTOMER_ID, LoanStatus.OVERDUE, startDate, endDate, null);
 
         LoanDTO expectedDto = new LoanDTO(
                 "loan-overdue-1",
@@ -104,10 +94,10 @@ class SearchLoansTest {
                 LoanStatus.OVERDUE,
                 startDate,
                 endDate,
-                overdueLoan.getClosedAt()
-        );
+                overdueLoan.getClosedAt());
 
-        when(loanRepository.search(overdueFilter.toLoanFilter())).thenReturn(new QueryResult<>(List.of(overdueLoan), 1));
+        when(loanRepository.search(overdueFilter.toLoanFilter()))
+                .thenReturn(new QueryResult<>(List.of(overdueLoan), 1));
         when(mapper.toResponseDto(overdueLoan)).thenReturn(expectedDto);
 
         OutputPaginationDto<LoanDTO> results = searchLoans.execute(overdueFilter);

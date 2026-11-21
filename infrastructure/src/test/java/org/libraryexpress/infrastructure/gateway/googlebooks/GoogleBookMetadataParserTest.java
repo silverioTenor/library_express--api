@@ -1,13 +1,12 @@
 package org.libraryexpress.infrastructure.gateway.googlebooks;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.book.valueobject.BookMetadata;
 import org.libraryexpress.infrastructure.UnitTest;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @UnitTest
 @DisplayName("Google Books metadata parser")
@@ -37,14 +36,15 @@ class GoogleBookMetadataParserTest {
         Optional<BookMetadata> parsed = GoogleBookMetadataParser.parse(json);
 
         assertTrue(parsed.isPresent());
-        assertEquals(new BookMetadata(
-                "9780132350884",
-                "Clean Code",
-                "Robert C. Martin, Michael Feathers",
-                2008,
-                "Computers, Software Engineering",
-                "A book description"
-        ), parsed.get());
+        assertEquals(
+                new BookMetadata(
+                        "9780132350884",
+                        "Clean Code",
+                        "Robert C. Martin, Michael Feathers",
+                        2008,
+                        "Computers, Software Engineering",
+                        "A book description"),
+                parsed.get());
     }
 
     @Test
@@ -69,7 +69,8 @@ class GoogleBookMetadataParserTest {
                 {"items":[{"volumeInfo":{"description":"%s"}}]}
                 """.formatted(description);
 
-        String parsedDescription = GoogleBookMetadataParser.parse(json).orElseThrow().description();
+        String parsedDescription =
+                GoogleBookMetadataParser.parse(json).orElseThrow().description();
 
         assertEquals(500, parsedDescription.length());
         assertTrue(parsedDescription.endsWith("..."));

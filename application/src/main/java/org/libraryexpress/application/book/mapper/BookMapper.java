@@ -1,8 +1,9 @@
 package org.libraryexpress.application.book.mapper;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.domain.book.entity.Book;
-import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.valueobject.Author;
 import org.libraryexpress.domain.book.valueobject.BookMetadata;
 import org.libraryexpress.domain.book.valueobject.Category;
@@ -10,24 +11,19 @@ import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Mapper(unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface BookMapper {
 
     BookMapper INSTANCE = Mappers.getMapper(BookMapper.class);
 
-//    @Mapping(target = "authors", source = "author")
-//    @Mapping(target = "categories", source = "category")
+    //    @Mapping(target = "authors", source = "author")
+    //    @Mapping(target = "categories", source = "category")
     BookDTO toResponseDto(Book book);
 
     List<BookDTO> toResponseListDto(List<Book> books);
 
     default String mapAuthors(List<Author> authors) {
-        return authors == null
-                ? null
-                : authors.stream().map(Author::name).collect(Collectors.joining(", "));
+        return authors == null ? null : authors.stream().map(Author::name).collect(Collectors.joining(", "));
     }
 
     default Book toEntity(BookMetadata bookMetadata, String status) {
@@ -38,8 +34,7 @@ public interface BookMapper {
                 bookMetadata.publicationYear(),
                 status,
                 bookMetadata.category(),
-                bookMetadata.description()
-        );
+                bookMetadata.description());
     }
 
     @Named("stringToIsbn")

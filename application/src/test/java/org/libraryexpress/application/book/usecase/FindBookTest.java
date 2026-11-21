@@ -1,5 +1,11 @@
 package org.libraryexpress.application.book.usecase;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,13 +19,6 @@ import org.libraryexpress.domain.book.repository.BookRepository;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +43,15 @@ class FindBookTest {
     void shouldReturnBookDto_whenBookExists() {
         // Arrange
         Book foundBook = Book.create(ISBN_STR, "Clean Code", "Robert C. Martin", 0, "AVAILABLE", "", "");
-        BookDTO expectedDto = new BookDTO(UUID_STR, ISBN_STR, "Clean Code", List.of("Robert C. Martin"), 2008, BookStatus.AVAILABLE, List.of(""), "");
+        BookDTO expectedDto = new BookDTO(
+                UUID_STR,
+                ISBN_STR,
+                "Clean Code",
+                List.of("Robert C. Martin"),
+                2008,
+                BookStatus.AVAILABLE,
+                List.of(""),
+                "");
 
         // Stubbing repository query and mapper layer conversion
         when(bookRepository.getByIsbn(ISBN_STR)).thenReturn(Optional.of(foundBook));

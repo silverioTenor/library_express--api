@@ -5,8 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Concrete Anti-Corruption Layer adapter mapping domain logging interfaces
- * straight into native high-performance SLF4J + Logback runtime contexts.
+ * Concrete Anti-Corruption Layer adapter mapping domain logging interfaces straight into native high-performance SLF4J
+ * + Logback runtime contexts.
  */
 public class Slf4jLoggerAdapter implements CustomLogger {
 

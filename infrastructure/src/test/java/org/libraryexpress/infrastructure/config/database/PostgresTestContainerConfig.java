@@ -2,16 +2,15 @@ package org.libraryexpress.infrastructure.config.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.flywaydb.core.Flyway;
-import org.junit.jupiter.api.AfterEach;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.Properties;
+import javax.sql.DataSource;
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.AfterEach;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 public abstract class PostgresTestContainerConfig {
 
@@ -27,13 +26,13 @@ public abstract class PostgresTestContainerConfig {
         postgresContainer = new PostgreSQLContainer("postgres:17-alpine");
 
         // Routing real-time container log buffers straight to standard system stdout channels
-        postgresContainer.withLogConsumer(outputFrame ->
-                System.out.print("[POSTGRES-DOCKER] " + outputFrame.getUtf8String())
-        );
+        postgresContainer.withLogConsumer(
+                outputFrame -> System.out.print("[POSTGRES-DOCKER] " + outputFrame.getUtf8String()));
 
         System.out.println("[TESTCONTAINERS] - Launching container instance...");
         postgresContainer.start();
-        System.out.println("[TESTCONTAINERS] - Container initialized on mapped port: " + postgresContainer.getFirstMappedPort());
+        System.out.println(
+                "[TESTCONTAINERS] - Container initialized on mapped port: " + postgresContainer.getFirstMappedPort());
 
         // Building the runtime connection pooling stack using properties files parameters
         HikariConfig config = new HikariConfig();
@@ -73,8 +72,8 @@ public abstract class PostgresTestContainerConfig {
 
     private static Properties loadTestProperties() {
         Properties props = new Properties();
-        try (InputStream input = PostgresTestContainerConfig.class.getClassLoader()
-                .getResourceAsStream("application.properties")) {
+        try (InputStream input =
+                PostgresTestContainerConfig.class.getClassLoader().getResourceAsStream("application.properties")) {
             if (input == null) {
                 System.err.println("Warning: application.properties not found inside test resources classpath.");
                 return props;
@@ -91,7 +90,7 @@ public abstract class PostgresTestContainerConfig {
         String sql = "TRUNCATE TABLE loan, book, customer RESTART IDENTITY CASCADE";
 
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
+                Statement statement = connection.createStatement()) {
 
             statement.executeUpdate(sql);
 
