@@ -23,101 +23,86 @@ public interface CustomerApiMapping {
 
     @Schema(name = "CreateCustomerRequest")
     record CreateCustomerContract(
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name,
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String email
-    ) {}
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            String name,
+
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            String email) {}
 
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Create a customer",
-            requestBody = @RequestBody(
-                    required = true,
-                    content =  @Content(
-                            mediaType =  MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = CreateCustomerContract.class)
-                    )
-            )
-    )
-    @Parameters({
-            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
-    })
+            requestBody =
+                    @RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.APPLICATION_JSON,
+                                            schema = @Schema(implementation = CreateCustomerContract.class))))
+    @Parameters({@Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)})
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Customer created"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Validation failure",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-            ,
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Duplicate email",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Internal Server Error",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
+        @ApiResponse(responseCode = "201", description = "Customer created"),
+        @ApiResponse(
+                responseCode = "400",
+                description = "Validation failure",
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(
+                responseCode = "409",
+                description = "Duplicate email",
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(
+                responseCode = "500",
+                description = "Internal Server Error",
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     void create(HttpContextRequest request, HttpContextResponse response) throws Exception;
 
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Update a customer's email",
-            requestBody = @RequestBody(
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(
-                                type = "object",
-                                requiredProperties = {"email"},
-                                properties = @StringToClassMapItem(key = "email", value = String.class)
-                            )
-                    )
-            )
-    )
+            requestBody =
+                    @RequestBody(
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.APPLICATION_JSON,
+                                            schema =
+                                                    @Schema(
+                                                            type = "object",
+                                                            requiredProperties = {"email"},
+                                                            properties =
+                                                                    @StringToClassMapItem(
+                                                                            key = "email",
+                                                                            value = String.class)))))
     @Parameters({
-            @Parameter(name = "id", in = ParameterIn.PATH, required = true),
-            @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
+        @Parameter(name = "id", in = ParameterIn.PATH, required = true),
+        @Parameter(name = "X-Trace-Id", in = ParameterIn.HEADER)
     })
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "204",
-                    description = "Email updated"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Customer not found",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            ),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "Email already in use by another customer",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
+        @ApiResponse(responseCode = "204", description = "Email updated"),
+        @ApiResponse(
+                responseCode = "404",
+                description = "Customer not found",
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(
+                responseCode = "409",
+                description = "Email already in use by another customer",
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     void updateEmail(HttpContextRequest request, HttpContextResponse response) throws Exception;
 
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Search customers (paginated)",
-            requestBody =  @RequestBody(content = @Content())
-    )
-    @Parameters({
-            @Parameter(name = "id", in = ParameterIn.QUERY),
-            @Parameter(name = "email", in = ParameterIn.QUERY)
-    })
+    @Operation(summary = "Search customers (paginated)", requestBody = @RequestBody(content = @Content()))
+    @Parameters({@Parameter(name = "id", in = ParameterIn.QUERY), @Parameter(name = "email", in = ParameterIn.QUERY)})
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Paginated list of customers",
-                    content = @Content(schema = @Schema(implementation = OutputPaginationDto.class) )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Customer not found",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-            )
+        @ApiResponse(
+                responseCode = "200",
+                description = "Paginated list of customers",
+                content = @Content(schema = @Schema(implementation = OutputPaginationDto.class))),
+        @ApiResponse(
+                responseCode = "404",
+                description = "Customer not found",
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     void search(HttpContextRequest request, HttpContextResponse response) throws Exception;
 }

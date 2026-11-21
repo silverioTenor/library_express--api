@@ -1,13 +1,12 @@
 package org.libraryexpress.infrastructure.gateway.googlebooks;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Optional;
+import java.util.StringJoiner;
 import org.libraryexpress.domain.book.valueobject.BookMetadata;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.infrastructure.config.JacksonConfig;
-
-import java.util.Optional;
-import java.util.StringJoiner;
 
 final class GoogleBookMetadataParser {
 
@@ -49,15 +48,14 @@ final class GoogleBookMetadataParser {
     }
 
     private static String extractIsbn(JsonNode item) {
-        JsonNode industryIdentifiers = item.path("volumeInfo")
-                .path("industryIdentifiers");
+        JsonNode industryIdentifiers = item.path("volumeInfo").path("industryIdentifiers");
         String isbn10 = null;
 
         for (JsonNode identifier : industryIdentifiers) {
             String type = identifier.path("type").asText();
 
             if ("ISBN_13".equals(type)) {
-               return identifier.path("identifier").asText();
+                return identifier.path("identifier").asText();
             }
 
             if ("ISBN_10".equals(type)) {
@@ -69,13 +67,11 @@ final class GoogleBookMetadataParser {
     }
 
     private static String extractTitle(JsonNode item) {
-        return item.path("volumeInfo")
-                .path("title").asText();
+        return item.path("volumeInfo").path("title").asText();
     }
 
     private static String extractAuthor(JsonNode item) {
-        JsonNode authors = item.path("volumeInfo")
-                .path("authors");
+        JsonNode authors = item.path("volumeInfo").path("authors");
 
         if (!authors.isArray() || authors.isEmpty()) return "";
 
@@ -89,8 +85,7 @@ final class GoogleBookMetadataParser {
     }
 
     private static int extractYear(JsonNode item) {
-        String publishedDate = item.path("volumeInfo")
-                .path("publishedDate").asText();
+        String publishedDate = item.path("volumeInfo").path("publishedDate").asText();
 
         if (publishedDate.isBlank() || publishedDate.length() < 4) return 0;
 
@@ -102,8 +97,7 @@ final class GoogleBookMetadataParser {
     }
 
     private static String extractCategory(JsonNode item) {
-        JsonNode categories = item.path("volumeInfo")
-                .path("categories");
+        JsonNode categories = item.path("volumeInfo").path("categories");
 
         if (!categories.isArray() || categories.isEmpty()) return "";
 
@@ -117,8 +111,7 @@ final class GoogleBookMetadataParser {
     }
 
     private static String extractDescription(JsonNode item) {
-        String description = item.path("volumeInfo")
-                .path("description").asText();
+        String description = item.path("volumeInfo").path("description").asText();
 
         if (description.length() <= 500) return description;
 

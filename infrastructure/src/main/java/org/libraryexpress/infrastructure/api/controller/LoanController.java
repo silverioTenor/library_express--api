@@ -1,5 +1,7 @@
 package org.libraryexpress.infrastructure.api.controller;
 
+import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
+
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
@@ -15,8 +17,6 @@ import org.libraryexpress.infrastructure.api.contract.openApi.LoanApiMapping;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
 import org.libraryexpress.infrastructure.config.AppContext;
-
-import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
 
 @Path("/loans")
 public final class LoanController implements LoanApiMapping {
@@ -60,10 +60,9 @@ public final class LoanController implements LoanApiMapping {
     }
 
     /**
-     * TODO - Temporary/palliative flow.
-     * Once fine calculation and score adjustment are implemented directly in LoanReturn,
-     * this flow should become obsolete — OVERDUE loans should transition to FINISHED
-     * automatically at return time, not via manual intervention.
+     * TODO - Temporary/palliative flow. Once fine calculation and score adjustment are implemented directly in
+     * LoanReturn, this flow should become obsolete — OVERDUE loans should transition to FINISHED automatically at
+     * return time, not via manual intervention.
      */
     @PATCH
     @Path("/{loanId}/close-overdue")

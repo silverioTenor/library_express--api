@@ -1,15 +1,14 @@
 package org.libraryexpress.infrastructure.gateway.adapter;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.sun.net.httpserver.HttpServer;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.infrastructure.UnitTest;
 import org.libraryexpress.infrastructure.gateway.contract.ClientResponse;
-
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @UnitTest
 @DisplayName("Native HTTP client")
@@ -28,9 +27,8 @@ class NativeHttpClientTest {
         server.start();
 
         try {
-            ClientResponse response = new NativeHttpClient().get(
-                    "http://127.0.0.1:" + server.getAddress().getPort() + "/books"
-            );
+            ClientResponse response = new NativeHttpClient()
+                    .get("http://127.0.0.1:" + server.getAddress().getPort() + "/books");
 
             assertEquals(200, response.statusCode());
             assertEquals("book metadata", response.body());

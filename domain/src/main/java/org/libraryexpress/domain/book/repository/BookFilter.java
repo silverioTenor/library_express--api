@@ -1,10 +1,9 @@
 package org.libraryexpress.domain.book.repository;
 
+import java.util.Set;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.book.valueobject.Isbn;
 import org.libraryexpress.domain.core.dto.InputPaginationDto;
-
-import java.util.Set;
 
 public record BookFilter(
         String id,
@@ -13,5 +12,4 @@ public record BookFilter(
         String author,
         Integer publishedYear,
         Set<BookStatus> statuses,
-        InputPaginationDto paginationDto
-) {}
+        InputPaginationDto paginationDto) {}

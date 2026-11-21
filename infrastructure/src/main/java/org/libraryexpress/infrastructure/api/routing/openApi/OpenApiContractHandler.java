@@ -1,12 +1,11 @@
 package org.libraryexpress.infrastructure.api.routing.openApi;
 
+import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
+
+import java.io.InputStream;
 import org.libraryexpress.infrastructure.api.routing.CustomHttpHandler;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
-
-import java.io.InputStream;
-
-import static org.libraryexpress.infrastructure.api.enums.HttpStatusCode.*;
 
 public final class OpenApiContractHandler implements CustomHttpHandler {
 

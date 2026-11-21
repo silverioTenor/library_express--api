@@ -1,39 +1,21 @@
 package org.libraryexpress.application.loan.dto.request;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.libraryexpress.domain.core.dto.InputPaginationDto;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.loan.enums.LoanStatus;
 import org.libraryexpress.domain.loan.repository.LoanFilter;
 
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 public record LoanFilterDTO(
-        String id,
-        String customerId,
-        String bookId,
-        Set<LoanStatus> statuses,
-        InputPaginationDto paginationDto
-) {
+        String id, String customerId, String bookId, Set<LoanStatus> statuses, InputPaginationDto paginationDto) {
     public LoanFilterDTO(String id, String customerId, String bookId, String statusesStr, int page, int size) {
-        this(
-                id,
-                customerId,
-                bookId,
-                parseStatuses(statusesStr),
-                new InputPaginationDto(page, size)
-        );
+        this(id, customerId, bookId, parseStatuses(statusesStr), new InputPaginationDto(page, size));
     }
 
     public LoanFilter toLoanFilter() {
-        return new LoanFilter(
-                id,
-                customerId,
-                bookId,
-                statuses,
-                paginationDto
-        );
+        return new LoanFilter(id, customerId, bookId, statuses, paginationDto);
     }
 
     private static Set<LoanStatus> parseStatuses(String statusesStr) {

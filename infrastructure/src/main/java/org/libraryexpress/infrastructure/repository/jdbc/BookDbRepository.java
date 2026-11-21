@@ -1,14 +1,17 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
-import org.libraryexpress.domain.book.entity.Book;
-import org.libraryexpress.domain.book.enums.BookStatus;
-import org.libraryexpress.domain.book.repository.BookRepository;
-import org.libraryexpress.domain.core.repository.QueryResult;
-import org.libraryexpress.domain.book.repository.BookFilter;
-
-import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
+import javax.sql.DataSource;
+import org.libraryexpress.domain.book.entity.Book;
+import org.libraryexpress.domain.book.enums.BookStatus;
+import org.libraryexpress.domain.book.repository.BookFilter;
+import org.libraryexpress.domain.book.repository.BookRepository;
+import org.libraryexpress.domain.core.repository.QueryResult;
+import org.libraryexpress.infrastructure.config.ConfigRegistry;
+import org.libraryexpress.infrastructure.config.database.transaction.TransactionContext;
+import org.libraryexpress.infrastructure.exception.LockAcquisitionException;
+import org.libraryexpress.infrastructure.exception.TransactionException;
 
 public class BookDbRepository implements BookRepository {
 
@@ -18,15 +21,13 @@ public class BookDbRepository implements BookRepository {
         this.dataSource = dataSource;
     }
 
-
     @Override
     public void create(Book book) {
-        String query = "INSERT INTO book (id, isbn, title, publication_year, status, description, author, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String query =
+                "INSERT INTO book (id, isbn, title, publication_year, status, description, author, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query)
-        ) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
             Array authorSqlArray = connection.createArrayOf("text", book.getAuthorsAsArray());
             Array categorySqlArray = connection.createArrayOf("text", book.getCategoriesAsArray());
 
@@ -50,12 +51,11 @@ public class BookDbRepository implements BookRepository {
 
     @Override
     public void update(Book book) {
-        String query = "UPDATE book SET title = ?, publication_year = ?, status = ?, description = ?, author = ?, category = ? WHERE id = ?";
+        String query =
+                "UPDATE book SET title = ?, publication_year = ?, status = ?, description = ?, author = ?, category = ? WHERE id = ?";
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query)
-        ) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
             Array authorSqlArray = connection.createArrayOf("text", book.getAuthorsAsArray());
             Array categorySqlArray = connection.createArrayOf("text", book.getCategoriesAsArray());
 
@@ -78,12 +78,13 @@ public class BookDbRepository implements BookRepository {
 
     @Override
     public Optional<Book> getById(String id) {
-        String query = "SELECT id, isbn, title, author, publication_year, status, category, description FROM book WHERE id::text = ?";
+        String query =
+                "SELECT id, isbn, title, author, publication_year, status, category, description FROM book WHERE id::text = ?";
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query)
-        ) {
+        if (TransactionContext.isTransactionActive()) query += " FOR UPDATE";
+
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, id);
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -93,7 +94,15 @@ public class BookDbRepository implements BookRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing book payload query by id: " + e.getMessage(), e);
+            if (TransactionContext.isTransactionActive()) {
+                if (ConfigRegistry.PG_LOCK_NOT_AVAILABLE.equals(e.getSQLState())) {
+                    throw new LockAcquisitionException("The book [" + id
+                            + "] is currently being processed by another operation." + e.getMessage());
+                }
+                throw new TransactionException(
+                        "Database error while locking book with ID: [" + id + "] " + e.getMessage());
+            }
+            throw new RuntimeException("Fatal database error during unique loan query operation: " + e.getMessage(), e);
         }
 
         return Optional.empty();
@@ -101,12 +110,13 @@ public class BookDbRepository implements BookRepository {
 
     @Override
     public Optional<Book> getByIsbn(String ISBN) {
-        String query = "SELECT id, isbn, title, author, publication_year, status, category, description FROM book WHERE isbn = ?";
+        String query =
+                "SELECT id, isbn, title, author, publication_year, status, category, description FROM book WHERE isbn = ?";
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query)
-        ) {
+        if (TransactionContext.isTransactionActive()) query += " FOR UPDATE";
+
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
 
             statement.setString(1, ISBN);
 
@@ -117,7 +127,16 @@ public class BookDbRepository implements BookRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing book payload query by isbn: " + e.getMessage(), e);
+            if (TransactionContext.isTransactionActive()) {
+                if (ConfigRegistry.PG_LOCK_NOT_AVAILABLE.equals(e.getSQLState())) {
+                    throw new LockAcquisitionException("The book with ISBN [" + ISBN
+                            + "] is currently being processed by another operation." + e.getMessage());
+                }
+                throw new TransactionException(
+                        "Database error while locking book with ISBN: [" + ISBN + "] " + e.getMessage());
+            }
+            throw new RuntimeException(
+                    "Fatal database error executing book payload query by isbn: " + e.getMessage(), e);
         }
 
         return Optional.empty();
@@ -125,7 +144,8 @@ public class BookDbRepository implements BookRepository {
 
     @Override
     public QueryResult<Book> search(BookFilter filter) {
-        boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
+        boolean shouldPaginate =
+                filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
         var query = shouldPaginate
                 ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM book WHERE 1=1")
@@ -136,7 +156,8 @@ public class BookDbRepository implements BookRepository {
 
         boolean hasIsbnFilter = filter.ISBN() != null && !filter.ISBN().value().isBlank();
         boolean hasIdFilter = filter.id() != null && !filter.id().isBlank();
-        boolean hasStatusFilter = filter.statuses() != null && !filter.statuses().isEmpty();
+        boolean hasStatusFilter =
+                filter.statuses() != null && !filter.statuses().isEmpty();
 
         if (hasIdFilter) query.append(" AND id::text = ?");
         if (hasIsbnFilter) query.append(" AND isbn = ?");
@@ -147,10 +168,8 @@ public class BookDbRepository implements BookRepository {
         if (shouldPaginate) query.append(" ORDER BY created_at, id DESC LIMIT ? OFFSET ?;");
         else query.append(" ORDER BY created_at DESC;");
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query.toString());
-        ) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query.toString()); ) {
             int parameterIndex = 1;
 
             if (hasIdFilter) {
@@ -162,9 +181,8 @@ public class BookDbRepository implements BookRepository {
             }
 
             if (hasStatusFilter) {
-                String[] statusStr = filter.statuses().stream()
-                        .map(BookStatus::name)
-                        .toArray(String[]::new);
+                String[] statusStr =
+                        filter.statuses().stream().map(BookStatus::name).toArray(String[]::new);
 
                 Array statusArray = connection.createArrayOf("varchar", statusStr);
                 statement.setArray(parameterIndex++, statusArray);
@@ -195,15 +213,14 @@ public class BookDbRepository implements BookRepository {
             totalElements = shouldPaginate ? countFromWindow : books.size();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing unrestricted books catalog query: " + e.getMessage(), e);
+            throw new RuntimeException(
+                    "Fatal database error executing unrestricted books catalog query: " + e.getMessage(), e);
         }
 
         return new QueryResult<Book>(books, totalElements);
     }
 
-    /**
-     * Map a book tuple back into its respective clean domain model abstraction.
-     */
+    /** Map a book tuple back into its respective clean domain model abstraction. */
     private Book mapRowToBook(ResultSet resultSet) throws SQLException {
         Array authorArray = resultSet.getArray("author");
         String[] authors = (authorArray != null) ? (String[]) authorArray.getArray() : new String[0];
@@ -219,7 +236,6 @@ public class BookDbRepository implements BookRepository {
                 resultSet.getInt("publication_year"),
                 resultSet.getString("status"),
                 categories,
-                resultSet.getString("description")
-        );
+                resultSet.getString("description"));
     }
 }

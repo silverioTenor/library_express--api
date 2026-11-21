@@ -1,15 +1,14 @@
 package org.libraryexpress.infrastructure.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import org.libraryexpress.domain.core.logging.CustomLogger;
-import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.libraryexpress.domain.core.logging.CustomLogger;
+import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 
 public final class ConfigRegistry {
 
@@ -18,10 +17,10 @@ public final class ConfigRegistry {
     private static final Dotenv dotenv;
     private static final Properties properties;
 
+    public static final String PG_LOCK_NOT_AVAILABLE = "55P03";
+
     static {
-        dotenv = Dotenv.configure()
-                .ignoreIfMissing()
-                .load();
+        dotenv = Dotenv.configure().ignoreIfMissing().load();
 
         properties = new Properties();
 
@@ -84,6 +83,10 @@ public final class ConfigRegistry {
         return Long.parseLong(resolve("hikari.max-lifetime", "900000"));
     }
 
+    public static long getDbLockTimeOut() {
+        return Long.parseLong(resolve("db.lock.timeout-ms", "3000"));
+    }
+
     public static String getAppEnv() {
         return resolve("APP_ENV", "prod");
     }
@@ -99,8 +102,7 @@ public final class ConfigRegistry {
                         () -> System.getProperty(key),
                         () -> System.getenv(key),
                         () -> dotenv.get(key),
-                        () -> properties.getProperty(key)
-                )
+                        () -> properties.getProperty(key))
                 .map(Supplier::get)
                 .filter(Objects::nonNull)
                 .filter(value -> !value.isBlank())
@@ -108,8 +110,7 @@ public final class ConfigRegistry {
                 .orElseGet(() -> {
                     if (defaultValue == null || defaultValue.isBlank()) {
                         throw new IllegalStateException(String.format(
-                                "Fatal Boot Error: Configuration key [%s] is mandatory but was not defined!", key
-                        ));
+                                "Fatal Boot Error: Configuration key [%s] is mandatory but was not defined!", key));
                     }
                     return defaultValue;
                 });

@@ -1,5 +1,9 @@
 package org.libraryexpress.infrastructure.api.routing;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -7,11 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.libraryexpress.infrastructure.UnitTest;
 import org.libraryexpress.infrastructure.config.logging.LogTrace;
 import org.mockito.Mockito;
-
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @DisplayName("LogTraceFilter - Unit Test")
@@ -52,7 +51,9 @@ public class LogTraceFilterTest {
         // Task Solution: Direct, crisp verification checking if headers and delegation triggers fired correctly
         verify(nextHandler, times(1)).handle(request, response);
         verify(response, times(1)).setHeader(TRACE_HEADER, existingTrackToken);
-        assertNull(LogTrace.get(), "MDC context must be completely purged from thread allocation buffers upon execution completion");
+        assertNull(
+                LogTrace.get(),
+                "MDC context must be completely purged from thread allocation buffers upon execution completion");
     }
 
     @Test
@@ -63,33 +64,45 @@ public class LogTraceFilterTest {
 
         // Act
         doAnswer(invocation -> {
-            String activeMdcToken = LogTrace.get();
-            assertNotNull(activeMdcToken, "A fallback tracking token must be dynamically seeded into the active execution thread mapping");
-            assertFalse(activeMdcToken.isBlank());
-            return null;
-        }).when(nextHandler).handle(any(), any());
+                    String activeMdcToken = LogTrace.get();
+                    assertNotNull(
+                            activeMdcToken,
+                            "A fallback tracking token must be dynamically seeded into the active execution thread mapping");
+                    assertFalse(activeMdcToken.isBlank());
+                    return null;
+                })
+                .when(nextHandler)
+                .handle(any(), any());
 
         filter.doFilter(request, response, nextHandler);
 
         // Assert
         // Verifying if response header method intercept captured any valid generated string entry
         verify(response, times(1)).setHeader(eq(TRACE_HEADER), anyString());
-        assertNull(LogTrace.get(), "MDC framework state must clear references to protect virtual thread recycling pipelines");
+        assertNull(
+                LogTrace.get(),
+                "MDC framework state must clear references to protect virtual thread recycling pipelines");
     }
 
     @Test
-    @DisplayName("Should guarantee complete context clearing protect hooks even when downstream controller handlers fail")
+    @DisplayName(
+            "Should guarantee complete context clearing protect hooks even when downstream controller handlers fail")
     void shouldEnforceMdcPurge_evenWhenDownstreamHandlerFailsCatastrophically() throws Exception {
         // Arrange
         when(request.getHeader(TRACE_HEADER)).thenReturn("FAULTY-TRACK-ID");
         doThrow(new RuntimeException("Severe database connection dropped during controller frame execution"))
-                .when(nextHandler).handle(any(), any());
+                .when(nextHandler)
+                .handle(any(), any());
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> filter.doFilter(request, response, nextHandler),
+        assertThrows(
+                RuntimeException.class,
+                () -> filter.doFilter(request, response, nextHandler),
                 "Downstream business use case failure signals must bubble up transparently");
 
         // Core Rationale Verification: Despite the failure, the finally block MUST execute defensive purge steps
-        assertNull(LogTrace.get(), "The structural framework must enforce absolute MDC clearance to prevent cross-request leakage pollution");
+        assertNull(
+                LogTrace.get(),
+                "The structural framework must enforce absolute MDC clearance to prevent cross-request leakage pollution");
     }
 }

@@ -1,5 +1,7 @@
 package org.libraryexpress.domain.customer;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -7,8 +9,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.customer.exception.InvalidEmailException;
 import org.libraryexpress.domain.customer.valueobject.Email;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @UnitTest
 @DisplayName("Email Value Object - Unit Test")
@@ -41,19 +41,15 @@ public class EmailUnitTest {
     @Test
     @DisplayName("Should throw an exception when email size is greater than 254 characters")
     void shouldThrowException_whenEmailSizeIsGreaterThan254Characters() {
-        String valueGreaterThan254 =  "test".repeat(255);
-        InvalidEmailException exception1 = assertThrows(InvalidEmailException.class, () -> new Email(valueGreaterThan254));
+        String valueGreaterThan254 = "test".repeat(255);
+        InvalidEmailException exception1 =
+                assertThrows(InvalidEmailException.class, () -> new Email(valueGreaterThan254));
 
         assertEquals("Email exceeds maximum allowed length", exception1.getMessage());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "invalidFormat",
-            "invalid.@test.com",
-            "t12child@.er",
-            "@t12child"
-    })
+    @ValueSource(strings = {"invalidFormat", "invalid.@test.com", "t12child@.er", "@t12child"})
     @DisplayName("Should throw an exception when email format provided is invalid")
     void shouldThrowException_whenEmailFormatProvidedIsInvalid(String invalidEmail) {
 

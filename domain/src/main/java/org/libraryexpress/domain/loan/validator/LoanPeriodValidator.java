@@ -1,9 +1,8 @@
 package org.libraryexpress.domain.loan.validator;
 
-import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
-
 import java.time.LocalDate;
 import java.util.Objects;
+import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
 
 public class LoanPeriodValidator {
 

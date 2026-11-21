@@ -1,5 +1,8 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -7,10 +10,6 @@ import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.repository.CustomerFilter;
 import org.libraryexpress.infrastructure.IntegrationTest;
 import org.libraryexpress.infrastructure.config.database.PostgresTestContainerConfig;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @IntegrationTest
 @DisplayName("Customer Repository - Core Operations Integration Test")
@@ -57,22 +56,25 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     }
 
     @Test
-    @DisplayName("Should throw RuntimeException triggered by a SQL integrity violation when inserting a duplicated email")
+    @DisplayName(
+            "Should throw RuntimeException triggered by a SQL integrity violation when inserting a duplicated email")
     void shouldThrowRuntimeException_whenEmailConstraintIsViolatedAtDatabaseLevel() {
         // Arrange (Testing structural database constraint protection without leaking domain exceptions)
         String sharedEmail = "duplicate@libraryexpress.com";
         Customer client1 = createSampleCustomer("10000000-0000-4000-8000-000000000003", "First Client", sharedEmail);
         customerRepository.create(client1);
 
-        Customer client2 = createSampleCustomer("10000000-0000-4000-8000-000000000004", "Second Client Boot Attempt", sharedEmail);
+        Customer client2 =
+                createSampleCustomer("10000000-0000-4000-8000-000000000004", "Second Client Boot Attempt", sharedEmail);
 
         // Act & Assert - DDD Principle: Expecting technical wrapper exception, not business rules mappings
-        RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                        customerRepository.create(client2),
-                "Repository layer must encapsulate raw relational engine unique constraint errors into technical runtime exceptions"
-        );
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> customerRepository.create(client2),
+                "Repository layer must encapsulate raw relational engine unique constraint errors into technical runtime exceptions");
 
-        assertNotNull(exception.getCause(), "The technical execution failure wrapper must contain the original SQLException");
+        assertNotNull(
+                exception.getCause(), "The technical execution failure wrapper must contain the original SQLException");
     }
 
     @Test
@@ -83,11 +85,8 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
         Customer baseCustomer = createSampleCustomer(customerId, "Old Name", "old.email@libraryexpress.com");
         customerRepository.create(baseCustomer);
 
-        Customer updatedCustomer = Customer.restore(
-                customerId,
-                "New Brand Identity Name",
-                "new.email@libraryexpress.com"
-        );
+        Customer updatedCustomer =
+                Customer.restore(customerId, "New Brand Identity Name", "new.email@libraryexpress.com");
 
         // Act
         customerRepository.update(updatedCustomer);
@@ -100,11 +99,14 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     }
 
     @Test
-    @DisplayName("Should successfully capture and retrieve the entire customers collection dataset during unrestricted scans")
+    @DisplayName(
+            "Should successfully capture and retrieve the entire customers collection dataset during unrestricted scans")
     void shouldReturnAllPersistedCustomers_whenTriggeringUnrestrictedCatalogScan() {
         // Arrange (Testing search)
-        Customer customer1 = createSampleCustomer("10000000-0000-4000-8000-000000000006", "User Alpha", "alpha@libraryexpress.com");
-        Customer customer2 = createSampleCustomer("10000000-0000-4000-8000-000000000007", "User Beta", "beta@libraryexpress.com");
+        Customer customer1 =
+                createSampleCustomer("10000000-0000-4000-8000-000000000006", "User Alpha", "alpha@libraryexpress.com");
+        Customer customer2 =
+                createSampleCustomer("10000000-0000-4000-8000-000000000007", "User Beta", "beta@libraryexpress.com");
 
         customerRepository.create(customer1);
         customerRepository.create(customer2);
@@ -115,12 +117,12 @@ class CustomerDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         // Assert
         assertNotNull(allCustomers.items());
-        assertTrue(allCustomers.total() >= 2, "Customers list lookup must yield search entries matching current database isolation scopes");
+        assertTrue(
+                allCustomers.total() >= 2,
+                "Customers list lookup must yield search entries matching current database isolation scopes");
     }
 
-    /**
-     * Clean helper method to encapsulate recurring customer creation inside the test suite matrix.
-     */
+    /** Clean helper method to encapsulate recurring customer creation inside the test suite matrix. */
     private Customer createSampleCustomer(String id, String name, String email) {
         return Customer.restore(id, name, email);
     }

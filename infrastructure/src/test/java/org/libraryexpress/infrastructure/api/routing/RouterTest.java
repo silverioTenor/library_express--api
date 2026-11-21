@@ -1,20 +1,19 @@
 package org.libraryexpress.infrastructure.api.routing;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.infrastructure.UnitTest;
 import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
 import org.libraryexpress.infrastructure.api.enums.HttpVerb;
-import org.libraryexpress.infrastructure.api.routing.Router;
-
-import java.io.ByteArrayOutputStream;
-import java.net.URI;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @DisplayName("Router - Unit Test")
@@ -35,8 +34,9 @@ class RouterTest {
         when(exchange.getRequestMethod()).thenReturn("GET");
         when(exchange.getRequestURI()).thenReturn(new URI("http://localhost:8080/books"));
 
-        // Mocking native bodies and streaming hooks to avoid side effects crashes on SunHttpServer conversion boundaries
-        when(exchange.getRequestBody()).thenReturn(mock(java.io.InputStream.class));
+        // Mocking native bodies and streaming hooks to avoid side effects crashes on SunHttpServer conversion
+        // boundaries
+        when(exchange.getRequestBody()).thenReturn(mock(InputStream.class));
         when(exchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
         when(exchange.getResponseHeaders()).thenReturn(new Headers());
 
@@ -58,7 +58,10 @@ class RouterTest {
         router.register(HttpVerb.GET, "/books/{isbn}", (req, res) -> {
             handlerWasInvoked.set(true);
             // Verification hook: Check if the inner path extraction matching behaves precisely
-            assertEquals("978-85-333-0227-3", req.getRouteParam("isbn"), "Path param values must match the incoming path segments");
+            assertEquals(
+                    "978-85-333-0227-3",
+                    req.getRouteParam("isbn"),
+                    "Path param values must match the incoming path segments");
         });
 
         HttpExchange exchange = mock(HttpExchange.class);
@@ -66,7 +69,7 @@ class RouterTest {
         when(exchange.getRequestMethod()).thenReturn("GET");
         when(exchange.getRequestURI()).thenReturn(new URI("http://localhost:8080/books/978-85-333-0227-3"));
 
-        when(exchange.getRequestBody()).thenReturn(mock(java.io.InputStream.class));
+        when(exchange.getRequestBody()).thenReturn(mock(InputStream.class));
         when(exchange.getResponseBody()).thenReturn(new ByteArrayOutputStream());
         when(exchange.getResponseHeaders()).thenReturn(new Headers());
 
@@ -74,7 +77,9 @@ class RouterTest {
         router.handle(exchange);
 
         // Assert
-        assertTrue(handlerWasInvoked.get(), "The parametric handler must be triggered by custom dynamic path entries matches");
+        assertTrue(
+                handlerWasInvoked.get(),
+                "The parametric handler must be triggered by custom dynamic path entries matches");
     }
 
     @Test
@@ -103,6 +108,8 @@ class RouterTest {
         assertEquals("application/json", headers.getFirst("Content-Type"));
 
         String responseBody = outputStream.toString();
-        assertTrue(responseBody.contains("Resource path or method execution context not found."), "Response must contain structural details");
+        assertTrue(
+                responseBody.contains("Resource path or method execution context not found."),
+                "Response must contain structural details");
     }
 }

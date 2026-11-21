@@ -1,12 +1,8 @@
 package org.libraryexpress.infrastructure.api.server;
 
-import com.sun.net.httpserver.HttpExchange;
-import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
-import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
-import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
-import org.libraryexpress.infrastructure.util.JsonPrinter;
-import org.libraryexpress.infrastructure.util.JsonReader;
+import static org.libraryexpress.infrastructure.api.contract.Pagination.*;
 
+import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,8 +10,11 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.libraryexpress.infrastructure.api.contract.Pagination.*;
+import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
+import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
+import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
+import org.libraryexpress.infrastructure.util.JsonPrinter;
+import org.libraryexpress.infrastructure.util.JsonReader;
 
 public final class SunHttpServer {
 
@@ -29,7 +28,7 @@ public final class SunHttpServer {
             @Override
             public <T> T parseBody(Class<T> targetClass) throws IOException {
                 try (InputStream is = exchange.getRequestBody()) {
-                    return  JsonReader.read(is, targetClass);
+                    return JsonReader.read(is, targetClass);
                 }
             }
 
@@ -70,8 +69,8 @@ public final class SunHttpServer {
                     String[] entries = pair.split("=");
 
                     if (entries.length > 0) {
-                        String  key = URLDecoder.decode(entries[0], StandardCharsets.UTF_8);
-                        String  value = entries.length > 1 ? URLDecoder.decode(entries[1], StandardCharsets.UTF_8) : "";
+                        String key = URLDecoder.decode(entries[0], StandardCharsets.UTF_8);
+                        String value = entries.length > 1 ? URLDecoder.decode(entries[1], StandardCharsets.UTF_8) : "";
 
                         queryParams.put(key, value);
                     }
@@ -133,8 +132,6 @@ public final class SunHttpServer {
                     os.write(body);
                 }
             }
-
         };
-
     }
 }

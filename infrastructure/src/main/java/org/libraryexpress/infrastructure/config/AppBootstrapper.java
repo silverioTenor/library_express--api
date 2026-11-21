@@ -1,5 +1,6 @@
 package org.libraryexpress.infrastructure.config;
 
+import javax.sql.DataSource;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 import org.libraryexpress.infrastructure.api.server.EmbeddedHttpServer;
@@ -8,17 +9,13 @@ import org.libraryexpress.infrastructure.config.database.MigrationRunner;
 import org.libraryexpress.infrastructure.config.logging.LogTrace;
 import org.libraryexpress.infrastructure.config.logging.Slf4jLoggerAdapter;
 
-import javax.sql.DataSource;
-
 public class AppBootstrapper {
 
     private static CustomLogger log;
 
     private AppBootstrapper() {}
 
-    /**
-     * Executes the foundational multi-stage setup sequence and launches the active interface.
-     */
+    /** Executes the foundational multi-stage setup sequence and launches the active interface. */
     public static void boot() {
         // Stage 1: Immediate framework-agnostic logging ACL registration
         CustomLoggerFactory.initialize(Slf4jLoggerAdapter::new);
@@ -49,7 +46,7 @@ public class AppBootstrapper {
                 server.stop();
 
                 // Step 2: Close the application services (Future SesV2Client within the AppContext)
-//                log.info("Closing application contexts and clients...");
+                //                log.info("Closing application contexts and clients...");
                 // context.close();
 
                 // Step 3: Shut down the database (Ensures that the final queries have run)

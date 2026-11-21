@@ -1,18 +1,15 @@
 package org.libraryexpress.infrastructure.config.database;
 
+import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 
-import javax.sql.DataSource;
-
 /**
- * Encapsulates the execution logic for database migrations via Flyway.
- * Ensures the physical schema is fully synchronized before business logic layers ignite.
+ * Encapsulates the execution logic for database migrations via Flyway. Ensures the physical schema is fully
+ * synchronized before business logic layers ignite.
  */
 public class MigrationRunner {
 
-    /**
-     * Executes database migration scripts found under the standard resources' folder.
-     */
+    /** Executes database migration scripts found under the standard resources' folder. */
     public static void run(DataSource dataSource) {
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)

@@ -1,15 +1,14 @@
 package org.libraryexpress.infrastructure.api.e2e;
 
-import io.restassured.http.ContentType;
-import org.junit.jupiter.api.*;
-import org.libraryexpress.application.book.dto.response.BookDTO;
-import org.libraryexpress.infrastructure.E2ETest;
-
-import java.util.List;
-
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import io.restassured.http.ContentType;
+import java.util.List;
+import org.junit.jupiter.api.*;
+import org.libraryexpress.application.book.dto.response.BookDTO;
+import org.libraryexpress.infrastructure.E2ETest;
 
 @E2ETest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -30,13 +29,12 @@ class BookE2ETest extends E2EBaseConfig {
             }
             """;
 
-        given()
-                .contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON)
                 .header("X-Trace-Id", "7278e119-b087-4528-87bd-a5e8809b9c49")
                 .body(bookPayload)
-        .when()
+                .when()
                 .post("/books")
-        .then()
+                .then()
                 .statusCode(201);
     }
 
@@ -44,11 +42,10 @@ class BookE2ETest extends E2EBaseConfig {
     @Order(2)
     @DisplayName("Should get a book by isbn when the data provided is valid")
     void shouldGetBookPreviouslySaved_whenProvideValidIsbn() {
-        given()
-                .contentType(ContentType.JSON)
-        .when()
+        given().contentType(ContentType.JSON)
+                .when()
                 .get("/books/9788520923580")
-        .then()
+                .then()
                 .statusCode(200)
                 .body("title", equalTo("Clean Architecture Modern Java"))
                 .body("authors", equalTo(List.of("John Doe")))
@@ -62,46 +59,42 @@ class BookE2ETest extends E2EBaseConfig {
     void shouldSuccessfullyListBooks_whenCallEndpoint() {
         BookDTO bookDto = get("/books/9788520923580").as(BookDTO.class);
 
-        given()
-                .contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON)
                 .param("id", bookDto.id())
-        .when()
+                .when()
                 .get("/books")
-        .then()
+                .then()
                 .statusCode(200)
                 .body("items", hasSize(1))
                 .body("items[0].id", is(bookDto.id()));
 
-        given()
-                .contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON)
                 .param("isbn", bookDto.isbn())
-        .when()
+                .when()
                 .get("/books")
-        .then()
+                .then()
                 .statusCode(200)
                 .body("items", hasSize(1))
                 .body("items[0].id", is(bookDto.id()));
 
-        given()
-                .contentType(ContentType.JSON)
-        .when()
+        given().contentType(ContentType.JSON)
+                .when()
                 .get("/books")
-        .then()
+                .then()
                 .statusCode(200)
-                .body("items",  hasSize(1))
+                .body("items", hasSize(1))
                 .body("page", is(0))
                 .body("limit", is(1))
                 .body("totalPages", is(1))
                 .body("total", is(1))
                 .body("items[0].id", is(bookDto.id()));
 
-        given()
-                .contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON)
                 .param("page", 1)
                 .param("limit", 5)
-        .when()
+                .when()
                 .get("/books")
-        .then()
+                .then()
                 .statusCode(200)
                 .body("page", is(1))
                 .body("limit", is(5))
@@ -111,7 +104,8 @@ class BookE2ETest extends E2EBaseConfig {
 
     @Test
     @Order(4)
-    @DisplayName("Should throw an error with status code 409 when trying register a new book with isbn previous registered")
+    @DisplayName(
+            "Should throw an error with status code 409 when trying register a new book with isbn previous registered")
     void shouldThrowConflictError_whenTryingRegisterNewBookWithISBNPreviousRegistered() {
         String bookPayload = """
             {
@@ -123,22 +117,22 @@ class BookE2ETest extends E2EBaseConfig {
             }
             """;
 
-        given()
-                .contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON)
                 .body(bookPayload)
                 .when()
                 .post("/books")
                 .then()
                 .statusCode(409)
-                .body("message", equalTo("It is not permitted to register a book with an isbn that is already in use."));
+                .body(
+                        "message",
+                        equalTo("It is not permitted to register a book with an isbn that is already in use."));
     }
 
     @Test
     @Order(5)
     @DisplayName("Should throw an error with status code 400 when provide an invalid isbn")
     void shouldThrowError_whenProvideAnInvalidIsbn() {
-        given()
-                .contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON)
                 .when()
                 .get("/books/995-29-6XL01-22-4")
                 .then()
@@ -159,15 +153,14 @@ class BookE2ETest extends E2EBaseConfig {
             }
             """;
 
-        String bookId = given()
-                .contentType(ContentType.JSON)
+        String bookId = given().contentType(ContentType.JSON)
                 .body(bookPayload)
-        .when()
+                .when()
                 .post("/books")
-        .then()
+                .then()
                 .statusCode(201)
                 .extract()
-                 .path("id");
+                .path("id");
         assertNotNull(bookId);
     }
 }

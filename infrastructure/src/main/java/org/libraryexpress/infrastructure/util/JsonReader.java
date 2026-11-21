@@ -1,12 +1,10 @@
 package org.libraryexpress.infrastructure.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.libraryexpress.domain.core.exception.DomainException;
-import org.libraryexpress.infrastructure.config.JacksonConfig;
-
 import java.io.IOException;
 import java.io.InputStream;
+import org.libraryexpress.domain.core.exception.DomainException;
+import org.libraryexpress.infrastructure.config.JacksonConfig;
 
 public final class JsonReader {
 

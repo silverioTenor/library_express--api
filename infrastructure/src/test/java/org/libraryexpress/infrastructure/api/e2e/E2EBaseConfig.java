@@ -1,6 +1,9 @@
 package org.libraryexpress.infrastructure.api.e2e;
 
 import io.restassured.RestAssured;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.libraryexpress.domain.core.logging.CustomLogger;
@@ -9,13 +12,9 @@ import org.libraryexpress.infrastructure.config.AppBootstrapper;
 import org.libraryexpress.infrastructure.config.logging.Slf4jLoggerAdapter;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
- * Baseline Architectural E2E Test class.
- * Orchestrates Testcontainers PostgreSQL lifecycles alongside our official AppBootstrapper lifecycles.
+ * Baseline Architectural E2E Test class. Orchestrates Testcontainers PostgreSQL lifecycles alongside our official
+ * AppBootstrapper lifecycles.
  */
 public abstract class E2EBaseConfig {
 
@@ -68,7 +67,7 @@ public abstract class E2EBaseConfig {
         String dbPassword = postgres.getPassword();
 
         try (var conn = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword);
-             var stmt = conn.createStatement()) {
+                var stmt = conn.createStatement()) {
 
             stmt.executeUpdate(truncateSql);
 

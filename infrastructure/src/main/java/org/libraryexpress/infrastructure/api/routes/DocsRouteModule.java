@@ -1,11 +1,11 @@
 package org.libraryexpress.infrastructure.api.routes;
 
+import static org.libraryexpress.infrastructure.api.enums.HttpVerb.GET;
+
 import org.libraryexpress.infrastructure.api.routing.Router;
 import org.libraryexpress.infrastructure.api.routing.openApi.OpenApiContractHandler;
 import org.libraryexpress.infrastructure.api.routing.openApi.SwaggerUiHandler;
 import org.libraryexpress.infrastructure.config.AppContext;
-
-import static org.libraryexpress.infrastructure.api.enums.HttpVerb.GET;
 
 public final class DocsRouteModule implements HttpRouteModule {
 

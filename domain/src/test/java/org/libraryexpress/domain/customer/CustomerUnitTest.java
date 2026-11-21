@@ -1,12 +1,12 @@
 package org.libraryexpress.domain.customer;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.customer.valueobject.Email;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @UnitTest
 @DisplayName("Customer Entity - Unit Test")

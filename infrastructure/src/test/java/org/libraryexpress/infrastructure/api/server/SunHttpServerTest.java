@@ -1,17 +1,16 @@
 package org.libraryexpress.infrastructure.api.server;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.sun.net.httpserver.HttpExchange;
+import java.net.URI;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.infrastructure.UnitTest;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
-
-import java.net.URI;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @UnitTest
 @DisplayName("SunHttpServer - Unit Test")
@@ -30,7 +29,10 @@ class SunHttpServerTest {
         HttpContextRequest request = SunHttpServer.adaptRequest(exchange, Map.of());
 
         // Assert
-        assertEquals("Dev Sênior", request.getQueryParam("title"), "The adapter must cleanly decode url parameters in UTF-8 standard");
+        assertEquals(
+                "Dev Sênior",
+                request.getQueryParam("title"),
+                "The adapter must cleanly decode url parameters in UTF-8 standard");
         assertEquals("John", request.getQueryParam("author"));
     }
 
@@ -67,7 +69,10 @@ class SunHttpServerTest {
         HttpContextRequest request = SunHttpServer.adaptRequest(exchange, simulatedRouteParams);
 
         // Assert
-        assertEquals("978-85-333-0227-3", request.getRouteParam("isbn"), "The handler must fetch path parameters cleanly from the request context");
+        assertEquals(
+                "978-85-333-0227-3",
+                request.getRouteParam("isbn"),
+                "The handler must fetch path parameters cleanly from the request context");
         assertNull(request.getRouteParam("invalid_key"), "Absent route variables must return null safely");
     }
 }

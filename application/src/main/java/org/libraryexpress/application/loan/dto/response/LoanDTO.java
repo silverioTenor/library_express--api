@@ -1,9 +1,8 @@
 package org.libraryexpress.application.loan.dto.response;
 
-import org.libraryexpress.domain.loan.enums.LoanStatus;
-
 import java.time.Instant;
 import java.time.LocalDate;
+import org.libraryexpress.domain.loan.enums.LoanStatus;
 
 public record LoanDTO(
         String id,
@@ -12,6 +11,4 @@ public record LoanDTO(
         LoanStatus status,
         LocalDate startDate,
         LocalDate endDate,
-        Instant closedAt
-) {
-}
+        Instant closedAt) {}

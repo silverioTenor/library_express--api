@@ -42,6 +42,7 @@
         <swagger.core.v3.version>2.2.25</swagger.core.v3.version>
         <swagger.ui.version>5.17.14</swagger.ui.version>
         <rest.assured.version>5.5.6</rest.assured.version>
+        <spotless.version>3.10.4</spotless.version>
 
         <exec.skip>true</exec.skip>
     </properties>
@@ -105,26 +106,26 @@
                 <artifactId>jackson-datatype-jsr310</artifactId>
                 <version>${org.jackson.version}</version>
             </dependency>
-            <!-- Driver JDBC oficial do PostgreSQL -->
+            <!-- Official PostgreSQL JDBC driver -->
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
                 <scope>runtime</scope>
             </dependency>
-            <!-- HikariCP: O pool de conexões definitivo -->
+            <!-- HikariCP: the definitive connection pool -->
             <dependency>
                 <groupId>com.zaxxer</groupId>
                 <artifactId>HikariCP</artifactId>
                 <version>${hikari.version}</version>
             </dependency>
-            <!-- Flyway Core: O motor de migração de banco de dados -->
+            <!-- Flyway Core: database migration engine -->
             <dependency>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-core</artifactId>
                 <version>${flyway.version}</version>
             </dependency>
-            <!-- Dependência do Flyway necessária especificamente para o PostgreSQL -->
+            <!-- Flyway dependency required specifically for PostgreSQL -->
             <dependency>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-database-postgresql</artifactId>
@@ -170,19 +171,19 @@
                 <version>${logstash-encoder.version}</version>
             </dependency>
 
-            <!-- Anotações JAX-RS: SÓ metadado, nenhum servidor/runtime JAX-RS é adicionado -->
+            <!-- JAX-RS annotations: metadata only; no JAX-RS server/runtime is added -->
             <dependency>
                 <groupId>jakarta.ws.rs</groupId>
                 <artifactId>jakarta.ws.rs-api</artifactId>
                 <version>${jakart.ws.rs-api.version}</version>
             </dependency>
-            <!-- Reader que o swagger-maven-plugin usa para escanear as anotações acima -->
+            <!-- Reader used by swagger-maven-plugin to scan the annotations above -->
             <dependency>
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-jaxrs2-jakarta</artifactId>
                 <version>${swagger.core.v3.version}</version>
             </dependency>
-            <!-- Swagger UI empacotado como webjar, servido estaticamente pelo seu próprio HttpServer -->
+            <!-- Swagger UI packaged as a webjar and served statically by its own HttpServer -->
             <dependency>
                 <groupId>org.webjars</groupId>
                 <artifactId>swagger-ui</artifactId>
@@ -392,6 +393,26 @@
                             -Amapstruct.addGeneratedAnnotation=true
                         </arg>
                     </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <java>
+                        <removeUnusedImports/>
+<!--                        <forbidWildcardImports/>-->
+                        <shortenFullyQualifiedTypes/>
+                        <importOrder/>
+                        <palantirJavaFormat>
+                            <style>PALANTIR</style>
+                            <formatJavadoc>true</formatJavadoc>
+                        </palantirJavaFormat>
+                        <formatAnnotations/>
+                        <endWithNewline/>
+                    </java>
                 </configuration>
             </plugin>
         </plugins>

@@ -3,8 +3,8 @@ package org.libraryexpress.infrastructure;
 import org.libraryexpress.infrastructure.config.AppBootstrapper;
 
 /**
- * Main application entrypoint boundary.
- * Acting strictly as the ignition key for the infrastructure bootstrapping layers.
+ * Main application entrypoint boundary. Acting strictly as the ignition key for the infrastructure bootstrapping
+ * layers.
  */
 public class Application {
 

@@ -1,16 +1,14 @@
 package org.libraryexpress.domain.loan.validator;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.loan.exception.DateOutOfBoundException;
-import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
-
-import java.time.LocalDate;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @UnitTest
 @DisplayName("LoanPeriodValidator - Unit Test")
@@ -24,10 +22,8 @@ class LoanPeriodValidatorTest {
         LocalDate startDate = LocalDate.of(2026, 8, 1);
         LocalDate dueDate = startDate.plusDays(LoanPeriodValidator.MAX_LOAN_DAYS + 1);
 
-        DateOutOfBoundException exception = assertThrows(
-                DateOutOfBoundException.class,
-                () -> validator.validate(startDate, dueDate)
-        );
+        DateOutOfBoundException exception =
+                assertThrows(DateOutOfBoundException.class, () -> validator.validate(startDate, dueDate));
 
         assertEquals("End date cannot exceed the 15-day limit from start date", exception.getMessage());
     }

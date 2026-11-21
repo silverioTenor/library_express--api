@@ -1,5 +1,8 @@
 package org.libraryexpress.infrastructure.api.exception;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,9 +18,6 @@ import org.libraryexpress.infrastructure.exception.InfrastructureErrorType;
 import org.libraryexpress.infrastructure.exception.InfrastructureException;
 import org.mockito.ArgumentCaptor;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 @UnitTest
 @DisplayName("Global Exception Handler - Unit Test")
 class GlobalExceptionHandlerTest {
@@ -27,7 +27,9 @@ class GlobalExceptionHandlerTest {
     void shouldMapTo422_whenDomainBusinessRuleViolationOccurs() throws Exception {
         // Arrange
         CustomHttpHandler mockedDelegate = mock(CustomHttpHandler.class);
-        doThrow(new BookUnavailableException("Target book is checked out")).when(mockedDelegate).handle(any(), any());
+        doThrow(new BookUnavailableException("Target book is checked out"))
+                .when(mockedDelegate)
+                .handle(any(), any());
 
         GlobalExceptionHandler handler = new GlobalExceptionHandler(mockedDelegate);
         HttpContextRequest req = mock(HttpContextRequest.class);
@@ -45,11 +47,14 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Should completely sanitize technical internal text messages when intercepting unexpected 500 collapses")
+    @DisplayName(
+            "Should completely sanitize technical internal text messages when intercepting unexpected 500 collapses")
     void shouldSanitizeMessage_whenUnexpectedCatastropheOccurs() throws Exception {
         // Arrange
         CustomHttpHandler mockedDelegate = mock(CustomHttpHandler.class);
-        doThrow(new NullPointerException("Severe core database socket dropped failure")).when(mockedDelegate).handle(any(), any());
+        doThrow(new NullPointerException("Severe core database socket dropped failure"))
+                .when(mockedDelegate)
+                .handle(any(), any());
 
         GlobalExceptionHandler handler = new GlobalExceptionHandler(mockedDelegate);
         HttpContextRequest req = mock(HttpContextRequest.class);
@@ -70,19 +75,18 @@ class GlobalExceptionHandlerTest {
 
     @ParameterizedTest
     @CsvSource({
-            "RESOURCE_NOT_FOUND, NOT_FOUND",
-            "BAD_GATEWAY, BAD_GATEWAY",
-            "SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE",
-            "GATEWAY_TIMEOUT, GATEWAY_TIMEOUT"
+        "RESOURCE_NOT_FOUND, NOT_FOUND",
+        "BAD_GATEWAY, BAD_GATEWAY",
+        "SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE",
+        "GATEWAY_TIMEOUT, GATEWAY_TIMEOUT"
     })
     @DisplayName("Maps infrastructure failures to their corresponding HTTP status")
     void shouldMapInfrastructureFailure_whenGatewayErrorOccurs(
-            InfrastructureErrorType errorType,
-            HttpStatusCode expectedStatus
-    ) throws Exception {
+            InfrastructureErrorType errorType, HttpStatusCode expectedStatus) throws Exception {
         CustomHttpHandler mockedDelegate = mock(CustomHttpHandler.class);
         doThrow(new InfrastructureException(errorType, "upstream failure"))
-                .when(mockedDelegate).handle(any(), any());
+                .when(mockedDelegate)
+                .handle(any(), any());
 
         GlobalExceptionHandler handler = new GlobalExceptionHandler(mockedDelegate);
         HttpContextResponse response = mock(HttpContextResponse.class, RETURNS_SELF);

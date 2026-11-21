@@ -1,18 +1,19 @@
 package org.libraryexpress.infrastructure.repository.jdbc;
 
-import org.libraryexpress.domain.core.dto.InputPaginationDto;
-import org.libraryexpress.domain.core.dto.OutputPaginationDto;
-import org.libraryexpress.domain.core.repository.QueryResult;
-import org.libraryexpress.domain.customer.entity.Customer;
-import org.libraryexpress.domain.customer.repository.CustomerFilter;
-import org.libraryexpress.domain.customer.repository.CustomerRepository;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import javax.sql.DataSource;
+import org.libraryexpress.domain.core.repository.QueryResult;
+import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.repository.CustomerFilter;
+import org.libraryexpress.domain.customer.repository.CustomerRepository;
+import org.libraryexpress.infrastructure.config.ConfigRegistry;
+import org.libraryexpress.infrastructure.config.database.transaction.TransactionContext;
+import org.libraryexpress.infrastructure.exception.LockAcquisitionException;
+import org.libraryexpress.infrastructure.exception.TransactionException;
 
 public class CustomerDbRepository implements CustomerRepository {
 
@@ -26,10 +27,8 @@ public class CustomerDbRepository implements CustomerRepository {
     public void create(Customer customer) {
         String query = "INSERT INTO customer (id, name, email) VALUES (?, ?, ?)";
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query)
-        ) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setObject(1, UUID.fromString(customer.getId()));
             statement.setString(2, customer.getName());
             statement.setString(3, customer.getEmail().value());
@@ -44,17 +43,16 @@ public class CustomerDbRepository implements CustomerRepository {
     public void update(Customer customer) {
         String query = "UPDATE customer SET name = ?, email = ? WHERE id::text = ?";
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query)
-        ) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, customer.getName());
             statement.setString(2, customer.getEmail().value());
             statement.setString(3, customer.getId());
             statement.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error during customer record modifications: " + e.getMessage(), e);
+            throw new RuntimeException(
+                    "Fatal database error during customer record modifications: " + e.getMessage(), e);
         }
     }
 
@@ -62,10 +60,10 @@ public class CustomerDbRepository implements CustomerRepository {
     public Optional<Customer> getById(String id) {
         String query = "SELECT * FROM customer WHERE id::text = ?";
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query)
-        ) {
+        if (TransactionContext.isTransactionActive()) query += " FOR UPDATE";
+
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, id);
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -74,7 +72,16 @@ public class CustomerDbRepository implements CustomerRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing customer payload query by ID: " + e.getMessage(), e);
+            if (TransactionContext.isTransactionActive()) {
+                if (ConfigRegistry.PG_LOCK_NOT_AVAILABLE.equals(e.getSQLState())) {
+                    throw new LockAcquisitionException("The customer [" + id
+                            + "] is currently being processed by another operation." + e.getMessage());
+                }
+                throw new TransactionException(
+                        "Database error while locking customer with ID: [" + id + "] " + e.getMessage());
+            }
+            throw new RuntimeException(
+                    "Fatal database error executing customer payload query by ID: " + e.getMessage(), e);
         }
 
         return Optional.empty();
@@ -84,10 +91,8 @@ public class CustomerDbRepository implements CustomerRepository {
     public Optional<Customer> getByEmail(String email) {
         String query = "SELECT * FROM customer WHERE email = ?";
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query)
-        ) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, email);
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -96,7 +101,8 @@ public class CustomerDbRepository implements CustomerRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing customer payload query by E-MAIL: " + e.getMessage(), e);
+            throw new RuntimeException(
+                    "Fatal database error executing customer payload query by E-MAIL: " + e.getMessage(), e);
         }
 
         return Optional.empty();
@@ -104,7 +110,8 @@ public class CustomerDbRepository implements CustomerRepository {
 
     @Override
     public QueryResult<Customer> search(CustomerFilter filter) {
-        boolean shouldPaginate = filter.paginationDto() != null && filter.paginationDto().isPaginated();
+        boolean shouldPaginate =
+                filter.paginationDto() != null && filter.paginationDto().isPaginated();
 
         var query = shouldPaginate
                 ? new StringBuilder("SELECT *, COUNT(*) OVER() as full_count FROM customer WHERE 1=1")
@@ -124,10 +131,8 @@ public class CustomerDbRepository implements CustomerRepository {
         if (shouldPaginate) query.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?;");
         else query.append(" ORDER BY created_at, id DESC;");
 
-        try (
-                Connection connection = dataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(query.toString());
-        ) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(query.toString()); ) {
             int parameterIndex = 1;
 
             if (hasId) {
@@ -167,20 +172,15 @@ public class CustomerDbRepository implements CustomerRepository {
             totalElements = shouldPaginate ? countFromWindow : customers.size();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Fatal database error executing unrestricted customers catalog query: " + e.getMessage(), e);
+            throw new RuntimeException(
+                    "Fatal database error executing unrestricted customers catalog query: " + e.getMessage(), e);
         }
 
         return new QueryResult<>(customers, totalElements);
     }
 
-    /**
-     * Map a customer tuple back into its respective clean domain model abstraction.
-     */
+    /** Map a customer tuple back into its respective clean domain model abstraction. */
     private Customer mapRowToCustomer(ResultSet resultSet) throws SQLException {
-        return Customer.restore(
-                resultSet.getString("id"),
-                resultSet.getString("name"),
-                resultSet.getString("email")
-        );
+        return Customer.restore(resultSet.getString("id"), resultSet.getString("name"), resultSet.getString("email"));
     }
 }

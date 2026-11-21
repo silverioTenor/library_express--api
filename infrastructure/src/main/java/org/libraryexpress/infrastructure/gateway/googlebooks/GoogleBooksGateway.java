@@ -1,20 +1,19 @@
 package org.libraryexpress.infrastructure.gateway.googlebooks;
 
-import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
-import org.libraryexpress.domain.book.valueobject.BookMetadata;
-import org.libraryexpress.domain.core.logging.CustomLogger;
-import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
-import org.libraryexpress.infrastructure.gateway.adapter.CustomHttpClient;
-import org.libraryexpress.infrastructure.gateway.contract.ClientResponse;
-import org.libraryexpress.infrastructure.config.ConfigRegistry;
-import org.libraryexpress.infrastructure.exception.InfrastructureException;
+import static org.libraryexpress.infrastructure.exception.InfrastructureErrorType.*;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-
-import static org.libraryexpress.infrastructure.exception.InfrastructureErrorType.*;
+import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
+import org.libraryexpress.domain.book.valueobject.BookMetadata;
+import org.libraryexpress.domain.core.logging.CustomLogger;
+import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
+import org.libraryexpress.infrastructure.config.ConfigRegistry;
+import org.libraryexpress.infrastructure.exception.InfrastructureException;
+import org.libraryexpress.infrastructure.gateway.adapter.CustomHttpClient;
+import org.libraryexpress.infrastructure.gateway.contract.ClientResponse;
 
 public final class GoogleBooksGateway implements BookMetadataGateway {
 
@@ -39,8 +38,8 @@ public final class GoogleBooksGateway implements BookMetadataGateway {
 
         String apiKey = ConfigRegistry.getGoogleBooksApiKey();
 
-        String secureUrl = "https://www.googleapis.com/books/v1/volumes?q=" +
-                encodedTitle + "&inauthor=" + encodedAuthor + "&key=" + apiKey;
+        String secureUrl = "https://www.googleapis.com/books/v1/volumes?q=" + encodedTitle + "&inauthor="
+                + encodedAuthor + "&key=" + apiKey;
 
         LOG.info("Google API URL: {}", secureUrl.replace(apiKey, "*****"));
 
@@ -57,8 +56,10 @@ public final class GoogleBooksGateway implements BookMetadataGateway {
                     throw new InfrastructureException(INVALID_DATA, response.body());
                 }
                 case 404 -> {
-                    LOG.warn("The provided information does not match any book in our external registry. "
-                            + "Please review the search data or fill in all required fields manually. HTTP response [{}]", response.body());
+                    LOG.warn(
+                            "The provided information does not match any book in our external registry. "
+                                    + "Please review the search data or fill in all required fields manually. HTTP response [{}]",
+                            response.body());
                     throw new InfrastructureException(RESOURCE_NOT_FOUND, response.body());
                 }
                 case 500, 502, 504, 503 -> {

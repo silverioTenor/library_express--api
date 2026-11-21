@@ -14,13 +14,7 @@ public class Pagination {
 
             return new PageRequest(resolvedPage, resolvedSize);
         }
-
     }
 
-    public record PageResponse<T>(
-            List<T> items,
-            int page,
-            int size,
-            long total
-    ) {}
+    public record PageResponse<T>(List<T> items, int page, int size, long total) {}
 }

@@ -1,13 +1,13 @@
 package org.libraryexpress.domain.book;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.book.enums.BookStatus;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @UnitTest
 @DisplayName("Book status")

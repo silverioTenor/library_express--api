@@ -1,9 +1,8 @@
 package org.libraryexpress.application.customer.dto.request;
 
-import org.libraryexpress.domain.core.exception.InvalidArgumentException;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 
 public record CreateCustomerDTO(String name, String email) {
 

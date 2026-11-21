@@ -1,7 +1,6 @@
 package org.libraryexpress.infrastructure.api.enums;
 
 public enum HttpVerb {
-
     GET("get"),
     POST("post"),
     PUT("put"),

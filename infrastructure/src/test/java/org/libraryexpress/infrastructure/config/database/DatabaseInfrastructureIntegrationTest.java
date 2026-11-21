@@ -1,14 +1,13 @@
 package org.libraryexpress.infrastructure.config.database;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.libraryexpress.infrastructure.IntegrationTest;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.libraryexpress.infrastructure.IntegrationTest;
 
 @IntegrationTest
 @DisplayName("Database Infrastructure - Integration Test")
@@ -20,8 +19,8 @@ class DatabaseInfrastructureIntegrationTest extends PostgresTestContainerConfig 
         String sql = "SELECT success FROM flyway_schema_history WHERE version = '1'";
 
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)) {
 
             assertTrue(resultSet.next(), "Flyway migration history entry for version 1 must be registered");
             assertTrue(resultSet.getBoolean("success"), "Migration script status descriptor must validate as true");
@@ -33,12 +32,13 @@ class DatabaseInfrastructureIntegrationTest extends PostgresTestContainerConfig 
     void shouldRecoverPoolAndExecuteStatement_whenUnderlyingDatabaseConnectionIsForciblyDropped() throws Exception {
         // Force a temporary connection checkout to send the termination signals
         try (Connection systemConnection = dataSource.getConnection();
-             Statement killStatement = systemConnection.createStatement()) {
+                Statement killStatement = systemConnection.createStatement()) {
 
-            System.out.println("[TEST-POOL-RECOVERY] - Simulating network collapse by executing native PostgreSQL backend termination...");
+            System.out.println(
+                    "[TEST-POOL-RECOVERY] - Simulating network collapse by executing native PostgreSQL backend termination...");
 
-            String killSql = "SELECT pg_terminate_backend(pid) FROM pg_stat_activity " +
-                    "WHERE datname = 'library_express_test' AND pid <> pg_backend_pid()";
+            String killSql = "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    + "WHERE datname = 'library_express_test' AND pid <> pg_backend_pid()";
 
             killStatement.execute(killSql);
         }
@@ -47,11 +47,13 @@ class DatabaseInfrastructureIntegrationTest extends PostgresTestContainerConfig 
         Thread.sleep(300);
 
         // Assert - Subsequent borrow from the pool must trigger an automatic eviction and drop healing mechanism
-        assertDoesNotThrow(() -> {
-            try (Connection freshConnection = dataSource.getConnection();
-                 Statement verificationStatement = freshConnection.createStatement()) {
-                verificationStatement.execute("SELECT 1");
-            }
-        }, "HikariCP pool manager must automatically heal from network connectivity losses without manual runtime intervention");
+        assertDoesNotThrow(
+                () -> {
+                    try (Connection freshConnection = dataSource.getConnection();
+                            Statement verificationStatement = freshConnection.createStatement()) {
+                        verificationStatement.execute("SELECT 1");
+                    }
+                },
+                "HikariCP pool manager must automatically heal from network connectivity losses without manual runtime intervention");
     }
 }

@@ -1,13 +1,12 @@
 package org.libraryexpress.domain.book.valueobject;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @UnitTest
 @DisplayName("Author value object")
@@ -28,12 +27,12 @@ class AuthorTest {
         assertThrows(InvalidArgumentException.class, () -> Author.parseMany("   "));
         assertThrows(InvalidArgumentException.class, () -> Author.parseMany(" , "));
         assertThrows(InvalidArgumentException.class, () -> new Author(" "));
-        assertThrows(InvalidArgumentException.class, () -> Author.parseMany(new String[]{" ", null}));
+        assertThrows(InvalidArgumentException.class, () -> Author.parseMany(new String[] {" ", null}));
     }
 
     @Test
     @DisplayName("Parses an array and ignores blank entries")
     void shouldParseAuthorArray_whenValuesArePresent() {
-        assertEquals(List.of(new Author("Ada Lovelace")), Author.parseMany(new String[]{" Ada Lovelace ", ""}));
+        assertEquals(List.of(new Author("Ada Lovelace")), Author.parseMany(new String[] {" Ada Lovelace ", ""}));
     }
 }

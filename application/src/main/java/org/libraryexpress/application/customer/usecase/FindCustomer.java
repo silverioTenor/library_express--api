@@ -1,22 +1,19 @@
 package org.libraryexpress.application.customer.usecase;
 
+import java.util.Optional;
 import org.libraryexpress.application.customer.dto.response.CustomerDTO;
-import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.exception.CustomerNotFoundException;
 import org.libraryexpress.domain.customer.exception.InvalidEmailException;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
-
-import java.util.Optional;
 
 public class FindCustomer {
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper mapper;
 
-    /**
-     * Deprecated
-     * */
+    /** Deprecated */
     public FindCustomer(CustomerRepository customerRepository, CustomerMapper mapper) {
         this.customerRepository = customerRepository;
         this.mapper = mapper;
@@ -30,8 +27,6 @@ public class FindCustomer {
                 ? this.customerRepository.getByEmail(criteria)
                 : this.customerRepository.getById(criteria);
 
-        return customer
-                .map(mapper::toResponseDto)
-                .orElseThrow(CustomerNotFoundException::new);
+        return customer.map(mapper::toResponseDto).orElseThrow(CustomerNotFoundException::new);
     }
 }

@@ -1,15 +1,14 @@
 package org.libraryexpress.application.customer.usecase;
 
+import java.util.Optional;
 import org.libraryexpress.application.customer.dto.request.CreateCustomerDTO;
 import org.libraryexpress.application.customer.dto.response.CreateCustomerResponseDTO;
+import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
-import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
-import org.libraryexpress.application.customer.mapper.CustomerMapper;
 import org.libraryexpress.domain.customer.entity.Customer;
+import org.libraryexpress.domain.customer.exception.UniqueEmailViolationException;
 import org.libraryexpress.domain.customer.repository.CustomerRepository;
-
-import java.util.Optional;
 
 public class CreateCustomer {
 

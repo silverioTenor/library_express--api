@@ -1,9 +1,8 @@
 package org.libraryexpress.infrastructure.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.libraryexpress.infrastructure.config.JacksonConfig;
-
 import java.nio.charset.StandardCharsets;
+import org.libraryexpress.infrastructure.config.JacksonConfig;
 
 public final class JsonPrinter {
 
