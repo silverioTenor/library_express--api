@@ -10,13 +10,13 @@ import org.libraryexpress.domain.core.repository.TransactionManager;
 import org.libraryexpress.infrastructure.config.database.transaction.TransactionContext;
 import org.libraryexpress.infrastructure.exception.TransactionException;
 
-public class TransactionDb implements TransactionManager {
+public class TransactionManagerDb implements TransactionManager {
 
-    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(TransactionDb.class);
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(TransactionManagerDb.class);
 
     private final DataSource dataSource;
 
-    public TransactionDb(DataSource dataSource) {
+    public TransactionManagerDb(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 

@@ -27,7 +27,7 @@ public final class PasswordPolicy {
         static final Set<String> ENTRIES = load();
 
         private static Set<String> load() {
-            try (InputStream in = PasswordPolicy.class.getResourceAsStream("../util/password-denylist.txt")) {
+            try (InputStream in = PasswordPolicy.class.getResourceAsStream("/password-denylist.txt")) {
                 if (in == null) throw new IllegalStateException("password-denylist.txt not found on the classpath");
 
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {

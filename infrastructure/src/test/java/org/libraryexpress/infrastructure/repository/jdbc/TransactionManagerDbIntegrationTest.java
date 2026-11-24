@@ -22,8 +22,8 @@ import org.libraryexpress.infrastructure.config.database.transaction.Transaction
 import org.libraryexpress.infrastructure.config.database.transaction.TransactionContext;
 
 @IntegrationTest
-@DisplayName("TransactionDb - Atomicity and Connection Sharing Integration Test")
-class TransactionDbIntegrationTest extends PostgresTestContainerConfig {
+@DisplayName("TransactionManagerDb - Atomicity and Connection Sharing Integration Test")
+class TransactionManagerDbIntegrationTest extends PostgresTestContainerConfig {
 
     private static final String CUSTOMER_ID = "20000000-0000-4000-8000-000000000010";
     private static final String LOAN_ID = "30000000-0000-4000-8000-000000000010";
@@ -38,7 +38,7 @@ class TransactionDbIntegrationTest extends PostgresTestContainerConfig {
     void setUp() {
         DataSource transactionAwareDataSource = new TransactionAwareDataSource(dataSource);
 
-        transactionManager = new TransactionDb(dataSource);
+        transactionManager = new TransactionManagerDb(dataSource);
         bookRepository = new BookDbRepository(transactionAwareDataSource);
         loanRepository = new LoanDbRepository(transactionAwareDataSource);
 

@@ -43,6 +43,7 @@
         <swagger.ui.version>5.17.14</swagger.ui.version>
         <rest.assured.version>5.5.6</rest.assured.version>
         <spotless.version>3.10.4</spotless.version>
+        <bouncycastle.version>1.87</bouncycastle.version>
 
         <exec.skip>true</exec.skip>
     </properties>
@@ -188,6 +189,12 @@
                 <groupId>org.webjars</groupId>
                 <artifactId>swagger-ui</artifactId>
                 <version>${swagger.ui.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

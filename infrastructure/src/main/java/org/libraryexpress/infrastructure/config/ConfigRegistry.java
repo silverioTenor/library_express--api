@@ -63,6 +63,14 @@ public final class ConfigRegistry {
         return resolve("DB_PASSWORD", null);
     }
 
+    public static String getAppEnv() {
+        return resolve("APP_ENV", "prod");
+    }
+
+    public static String getGoogleBooksApiKey() {
+        return resolve("GOOGLE_BOOKS_API_KEY", null);
+    }
+
     public static int getMaximumPoolSize() {
         return Integer.parseInt(resolve("hikari.maximum-pool-size", "10"));
     }
@@ -87,12 +95,16 @@ public final class ConfigRegistry {
         return Long.parseLong(resolve("db.lock.timeout-ms", "3000"));
     }
 
-    public static String getAppEnv() {
-        return resolve("APP_ENV", "prod");
+    public static long getArgon2MemoryKib() {
+        return Long.parseLong(resolve("argon2.memory-kib", "19456"));
     }
 
-    public static String getGoogleBooksApiKey() {
-        return resolve("GOOGLE_BOOKS_API_KEY", null);
+    public static long getArgon2Iterations() {
+        return Long.parseLong(resolve("argon2.iterations", "2"));
+    }
+
+    public static long getArgon2Parallelism() {
+        return Long.parseLong(resolve("argon2.parallelism", "1"));
     }
 
     private static String resolve(String key, String defaultValue) {
