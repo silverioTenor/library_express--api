@@ -2,7 +2,6 @@ package org.libraryexpress.domain.identity.entity;
 
 import java.time.Instant;
 import java.util.*;
-
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.core.valueobject.Email;
 import org.libraryexpress.domain.identity.enums.IdentityStatus;
@@ -37,13 +36,12 @@ public class Identity {
 
     /** New identity waiting for its owner to define the password. */
     public static Identity createPending(String email) {
-        return new Identity(
-                UUID.randomUUID(), new Email(email), null, IdentityStatus.PENDING_ACTIVATION, 0, null);
+        return new Identity(UUID.randomUUID(), Email.of(email), null, IdentityStatus.PENDING_ACTIVATION, 0, null);
     }
 
     /** New identity that is born active (the superAdmin bootstrap). */
     public static Identity createActive(String email, PasswordHash passwordHash) {
-        return new Identity(UUID.randomUUID(), new Email(email), passwordHash, IdentityStatus.ACTIVE, 0, null);
+        return new Identity(UUID.randomUUID(), Email.of(email), passwordHash, IdentityStatus.ACTIVE, 0, null);
     }
 
     private void validate() {
@@ -55,10 +53,8 @@ public class Identity {
         if (failedAttempts < 0) errors.add("Failed attempts cannot be negative");
 
         boolean pending = status == IdentityStatus.PENDING_ACTIVATION;
-        if (pending && passwordHash != null)
-            errors.add("A pending identity cannot have a password hash");
-        if (!pending && passwordHash == null)
-            errors.add("An identity that is not pending must have a password hash");
+        if (pending && passwordHash != null) errors.add("A pending identity cannot have a password hash");
+        if (!pending && passwordHash == null) errors.add("An identity that is not pending must have a password hash");
 
         if (!errors.isEmpty()) {
             throw new InvalidArgumentException(errors.toString());
@@ -73,7 +69,7 @@ public class Identity {
             int failedAttempts,
             Instant lockedUntil) {
         PasswordHash hash = passwordHash == null ? null : new PasswordHash(passwordHash);
-        return new Identity(id, new Email(email), hash, status, failedAttempts, lockedUntil);
+        return new Identity(id, Email.of(email), hash, status, failedAttempts, lockedUntil);
     }
 
     public UUID getId() {

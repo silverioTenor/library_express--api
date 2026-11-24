@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
-import org.libraryexpress.domain.customer.entity.Customer;
 import org.libraryexpress.domain.core.valueobject.Email;
+import org.libraryexpress.domain.customer.entity.Customer;
 
 @UnitTest
 @DisplayName("Customer Entity - Unit Test")
@@ -21,7 +21,7 @@ public class CustomerUnitTest {
         assertNotNull(customer.getId());
         assertFalse(customer.getId().isBlank());
         assertEquals("John Doe", customer.getName());
-        assertEquals(new Email("j.doe@test.com"), customer.getEmail());
+        assertEquals(Email.of("j.doe@test.com"), customer.getEmail());
     }
 
     @Test
