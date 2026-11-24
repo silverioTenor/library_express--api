@@ -46,8 +46,11 @@ public class User {
         List<String> errors = new ArrayList<>();
 
         if (id == null || id.isBlank()) errors.add("User id cannot be null or empty");
-        if (name == null || name.isBlank()) errors.add("User name cannot be null or empty");
-        if (name.length() > NAME_MAX_LENGTH) errors.add("User name exceeds " + NAME_MAX_LENGTH + " characters");
+        if (name == null || name.isBlank()) {
+            errors.add("User name cannot be null or empty");
+        } else if (name.length() > NAME_MAX_LENGTH) {
+            errors.add("User name exceeds " + NAME_MAX_LENGTH + " characters");
+        }
         if (role == null) errors.add("User role cannot be null");
         if (identity == null) errors.add("User identity cannot be null");
 
