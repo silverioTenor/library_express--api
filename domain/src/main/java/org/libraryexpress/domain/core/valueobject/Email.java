@@ -1,4 +1,4 @@
-package org.libraryexpress.domain.customer.valueobject;
+package org.libraryexpress.domain.core.valueobject;
 
 import java.util.regex.Pattern;
 import org.libraryexpress.domain.customer.exception.InvalidEmailException;

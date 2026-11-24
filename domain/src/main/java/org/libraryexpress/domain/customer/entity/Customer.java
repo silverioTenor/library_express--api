@@ -2,7 +2,7 @@ package org.libraryexpress.domain.customer.entity;
 
 import java.util.Objects;
 import org.libraryexpress.domain.core.util.RandomGenerator;
-import org.libraryexpress.domain.customer.valueobject.Email;
+import org.libraryexpress.domain.core.valueobject.Email;
 
 public class Customer implements Comparable<Customer> {
 

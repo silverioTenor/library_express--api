@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.customer.exception.InvalidEmailException;
-import org.libraryexpress.domain.customer.valueobject.Email;
+import org.libraryexpress.domain.core.valueobject.Email;
 
 @UnitTest
 @DisplayName("Email Value Object - Unit Test")

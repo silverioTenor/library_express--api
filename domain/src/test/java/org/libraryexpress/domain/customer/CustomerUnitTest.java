@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.customer.entity.Customer;
-import org.libraryexpress.domain.customer.valueobject.Email;
+import org.libraryexpress.domain.core.valueobject.Email;
 
 @UnitTest
 @DisplayName("Customer Entity - Unit Test")
