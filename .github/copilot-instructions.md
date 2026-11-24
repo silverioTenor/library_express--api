@@ -14,12 +14,14 @@
 
 ## 3. Readability & Code Design Rules (CRITICAL)
 - **No Compacted / Dense Code:** Write spacious, human-readable code. Never compress logic into clever one-liners.
-- **Method Length:** Keep methods focused and short (target **<= 20 lines**). Extract complex conditions, SQL parameter bindings, or mapping steps into well-named `private` helper methods.
+- **Method Length:** Keep methods focused and short (target **<= 40 lines**) keeping the single responsibility principal. Extract complex conditions, SQL parameter bindings, or mapping steps into well-named `private` helper methods.
 - **Streams & Conditionals:** Never chain more than 2 operations in a `Stream` or `Optional`. Extract intermediate results into clearly named local variables. Avoid nested ternaries; use explicit `if/else` or Java 21 `switch` expressions.
 - **Early Returns:** Use guard clauses at the top of methods to keep nesting depth <= 2 levels.
 - **Visual Breathing Room:** Separate logical blocks inside a method (validation, query/execution, mapping, return) with a blank line.
 
 ## 4. Testing & Build Quality Gates
 - **Tests:** JUnit 5 + Mockito for `domain` and `application` (use passthrough `TransactionManager` in application unit tests). In `infrastructure`, tag unit tests with `@UnitTest` and PostgreSQL Testcontainers tests with `@IntegrationTest`.
+- **Test Naming & Descriptions:** Every test method must follow the `should<ExpectedBehavior>_when<Condition>` naming convention (e.g., `shouldThrowException_whenEndDateIsNull`) and include a descriptive `@DisplayName("Should <behavior> when <reason>")` annotation (e.g., `@DisplayName("Should reject a null endDate when the entity requires a non-null due date")`).
+- **Test Structure (AAA):** Organize every test method into clear **Arrange**, **Act**, and **Assert** blocks separated by a blank line (without redundant `// Arrange` comments unless the setup is complex). Test one single behavior per test method and avoid asserting unrelated outcomes together.
 - **Coverage Targets (JaCoCo):** Domain >= 90% inst / 88% branch; Application >= 95% inst / 88% branch; Infrastructure >= 80% inst / 65% branch.
 - **Formatting:** Always run `mvn spotless:apply` (Palantir Java Format, 120-char width) after modifying Java files to ensure clean imports and formatting.
