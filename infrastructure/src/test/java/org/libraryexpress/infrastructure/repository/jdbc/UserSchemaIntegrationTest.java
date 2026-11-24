@@ -35,8 +35,7 @@ class UserSchemaIntegrationTest extends PostgresTestContainerConfig {
     void shouldMatchIdentityStatusNames_whenSchemaIsMigratedFromZero() throws SQLException {
         Set<String> enumNames =
                 Arrays.stream(IdentityStatus.values()).map(Enum::name).collect(Collectors.toSet());
-        Set<String> tableNames =
-                new HashSet<>(readLookupRows("identity_status").values());
+        Set<String> tableNames = new HashSet<>(readLookupRows("identity_status").values());
 
         assertEquals(enumNames, tableNames);
     }
