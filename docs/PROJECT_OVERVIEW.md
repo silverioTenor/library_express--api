@@ -263,7 +263,7 @@ JDBC repositories implement the domain repository contracts. They:
 
 ## 9. Transactions and Concurrency
 
-`TransactionManager` is a domain port. `TransactionDb` provides the infrastructure implementation.
+`TransactionManager` is a domain port. `TransactionManagerDb` provides the infrastructure implementation.
 
 A transaction:
 

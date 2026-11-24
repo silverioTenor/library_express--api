@@ -30,7 +30,7 @@ import org.libraryexpress.infrastructure.gateway.adapter.NativeHttpClient;
 import org.libraryexpress.infrastructure.repository.jdbc.BookDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.CustomerDbRepository;
 import org.libraryexpress.infrastructure.repository.jdbc.LoanDbRepository;
-import org.libraryexpress.infrastructure.repository.jdbc.TransactionDb;
+import org.libraryexpress.infrastructure.repository.jdbc.TransactionManagerDb;
 
 public class AppContext {
 
@@ -63,7 +63,7 @@ public class AppContext {
 
     public AppContext(ConnectionProvider connectionProvider) {
         DataSource dataSource = connectionProvider.getDataSource();
-        TransactionManager transactionManager = new TransactionDb(dataSource);
+        TransactionManager transactionManager = new TransactionManagerDb(dataSource);
         DataSource transactionAwareDataSource = new TransactionAwareDataSource(dataSource);
 
         // GATEWAYS

@@ -2,7 +2,7 @@ package org.libraryexpress.domain.customer.entity;
 
 import java.util.Objects;
 import org.libraryexpress.domain.core.util.RandomGenerator;
-import org.libraryexpress.domain.customer.valueobject.Email;
+import org.libraryexpress.domain.core.valueobject.Email;
 
 public class Customer implements Comparable<Customer> {
 
@@ -19,11 +19,11 @@ public class Customer implements Comparable<Customer> {
     }
 
     public static Customer create(String name, String email) {
-        return new Customer(RandomGenerator.UUID(), name, new Email(email));
+        return new Customer(RandomGenerator.UUID(), name, Email.of(email));
     }
 
     public static Customer restore(String id, String name, String email) {
-        return new Customer(id, name, new Email(email));
+        return new Customer(id, name, Email.of(email));
     }
 
     public String getId() {
@@ -39,7 +39,7 @@ public class Customer implements Comparable<Customer> {
     }
 
     public void changeEmail(String newEmail) {
-        this.email = new Email(newEmail);
+        this.email = Email.of(newEmail);
     }
 
     @Override
