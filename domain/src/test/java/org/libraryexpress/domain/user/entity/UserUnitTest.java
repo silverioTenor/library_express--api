@@ -27,11 +27,11 @@ class UserUnitTest {
     void shouldCreateSuperAdmin_whenCreatorIsNotProvided() {
         Identity identity = Identity.createActive("admin@example.com", new PasswordHash(PASSWORD_HASH));
 
-        User user = User.create("Library Admin", Role.SUPER_ADMIN, identity, null);
+        User user = User.create("Library Admin", Role.SA, identity, null);
 
         assertNotNull(user.getId());
         assertEquals("Library Admin", user.getName());
-        assertEquals(Role.SUPER_ADMIN, user.getRole());
+        assertEquals(Role.SA, user.getRole());
         assertEquals(identity, user.getIdentity());
         assertTrue(user.getCreatedBy().isEmpty());
     }
@@ -40,18 +40,21 @@ class UserUnitTest {
     @DisplayName("Should create a non-super-admin when a creator is provided")
     void shouldCreateUser_whenCreatorIsProvided() {
         Identity identity = createIdentity();
+        UUID userId = UUID.randomUUID();
 
-        User user = User.create("Operator", Role.OPERATOR, identity, "creator-123");
+        User user = User.create("Operator", Role.OPERATOR, identity, userId);
 
-        assertEquals("creator-123", user.getCreatedBy().orElseThrow());
+        assertEquals(userId, user.getCreatedBy().orElseThrow());
     }
 
     @Test
     @DisplayName("Should reject a super admin with a creator")
     void shouldThrowException_whenSuperAdminHasCreator() {
+        UUID userId = UUID.randomUUID();
+
         InvalidArgumentException exception = assertThrows(
                 InvalidArgumentException.class,
-                () -> User.create("Admin", Role.SUPER_ADMIN, createIdentity(), "creator"));
+                () -> User.create("Admin", Role.SA, createIdentity(), userId));
 
         assertEquals("The super admin cannot have a creator", exception.getMessage());
     }
@@ -60,7 +63,7 @@ class UserUnitTest {
     @DisplayName("Should reject a non-super-admin without a creator")
     void shouldThrowException_whenNonSuperAdminHasNoCreator() {
         InvalidArgumentException exception = assertThrows(
-                InvalidArgumentException.class, () -> User.create("Operator", Role.OPERATOR, createIdentity(), "  "));
+                InvalidArgumentException.class, () -> User.create("Operator", Role.OPERATOR, createIdentity(), null));
 
         assertEquals("A user other than the super admin must have a creator", exception.getMessage());
     }
@@ -68,9 +71,11 @@ class UserUnitTest {
     @Test
     @DisplayName("Should reject a user with a null name")
     void shouldThrowException_whenNameIsNull() {
+        UUID userId = UUID.randomUUID();
+
         InvalidArgumentException exception = assertThrows(
                 InvalidArgumentException.class,
-                () -> User.restore("user-123", null, Role.ADMIN, createIdentity(), "creator-123"));
+                () -> User.restore(userId, null, Role.ADMIN, createIdentity(), userId));
 
         assertTrue(exception.getMessage().contains("User name cannot be null or empty"));
     }
@@ -78,9 +83,11 @@ class UserUnitTest {
     @Test
     @DisplayName("Should reject a user name longer than the maximum length")
     void shouldThrowException_whenNameExceedsMaximumLength() {
+        UUID userId = UUID.randomUUID();
+
         InvalidArgumentException exception = assertThrows(
                 InvalidArgumentException.class,
-                () -> User.restore("user-123", "a".repeat(151), Role.ADMIN, createIdentity(), "creator-123"));
+                () -> User.restore(userId, "a".repeat(151), Role.ADMIN, createIdentity(), userId));
 
         assertTrue(exception.getMessage().contains("User name exceeds 150 characters"));
     }
@@ -88,9 +95,11 @@ class UserUnitTest {
     @Test
     @DisplayName("Should reject a user with a missing identifier")
     void shouldThrowException_whenIdIsBlank() {
+        UUID userId = UUID.randomUUID();
+
         InvalidArgumentException exception = assertThrows(
                 InvalidArgumentException.class,
-                () -> User.restore(" ", "Operator", Role.ADMIN, createIdentity(), "creator-123"));
+                () -> User.restore(null, "Operator", Role.ADMIN, createIdentity(), userId));
 
         assertTrue(exception.getMessage().contains("User id cannot be null or empty"));
     }
@@ -98,9 +107,11 @@ class UserUnitTest {
     @Test
     @DisplayName("Should reject a user with a missing identity")
     void shouldThrowException_whenIdentityIsNull() {
+        UUID userId = UUID.randomUUID();
+
         InvalidArgumentException exception = assertThrows(
                 InvalidArgumentException.class,
-                () -> User.restore("user-123", "Operator", Role.ADMIN, null, "creator-123"));
+                () -> User.restore(userId, "Operator", Role.ADMIN, null, userId));
 
         assertTrue(exception.getMessage().contains("User identity cannot be null"));
     }
@@ -108,23 +119,27 @@ class UserUnitTest {
     @Test
     @DisplayName("Should restore a user using its persisted identifier and creator")
     void shouldRestoreUser_whenPersistedValuesAreValid() {
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
         Identity identity = createIdentity();
 
-        User user = User.restore(userId, "Supervisor", Role.SUPERVISOR, identity, "creator-123");
+        User user = User.restore(userId, "Supervisor", Role.SUPERVISOR, identity, creatorId);
 
         assertEquals(userId, user.getId());
         assertEquals(Role.SUPERVISOR, user.getRole());
         assertEquals(identity, user.getIdentity());
-        assertEquals("creator-123", user.getCreatedBy().orElseThrow());
+        assertEquals(creatorId, user.getCreatedBy().orElseThrow());
     }
 
     @Test
     @DisplayName("Should compare users by identifier")
     void shouldBeEqual_whenUserIdsAreEqual() {
-        String userId = "user-123";
-        User firstUser = User.restore(userId, "First", Role.ADMIN, createIdentity(), "creator-1");
-        User secondUser = User.restore(userId, "Second", Role.OPERATOR, createIdentity(), "creator-2");
+        UUID userId = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
+        UUID creatorId2 = UUID.randomUUID();
+
+        User firstUser = User.restore(userId, "First", Role.ADMIN, createIdentity(), creatorId);
+        User secondUser = User.restore(userId, "Second", Role.OPERATOR, createIdentity(), creatorId2);
 
         assertEquals(firstUser, secondUser);
         assertEquals(firstUser.hashCode(), secondUser.hashCode());
@@ -133,8 +148,13 @@ class UserUnitTest {
     @Test
     @DisplayName("Should not compare users as equal when identifiers differ")
     void shouldNotBeEqual_whenUserIdsDiffer() {
-        User firstUser = User.restore("user-1", "First", Role.ADMIN, createIdentity(), "creator-1");
-        User secondUser = User.restore("user-2", "Second", Role.ADMIN, createIdentity(), "creator-2");
+        UUID userId = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+        UUID creatorId = UUID.randomUUID();
+        UUID creatorId2 = UUID.randomUUID();
+
+        User firstUser = User.restore(userId, "First", Role.ADMIN, createIdentity(), creatorId);
+        User secondUser = User.restore(userId2, "Second", Role.ADMIN, createIdentity(), creatorId2);
 
         assertNotEquals(firstUser, secondUser);
         assertNotNull(firstUser);

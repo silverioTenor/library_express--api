@@ -25,11 +25,15 @@ public class Argon2idPasswordHasher implements PasswordHasher {
         random.nextBytes(salt);
 
         byte[] hash = derive(
-                password, salt, settings.memoryKib(), settings.iterations(), settings.parallelism(),
+                password,
+                salt,
+                settings.memoryKib(),
+                settings.iterations(),
+                settings.parallelism(),
                 Argon2Settings.HASH_LENGTH);
 
-        return new PasswordHash(PhcFormat.encode(
-                settings.memoryKib(), settings.iterations(), settings.parallelism(), salt, hash));
+        return new PasswordHash(
+                PhcFormat.encode(settings.memoryKib(), settings.iterations(), settings.parallelism(), salt, hash));
     }
 
     @Override
@@ -42,7 +46,11 @@ public class Argon2idPasswordHasher implements PasswordHasher {
         }
 
         byte[] actual = derive(
-                password, stored.salt(), stored.memoryKib(), stored.iterations(), stored.parallelism(),
+                password,
+                stored.salt(),
+                stored.memoryKib(),
+                stored.iterations(),
+                stored.parallelism(),
                 stored.hash().length);
 
         return MessageDigest.isEqual(actual, stored.hash()); // constant time

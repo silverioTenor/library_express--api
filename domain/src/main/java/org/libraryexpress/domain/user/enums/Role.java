@@ -1,7 +1,7 @@
 package org.libraryexpress.domain.user.enums;
 
 public enum Role {
-    SUPER_ADMIN,
+    SA,
     ADMIN,
     SUPERVISOR,
     OPERATOR

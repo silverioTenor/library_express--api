@@ -32,10 +32,6 @@ public final class Email {
         }
     }
 
-    public String getValue() {
-        return value;
-    }
-
     public String value() {
         return value;
     }
