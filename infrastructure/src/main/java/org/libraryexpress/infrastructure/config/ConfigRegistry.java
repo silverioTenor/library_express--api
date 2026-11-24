@@ -3,10 +3,9 @@ package org.libraryexpress.infrastructure.config;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 import java.util.Properties;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.libraryexpress.domain.core.logging.CustomLogger;
 import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
 
@@ -14,30 +13,11 @@ public final class ConfigRegistry {
 
     private static final CustomLogger LOG = CustomLoggerFactory.getLogger(ConfigRegistry.class);
 
-    private static final Dotenv dotenv;
-    private static final Properties properties;
+    private static final ConcurrentMap<String, String> RESOLVED_VALUES = new ConcurrentHashMap<>();
 
     public static final String PG_LOCK_NOT_AVAILABLE = "55P03";
 
-    static {
-        dotenv = Dotenv.configure().ignoreIfMissing().load();
-
-        properties = new Properties();
-
-        try (InputStream input = ConfigRegistry.class.getClassLoader().getResourceAsStream("application.properties")) {
-            if (input != null) {
-                properties.load(input);
-            } else {
-                LOG.warn("Warning: application.properties not found. Relying on default parameters.");
-            }
-        } catch (IOException e) {
-            LOG.error("Error reading connection properties file: " + e.getMessage(), e);
-        }
-    }
-
     private ConfigRegistry() {}
-
-    // In the future, consider using Lazy Initialization or caching for frequently called methods.
 
     public static int getApiPort() {
         return Integer.parseInt(resolve("API_PORT", "3000"));
@@ -110,21 +90,56 @@ public final class ConfigRegistry {
     private static String resolve(String key, String defaultValue) {
         if (key == null || key.isBlank()) return defaultValue;
 
-        return Stream.<Supplier<String>>of(
-                        () -> System.getProperty(key),
-                        () -> System.getenv(key),
-                        () -> dotenv.get(key),
-                        () -> properties.getProperty(key))
-                .map(Supplier::get)
-                .filter(Objects::nonNull)
-                .filter(value -> !value.isBlank())
-                .findFirst()
-                .orElseGet(() -> {
-                    if (defaultValue == null || defaultValue.isBlank()) {
-                        throw new IllegalStateException(String.format(
-                                "Fatal Boot Error: Configuration key [%s] is mandatory but was not defined!", key));
-                    }
-                    return defaultValue;
-                });
+        return RESOLVED_VALUES.computeIfAbsent(key, ignored -> resolveUncached(key, defaultValue));
+    }
+
+    private static String resolveUncached(String key, String defaultValue) {
+        String value = isValid(System.getProperty(key));
+        if (value != null) return value;
+
+        value = isValid(System.getenv(key));
+        if (value != null) return value;
+
+        value = isValid(Sources.DOTENV.get(key));
+        if (value != null) return value;
+
+        value = isValid(Sources.PROPERTIES.getProperty(key));
+        if (value != null) return value;
+
+        if (defaultValue == null || defaultValue.isBlank()) {
+            throw new IllegalStateException(
+                    String.format("Fatal Boot Error: Configuration key [%s] is mandatory but was not defined!", key));
+        }
+
+        return defaultValue;
+    }
+
+    private static String isValid(String value) {
+        if (value == null || value.isBlank()) return null;
+        return value;
+    }
+
+    private static final class Sources {
+
+        private static final Dotenv DOTENV =
+                Dotenv.configure().ignoreIfMissing().load();
+        private static final Properties PROPERTIES = loadProperties();
+
+        private static Properties loadProperties() {
+            Properties properties = new Properties();
+
+            try (InputStream input =
+                    ConfigRegistry.class.getClassLoader().getResourceAsStream("application.properties")) {
+                if (input != null) {
+                    properties.load(input);
+                } else {
+                    LOG.warn("Warning: application.properties not found. Relying on default parameters.");
+                }
+            } catch (IOException e) {
+                LOG.error("Error reading connection properties file: " + e.getMessage(), e);
+            }
+
+            return properties;
+        }
     }
 }

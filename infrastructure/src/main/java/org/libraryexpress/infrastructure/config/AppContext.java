@@ -12,7 +12,10 @@ import org.libraryexpress.application.customer.usecase.FindCustomer;
 import org.libraryexpress.application.customer.usecase.SearchCustomers;
 import org.libraryexpress.application.customer.usecase.UpdateCustomerEmail;
 import org.libraryexpress.application.loan.mapper.LoanMapper;
-import org.libraryexpress.application.loan.usecase.*;
+import org.libraryexpress.application.loan.usecase.CloseOverdueLoan;
+import org.libraryexpress.application.loan.usecase.CreateLoan;
+import org.libraryexpress.application.loan.usecase.LoanReturn;
+import org.libraryexpress.application.loan.usecase.SearchLoans;
 import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
 import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
 import org.libraryexpress.domain.core.repository.TransactionManager;
@@ -34,148 +37,209 @@ import org.libraryexpress.infrastructure.repository.jdbc.TransactionManagerDb;
 
 public class AppContext {
 
-    // CUSTOMER
-    private final CreateCustomer createCustomer;
-    private final FindCustomer findCustomer;
-    private final SearchCustomers searchCustomers;
-    private final UpdateCustomerEmail updateCustomerEmail;
-    private final CustomerController customerController;
-
-    // BOOK
-    private final RegisterBook registerBook;
-    private final FindBook findBook;
-    private final SearchBooks serchBooks;
-    private final BookController bookController;
-
-    // LOAN
-    private final CreateLoan createLoan;
-    private final SearchLoans searchLoans;
-    private final LoanReturn loanReturn;
-    private final CloseOverdueLoan closeOverdueLoan;
-    private final LoanController loanController;
-
-    // DOCS
-    private final OpenApiContractHandler openApiContractHandler;
-    private final SwaggerUiHandler swaggerUiHandler;
-
-    // GATEWAYS
-    private final BookMetadataGateway bookMetadataGateway;
+    private final Database database;
+    private final Repositories repositories;
+    private final Validators validators;
+    private final Gateways gateways;
+    private final UseCases useCases;
+    private final Controllers controllers;
+    private final Documentation documentation;
 
     public AppContext(ConnectionProvider connectionProvider) {
         DataSource dataSource = connectionProvider.getDataSource();
-        TransactionManager transactionManager = new TransactionManagerDb(dataSource);
-        DataSource transactionAwareDataSource = new TransactionAwareDataSource(dataSource);
 
-        // GATEWAYS
-        NativeHttpClient nativeHttpClient = new NativeHttpClient();
-        this.bookMetadataGateway = BookMetadataGatewayFactory.create(ConfigRegistry.getAppEnv(), nativeHttpClient);
-
-        // CUSTOMER
-        CustomerDbRepository customerRepository = new CustomerDbRepository(transactionAwareDataSource);
-
-        this.createCustomer = new CreateCustomer(customerRepository, CustomerMapper.INSTANCE);
-        this.findCustomer = new FindCustomer(customerRepository, CustomerMapper.INSTANCE);
-        this.searchCustomers = new SearchCustomers(customerRepository, CustomerMapper.INSTANCE);
-        this.updateCustomerEmail = new UpdateCustomerEmail(customerRepository, CustomerMapper.INSTANCE);
-        this.customerController = new CustomerController(this);
-
-        // BOOK
-        BookDbRepository bookRepository = new BookDbRepository(transactionAwareDataSource);
-        BookAvailabilityValidator bookAvailabilityValidator = new BookAvailabilityValidator(bookRepository);
-
-        this.registerBook = new RegisterBook(bookRepository, bookMetadataGateway, BookMapper.INSTANCE);
-        this.findBook = new FindBook(bookRepository, BookMapper.INSTANCE);
-        this.serchBooks = new SearchBooks(bookRepository, BookMapper.INSTANCE);
-        this.bookController = new BookController(this);
-
-        // LOAN
-        LoanDbRepository loanRepository = new LoanDbRepository(transactionAwareDataSource);
-        LoanEligibilityValidator loanEligibilityValidator = new LoanEligibilityValidator(loanRepository);
-        LoanPeriodValidator loanPeriodValidator = new LoanPeriodValidator();
-
-        this.createLoan = new CreateLoan(
-                transactionManager,
-                loanRepository,
-                bookRepository,
-                customerRepository,
-                loanEligibilityValidator,
-                bookAvailabilityValidator,
-                loanPeriodValidator);
-        this.searchLoans = new SearchLoans(loanRepository, LoanMapper.INSTANCE);
-        this.loanReturn = new LoanReturn(transactionManager, loanRepository, bookRepository, Clock.systemDefaultZone());
-        this.closeOverdueLoan = new CloseOverdueLoan(loanRepository, Clock.systemDefaultZone());
-        this.loanController = new LoanController(this);
-
-        // DOCS
-        this.openApiContractHandler = new OpenApiContractHandler();
-        this.swaggerUiHandler = new SwaggerUiHandler();
+        this.database = new Database(dataSource);
+        this.repositories = new Repositories(database.transactionAwareDataSource);
+        this.validators = new Validators(repositories);
+        this.gateways = new Gateways();
+        this.useCases = new UseCases(database.transactionManager, repositories, validators, gateways);
+        this.controllers = new Controllers(this);
+        this.documentation = new Documentation();
     }
 
     public CreateCustomer getCreateCustomer() {
-        return createCustomer;
+        return useCases.createCustomer;
     }
 
     public FindCustomer getFindCustomer() {
-        return findCustomer;
+        return useCases.findCustomer;
     }
 
     public SearchCustomers getListCustomers() {
-        return searchCustomers;
+        return useCases.searchCustomers;
     }
 
     public UpdateCustomerEmail getUpdateCustomerEmail() {
-        return updateCustomerEmail;
+        return useCases.updateCustomerEmail;
     }
 
     public RegisterBook getRegisterBook() {
-        return registerBook;
+        return useCases.registerBook;
     }
 
     public FindBook getFindBook() {
-        return findBook;
+        return useCases.findBook;
     }
 
     public SearchBooks getListBooks() {
-        return serchBooks;
+        return useCases.searchBooks;
     }
 
     public CreateLoan getCreateLoan() {
-        return createLoan;
+        return useCases.createLoan;
     }
 
     public SearchLoans getSearchLoans() {
-        return searchLoans;
+        return useCases.searchLoans;
     }
 
     public LoanReturn getLoanReturn() {
-        return loanReturn;
+        return useCases.loanReturn;
     }
 
     public CloseOverdueLoan getCloseOverdueLoan() {
-        return closeOverdueLoan;
+        return useCases.closeOverdueLoan;
     }
 
     public BookController getBookController() {
-        return bookController;
+        return controllers.bookController;
     }
 
     public CustomerController getCustomerController() {
-        return customerController;
+        return controllers.customerController;
     }
 
     public LoanController getLoanController() {
-        return loanController;
+        return controllers.loanController;
     }
 
     public OpenApiContractHandler getOpenApiContractHandler() {
-        return openApiContractHandler;
+        return documentation.openApiContractHandler;
     }
 
     public SwaggerUiHandler getSwaggerUiHandler() {
-        return swaggerUiHandler;
+        return documentation.swaggerUiHandler;
     }
 
     public BookMetadataGateway getBookMetadataGateway() {
-        return bookMetadataGateway;
+        return gateways.bookMetadataGateway;
+    }
+
+    private static final class Database {
+
+        private final TransactionManager transactionManager;
+        private final DataSource transactionAwareDataSource;
+
+        private Database(DataSource dataSource) {
+            this.transactionManager = new TransactionManagerDb(dataSource);
+            this.transactionAwareDataSource = new TransactionAwareDataSource(dataSource);
+        }
+    }
+
+    private static final class Repositories {
+
+        private final BookDbRepository bookRepository;
+        private final CustomerDbRepository customerRepository;
+        private final LoanDbRepository loanRepository;
+
+        private Repositories(DataSource dataSource) {
+            this.bookRepository = new BookDbRepository(dataSource);
+            this.customerRepository = new CustomerDbRepository(dataSource);
+            this.loanRepository = new LoanDbRepository(dataSource);
+        }
+    }
+
+    private static final class Validators {
+
+        private final BookAvailabilityValidator bookAvailabilityValidator;
+        private final LoanEligibilityValidator loanEligibilityValidator;
+        private final LoanPeriodValidator loanPeriodValidator;
+
+        private Validators(Repositories repositories) {
+            this.bookAvailabilityValidator = new BookAvailabilityValidator(repositories.bookRepository);
+            this.loanEligibilityValidator = new LoanEligibilityValidator(repositories.loanRepository);
+            this.loanPeriodValidator = new LoanPeriodValidator();
+        }
+    }
+
+    private static final class Gateways {
+
+        private final NativeHttpClient nativeHttpClient;
+        private final BookMetadataGateway bookMetadataGateway;
+
+        private Gateways() {
+            this.nativeHttpClient = new NativeHttpClient();
+            this.bookMetadataGateway = BookMetadataGatewayFactory.create(ConfigRegistry.getAppEnv(), nativeHttpClient);
+        }
+    }
+
+    private static final class UseCases {
+
+        private final CreateCustomer createCustomer;
+        private final FindCustomer findCustomer;
+        private final SearchCustomers searchCustomers;
+        private final UpdateCustomerEmail updateCustomerEmail;
+        private final RegisterBook registerBook;
+        private final FindBook findBook;
+        private final SearchBooks searchBooks;
+        private final CreateLoan createLoan;
+        private final SearchLoans searchLoans;
+        private final LoanReturn loanReturn;
+        private final CloseOverdueLoan closeOverdueLoan;
+
+        private UseCases(
+                TransactionManager transactionManager,
+                Repositories repositories,
+                Validators validators,
+                Gateways gateways) {
+            this.createCustomer = new CreateCustomer(repositories.customerRepository, CustomerMapper.INSTANCE);
+            this.findCustomer = new FindCustomer(repositories.customerRepository, CustomerMapper.INSTANCE);
+            this.searchCustomers = new SearchCustomers(repositories.customerRepository, CustomerMapper.INSTANCE);
+            this.updateCustomerEmail =
+                    new UpdateCustomerEmail(repositories.customerRepository, CustomerMapper.INSTANCE);
+
+            this.registerBook =
+                    new RegisterBook(repositories.bookRepository, gateways.bookMetadataGateway, BookMapper.INSTANCE);
+            this.findBook = new FindBook(repositories.bookRepository, BookMapper.INSTANCE);
+            this.searchBooks = new SearchBooks(repositories.bookRepository, BookMapper.INSTANCE);
+
+            Clock clock = Clock.systemDefaultZone();
+            this.createLoan = new CreateLoan(
+                    transactionManager,
+                    repositories.loanRepository,
+                    repositories.bookRepository,
+                    repositories.customerRepository,
+                    validators.loanEligibilityValidator,
+                    validators.bookAvailabilityValidator,
+                    validators.loanPeriodValidator);
+            this.searchLoans = new SearchLoans(repositories.loanRepository, LoanMapper.INSTANCE);
+            this.loanReturn =
+                    new LoanReturn(transactionManager, repositories.loanRepository, repositories.bookRepository, clock);
+            this.closeOverdueLoan = new CloseOverdueLoan(repositories.loanRepository, clock);
+        }
+    }
+
+    private static final class Controllers {
+
+        private final BookController bookController;
+        private final CustomerController customerController;
+        private final LoanController loanController;
+
+        private Controllers(AppContext appContext) {
+            this.bookController = new BookController(appContext);
+            this.customerController = new CustomerController(appContext);
+            this.loanController = new LoanController(appContext);
+        }
+    }
+
+    private static final class Documentation {
+
+        private final OpenApiContractHandler openApiContractHandler;
+        private final SwaggerUiHandler swaggerUiHandler;
+
+        private Documentation() {
+            this.openApiContractHandler = new OpenApiContractHandler();
+            this.swaggerUiHandler = new SwaggerUiHandler();
+        }
     }
 }
