@@ -12,8 +12,9 @@ public final class RouteOrchestrator {
             BookRouteModule bookRouter,
             CustomerRouteModule customerRouter,
             LoanRouteModule loanRouter,
-            DocsRouteModule docsRouter) {
-        this.modules = List.of(bookRouter, customerRouter, loanRouter, docsRouter);
+            DocsRouteModule docsRouter,
+            RestrictRouteModule restrictRouter) {
+        this.modules = List.of(bookRouter, customerRouter, loanRouter, docsRouter, restrictRouter);
     }
 
     public void bindAll(Router router) {

@@ -44,7 +44,11 @@ public final class ConfigRegistry {
     }
 
     public static String getAppEnv() {
-        return resolve("APP_ENV", "prod");
+        return resolve("APP_ENV", "development");
+    }
+
+    public static String getAwsSecretId() {
+        return resolve("AWS_SECRET_ID", "development");
     }
 
     public static String getGoogleBooksApiKey() {
@@ -75,16 +79,16 @@ public final class ConfigRegistry {
         return Long.parseLong(resolve("db.lock.timeout-ms", "3000"));
     }
 
-    public static long getArgon2MemoryKib() {
-        return Long.parseLong(resolve("argon2.memory-kib", "19456"));
+    public static int getArgon2MemoryKib() {
+        return Integer.parseInt(resolve("argon2.memory-kib", "19456"));
     }
 
-    public static long getArgon2Iterations() {
-        return Long.parseLong(resolve("argon2.iterations", "2"));
+    public static int getArgon2Iterations() {
+        return Integer.parseInt(resolve("argon2.iterations", "2"));
     }
 
-    public static long getArgon2Parallelism() {
-        return Long.parseLong(resolve("argon2.parallelism", "1"));
+    public static int getArgon2Parallelism() {
+        return Integer.parseInt(resolve("argon2.parallelism", "1"));
     }
 
     private static String resolve(String key, String defaultValue) {
@@ -94,17 +98,17 @@ public final class ConfigRegistry {
     }
 
     private static String resolveUncached(String key, String defaultValue) {
-        String value = isValid(System.getProperty(key));
-        if (value != null) return value;
+        var result = isValid(System.getProperty(key));
+        if (result.status) return result.value;
 
-        value = isValid(System.getenv(key));
-        if (value != null) return value;
+        result = isValid(System.getenv(key));
+        if (result.status) return result.value;
 
-        value = isValid(Sources.DOTENV.get(key));
-        if (value != null) return value;
+        result = isValid(Sources.DOTENV.get(key));
+        if (result.status) return result.value;
 
-        value = isValid(Sources.PROPERTIES.getProperty(key));
-        if (value != null) return value;
+        result = isValid(Sources.PROPERTIES.getProperty(key));
+        if (result.status) return result.value;
 
         if (defaultValue == null || defaultValue.isBlank()) {
             throw new IllegalStateException(
@@ -114,9 +118,15 @@ public final class ConfigRegistry {
         return defaultValue;
     }
 
-    private static String isValid(String value) {
-        if (value == null || value.isBlank()) return null;
-        return value;
+    private static Result isValid(String value) {
+        boolean status = (value != null && !value.isBlank());
+        return Result.of(status, value);
+    }
+
+    private record Result(boolean status, String value) {
+        private static Result of(boolean anStatus, String anValue) {
+            return new Result(anStatus, anValue);
+        }
     }
 
     private static final class Sources {

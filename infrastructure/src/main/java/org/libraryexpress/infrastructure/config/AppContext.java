@@ -16,14 +16,18 @@ import org.libraryexpress.application.loan.usecase.CloseOverdueLoan;
 import org.libraryexpress.application.loan.usecase.CreateLoan;
 import org.libraryexpress.application.loan.usecase.LoanReturn;
 import org.libraryexpress.application.loan.usecase.SearchLoans;
+import org.libraryexpress.application.user.usecase.CreateSuperAdmin;
 import org.libraryexpress.domain.book.gateway.BookMetadataGateway;
 import org.libraryexpress.domain.book.validator.BookAvailabilityValidator;
 import org.libraryexpress.domain.core.repository.TransactionManager;
+import org.libraryexpress.domain.identity.security.PasswordHasher;
 import org.libraryexpress.domain.loan.validator.LoanEligibilityValidator;
 import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.api.controller.CustomerController;
 import org.libraryexpress.infrastructure.api.controller.LoanController;
+import org.libraryexpress.infrastructure.api.controller.RestrictController;
+import org.libraryexpress.infrastructure.api.guard.CreateSuperAdminGuard;
 import org.libraryexpress.infrastructure.api.routes.*;
 import org.libraryexpress.infrastructure.api.routing.openApi.OpenApiContractHandler;
 import org.libraryexpress.infrastructure.api.routing.openApi.SwaggerUiHandler;
@@ -31,33 +35,30 @@ import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
 import org.libraryexpress.infrastructure.config.database.transaction.TransactionAwareDataSource;
 import org.libraryexpress.infrastructure.gateway.BookMetadataGatewayFactory;
 import org.libraryexpress.infrastructure.gateway.adapter.NativeHttpClient;
-import org.libraryexpress.infrastructure.repository.jdbc.BookDbRepository;
-import org.libraryexpress.infrastructure.repository.jdbc.CustomerDbRepository;
-import org.libraryexpress.infrastructure.repository.jdbc.LoanDbRepository;
-import org.libraryexpress.infrastructure.repository.jdbc.TransactionManagerDb;
+import org.libraryexpress.infrastructure.gateway.aws.AwsSecretsManager;
+import org.libraryexpress.infrastructure.gateway.aws.ConfigSecretProvider;
+import org.libraryexpress.infrastructure.gateway.aws.SecretProvider;
+import org.libraryexpress.infrastructure.repository.jdbc.*;
+import org.libraryexpress.infrastructure.security.Argon2Settings;
+import org.libraryexpress.infrastructure.security.Argon2idPasswordHasher;
 
 public class AppContext {
 
-    private final Database database;
-    private final Repositories repositories;
-    private final Validators validators;
-    private final Gateways gateways;
-    private final UseCases useCases;
-    private final Controllers controllers;
-    private final Documentation documentation;
     private final Routes routes;
 
     public AppContext(ConnectionProvider connectionProvider) {
         DataSource dataSource = connectionProvider.getDataSource();
 
-        this.database = new Database(dataSource);
-        this.repositories = new Repositories(database.transactionAwareDataSource);
-        this.validators = new Validators(repositories);
-        this.gateways = new Gateways();
-        this.useCases = new UseCases(database.transactionManager, repositories, validators, gateways);
-        this.controllers = new Controllers(useCases);
-        this.documentation = new Documentation();
-        this.routes = new Routes(controllers, documentation);
+        Database database = new Database(dataSource);
+        Repositories repositories = new Repositories(database.transactionAwareDataSource);
+        Validators validators = new Validators(repositories);
+        Security security = new Security();
+        Gateways gateways = new Gateways();
+        UseCases useCases = new UseCases(database.transactionManager, repositories, validators, gateways, security);
+        Controllers controllers = new Controllers(useCases);
+        Documentation documentation = new Documentation();
+        Guards guards = new Guards(controllers, repositories, security);
+        this.routes = new Routes(guards, controllers, documentation);
     }
 
     public RouteOrchestrator orchestrator() {
@@ -68,14 +69,16 @@ public class AppContext {
 
         private final RouteOrchestrator orchestrator;
 
-        private Routes(Controllers controllers, Documentation documentation) {
+        private Routes(Guards guards, Controllers controllers, Documentation documentation) {
             BookRouteModule bookRouteModule = new BookRouteModule(controllers.bookController);
             CustomerRouteModule customerRouteModule = new CustomerRouteModule(controllers.customerController);
             LoanRouteModule loanRouteModule = new LoanRouteModule(controllers.loanController);
             DocsRouteModule docsRouteModule =
                     new DocsRouteModule(documentation.openApiContractHandler, documentation.swaggerUiHandler);
-            this.orchestrator =
-                    new RouteOrchestrator(bookRouteModule, customerRouteModule, loanRouteModule, docsRouteModule);
+            RestrictRouteModule restrictRouteModule =
+                    new RestrictRouteModule(controllers.restrictController, guards.createSuperAdminGuard);
+            this.orchestrator = new RouteOrchestrator(
+                    bookRouteModule, customerRouteModule, loanRouteModule, docsRouteModule, restrictRouteModule);
         }
     }
 
@@ -95,11 +98,13 @@ public class AppContext {
         private final BookDbRepository bookRepository;
         private final CustomerDbRepository customerRepository;
         private final LoanDbRepository loanRepository;
+        private final UserDbRepository userDbRepository;
 
         private Repositories(DataSource dataSource) {
             this.bookRepository = new BookDbRepository(dataSource);
             this.customerRepository = new CustomerDbRepository(dataSource);
             this.loanRepository = new LoanDbRepository(dataSource);
+            this.userDbRepository = new UserDbRepository(dataSource);
         }
     }
 
@@ -140,12 +145,14 @@ public class AppContext {
         private final SearchLoans searchLoans;
         private final LoanReturn loanReturn;
         private final CloseOverdueLoan closeOverdueLoan;
+        private final CreateSuperAdmin createSuperAdmin;
 
         private UseCases(
                 TransactionManager transactionManager,
                 Repositories repositories,
                 Validators validators,
-                Gateways gateways) {
+                Gateways gateways,
+                Security security) {
             this.createCustomer = new CreateCustomer(repositories.customerRepository, CustomerMapper.INSTANCE);
             this.findCustomer = new FindCustomer(repositories.customerRepository, CustomerMapper.INSTANCE);
             this.searchCustomers = new SearchCustomers(repositories.customerRepository, CustomerMapper.INSTANCE);
@@ -170,6 +177,9 @@ public class AppContext {
             this.loanReturn =
                     new LoanReturn(transactionManager, repositories.loanRepository, repositories.bookRepository, clock);
             this.closeOverdueLoan = new CloseOverdueLoan(repositories.loanRepository, clock);
+
+            this.createSuperAdmin =
+                    new CreateSuperAdmin(repositories.userDbRepository, security.passwordHasher, transactionManager);
         }
     }
 
@@ -178,6 +188,7 @@ public class AppContext {
         private final BookController bookController;
         private final CustomerController customerController;
         private final LoanController loanController;
+        private final RestrictController restrictController;
 
         private Controllers(UseCases useCases) {
             this.bookController = new BookController(useCases.registerBook, useCases.findBook, useCases.searchBooks);
@@ -185,6 +196,37 @@ public class AppContext {
                     useCases.createCustomer, useCases.updateCustomerEmail, useCases.searchCustomers);
             this.loanController = new LoanController(
                     useCases.createLoan, useCases.searchLoans, useCases.loanReturn, useCases.closeOverdueLoan);
+            this.restrictController = new RestrictController(useCases.createSuperAdmin);
+        }
+    }
+
+    private static final class Security {
+
+        private final PasswordHasher passwordHasher;
+        private final SecretProvider secretProvider;
+        private final String secretId;
+
+        private Security() {
+            Argon2Settings argon2Settings = new Argon2Settings(
+                    ConfigRegistry.getArgon2MemoryKib(),
+                    ConfigRegistry.getArgon2Iterations(),
+                    ConfigRegistry.getArgon2Parallelism());
+            this.passwordHasher = new Argon2idPasswordHasher(argon2Settings);
+
+            this.secretProvider = (ConfigRegistry.getAppEnv().equals("prod"))
+                    ? new AwsSecretsManager()
+                    : new ConfigSecretProvider(String::strip);
+            this.secretId = ConfigRegistry.getAwsSecretId();
+        }
+    }
+
+    private static final class Guards {
+
+        private CreateSuperAdminGuard createSuperAdminGuard;
+
+        private Guards(Controllers controllers, Repositories repositories, Security security) {
+            this.createSuperAdminGuard = new CreateSuperAdminGuard(
+                    repositories.userDbRepository, security.secretProvider, security.secretId);
         }
     }
 

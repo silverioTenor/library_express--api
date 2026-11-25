@@ -44,6 +44,7 @@
         <rest.assured.version>5.5.6</rest.assured.version>
         <spotless.version>3.10.4</spotless.version>
         <bouncycastle.version>1.87</bouncycastle.version>
+        <aws.sdk.version>2.59.8</aws.sdk.version>
 
         <exec.skip>true</exec.skip>
     </properties>
@@ -195,6 +196,14 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk18on</artifactId>
                 <version>${bouncycastle.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws.sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
