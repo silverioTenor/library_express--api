@@ -19,6 +19,39 @@ import org.libraryexpress.infrastructure.config.database.PostgresTestContainerCo
 @IntegrationTest
 @DisplayName("User schema constraints integration tests")
 class UserSchemaIntegrationTest extends PostgresTestContainerConfig {
+    @Test
+    @DisplayName("Should accept the first super admin and reject a second")
+    void shouldRejectSecondSuperAdmin_whenRoleIdIsOne() throws SQLException {
+        UUID firstIdentity = UUID.randomUUID();
+        insertIdentity(firstIdentity, uniqueEmail(), "$argon2id$direct-test-hash", 2);
+        insertAdminUserWithRole(UUID.randomUUID(), firstIdentity, 1);
+
+        UUID secondIdentity = UUID.randomUUID();
+        insertIdentity(secondIdentity, uniqueEmail(), "$argon2id$direct-test-hash", 2);
+
+        assertThrows(SQLException.class, () -> insertAdminUserWithRole(UUID.randomUUID(), secondIdentity, 1));
+    }
+
+    @Test
+    @DisplayName("Should accept several users in non-super-admin roles")
+    void shouldAcceptOtherRoles_whenSeveralUsersExist() throws SQLException {
+        insertRoleUser(2);
+        insertRoleUser(3);
+        insertRoleUser(4);
+    }
+
+    private void insertRoleUser(int roleId) throws SQLException {
+        UUID identityId = UUID.randomUUID();
+        insertIdentity(identityId, uniqueEmail());
+        insertAdminUserWithRole(UUID.randomUUID(), identityId, roleId);
+    }
+
+    private void insertAdminUserWithRole(UUID userId, UUID identityId, int roleId) throws SQLException {
+        executeSql("""
+                INSERT INTO admin_user (id, name, identity_id, role_id)
+                VALUES (?, ?, ?, ?)
+                """, userId, "Schema test user", identityId, roleId);
+    }
 
     @Test
     @DisplayName("Should seed the configured role and identity status lookup rows")

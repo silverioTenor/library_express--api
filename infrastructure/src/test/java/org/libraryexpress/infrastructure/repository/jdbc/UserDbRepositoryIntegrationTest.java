@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.libraryexpress.domain.core.valueobject.Email;
 import org.libraryexpress.domain.identity.entity.Identity;
 import org.libraryexpress.domain.identity.enums.IdentityStatus;
+import org.libraryexpress.domain.identity.valueobject.PasswordHash;
 import org.libraryexpress.domain.identity.valueobject.PlainPassword;
 import org.libraryexpress.domain.user.entity.User;
 import org.libraryexpress.domain.user.enums.Role;
@@ -38,6 +39,23 @@ class UserDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     void setUp() {
         transactionManager = new TransactionManagerDb(dataSource);
         userRepository = new UserDbRepository(new TransactionAwareDataSource(dataSource));
+        executeSql("TRUNCATE TABLE loan, book, customer, admin_user, identity RESTART IDENTITY CASCADE");
+    }
+
+    @Test
+    @DisplayName("Should report role existence accurately on an empty table and after super admin creation")
+    void shouldReportRoleExistence_whenSuperAdminIsCreated() {
+        assertFalse(userRepository.existsByRole(Role.SA));
+        assertFalse(userRepository.existsByRole(Role.ADMIN));
+
+        Identity identity =
+                Identity.createActive(uniqueEmail(), PasswordHash.of("$argon2id$v=19$m=65536,t=3,p=1$c2FsdA$aGFzaA"));
+        User superAdmin = User.create("Super admin", Role.SA, identity, null);
+
+        persist(superAdmin);
+
+        assertTrue(userRepository.existsByRole(Role.SA));
+        assertFalse(userRepository.existsByRole(Role.ADMIN));
     }
 
     @Test
@@ -166,6 +184,23 @@ class UserDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
 
         assertTrue(userRepository.getById(firstUser.getId()).isPresent());
         assertTrue(userRepository.getById(secondUser.getId()).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should reject a second super admin at the database and leave no orphan identity")
+    void shouldRejectSecondSuperAdmin_whenUniqueIndexIsViolated() throws SQLException {
+        PasswordHash hash = PasswordHash.of("$argon2id$v=19$m=65536,t=3,p=1$c2FsdA$aGFzaA");
+        Identity firstIdentity = Identity.createActive(uniqueEmail(), hash);
+        Identity secondIdentity = Identity.createActive(uniqueEmail(), hash);
+        User first = User.create("First super admin", Role.SA, firstIdentity, null);
+        User second = User.create("Second super admin", Role.SA, secondIdentity, null);
+
+        persist(first);
+
+        assertThrows(RuntimeException.class, () -> persist(second));
+
+        assertFalse(identityExists(secondIdentity.getId()));
+        assertFalse(userExists(second.getId()));
     }
 
     private void persist(User user) {

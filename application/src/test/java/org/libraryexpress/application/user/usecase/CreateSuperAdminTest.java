@@ -3,6 +3,7 @@ package org.libraryexpress.application.user.usecase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,6 +22,7 @@ import org.libraryexpress.domain.user.entity.User;
 import org.libraryexpress.domain.user.enums.Role;
 import org.libraryexpress.domain.user.repository.UserRepository;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -64,13 +66,31 @@ class CreateSuperAdminTest {
     @Test
     @DisplayName("Should reject a super admin and abort persistence when the password is invalid")
     void shouldRejectSuperAdmin_whenPasswordIsTooShort() {
-        CreateSuperAdminDTO request = new CreateSuperAdminDTO("Library Admin", "admin@example.com", "short");
         CreateSuperAdmin useCase =
                 new CreateSuperAdmin(userRepository, passwordHasher, new PassthroughTransactionManager());
 
-        assertThrows(InvalidArgumentException.class, () -> useCase.execute(request));
+        assertThrows(
+                InvalidArgumentException.class,
+                () -> new CreateSuperAdminDTO("Library Admin", "admin@example.com", "short"));
 
         verify(passwordHasher, never()).hash(any());
         verify(userRepository, never()).create(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should hash the password outside the transaction before persistence")
+    void shouldHashOutsideTransaction_whenRequestIsValid() {
+        CreateSuperAdminDTO request =
+                new CreateSuperAdminDTO("Library Admin", "admin@example.com", "N0tCommon-LongPassword!2026");
+        PasswordHash passwordHash = PasswordHash.of(VALID_HASH);
+        when(passwordHasher.hash(any())).thenReturn(passwordHash);
+        CreateSuperAdmin useCase =
+                new CreateSuperAdmin(userRepository, passwordHasher, new PassthroughTransactionManager());
+
+        useCase.execute(request);
+
+        InOrder inOrder = inOrder(passwordHasher, userRepository);
+        inOrder.verify(passwordHasher).hash(any());
+        inOrder.verify(userRepository).create(any(User.class));
     }
 }
