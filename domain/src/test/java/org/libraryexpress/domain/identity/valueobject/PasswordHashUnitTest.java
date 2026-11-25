@@ -17,7 +17,7 @@ class PasswordHashUnitTest {
     @Test
     @DisplayName("Should accept an Argon2id PHC string")
     void shouldCreatePasswordHash_whenValueIsArgon2idPhcString() {
-        PasswordHash passwordHash = new PasswordHash(VALID_HASH);
+        PasswordHash passwordHash = PasswordHash.of(VALID_HASH);
 
         assertEquals(VALID_HASH, passwordHash.value());
     }
@@ -25,7 +25,7 @@ class PasswordHashUnitTest {
     @Test
     @DisplayName("Should reject a null hash")
     void shouldThrowException_whenHashIsNull() {
-        InvalidArgumentException exception = assertThrows(InvalidArgumentException.class, () -> new PasswordHash(null));
+        InvalidArgumentException exception = assertThrows(InvalidArgumentException.class, () -> PasswordHash.of(null));
 
         assertEquals("Password hash must be an Argon2id PHC string", exception.getMessage());
     }
@@ -34,7 +34,7 @@ class PasswordHashUnitTest {
     @DisplayName("Should reject a hash that does not use Argon2id")
     void shouldThrowException_whenHashHasInvalidAlgorithm() {
         InvalidArgumentException exception =
-                assertThrows(InvalidArgumentException.class, () -> new PasswordHash("$bcrypt$hash"));
+                assertThrows(InvalidArgumentException.class, () -> PasswordHash.of("$bcrypt$hash"));
 
         assertEquals("Password hash must be an Argon2id PHC string", exception.getMessage());
     }
@@ -44,7 +44,7 @@ class PasswordHashUnitTest {
     void shouldCreatePasswordHash_whenLengthIsAtMaximum() {
         String hashValue = "$argon2id$" + "a".repeat(245);
 
-        PasswordHash passwordHash = new PasswordHash(hashValue);
+        PasswordHash passwordHash = PasswordHash.of(hashValue);
 
         assertEquals(255, passwordHash.value().length());
     }
@@ -55,7 +55,7 @@ class PasswordHashUnitTest {
         String hashValue = "$argon2id$" + "a".repeat(247);
 
         InvalidArgumentException exception =
-                assertThrows(InvalidArgumentException.class, () -> new PasswordHash(hashValue));
+                assertThrows(InvalidArgumentException.class, () -> PasswordHash.of(hashValue));
 
         assertEquals("Password hash exceeds maximum length", exception.getMessage());
     }
@@ -63,7 +63,7 @@ class PasswordHashUnitTest {
     @Test
     @DisplayName("Should hide the hash value when converted to a string")
     void shouldHideHash_whenConvertedToString() {
-        PasswordHash passwordHash = new PasswordHash(VALID_HASH);
+        PasswordHash passwordHash = PasswordHash.of(VALID_HASH);
 
         String representation = passwordHash.toString();
 

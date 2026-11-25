@@ -65,7 +65,7 @@ class UserDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     @Test
     @DisplayName("Should round-trip a SUPER_ADMIN and verify its Argon2id password hash")
     void shouldRoundTripSuperAdminWithVerifiablePasswordHash_whenCreatedWithinTransaction() throws SQLException {
-        PlainPassword password = new PlainPassword("N0tCommon-LongPassword!2026");
+        PlainPassword password = PlainPassword.of("N0tCommon-LongPassword!2026");
         Argon2idPasswordHasher hasher = new Argon2idPasswordHasher(Argon2Settings.owaspDefaults());
         Identity identity = Identity.createActive(uniqueEmail(), hasher.hash(password));
         User user = User.create("Super administrator", Role.SA, identity, null);

@@ -24,7 +24,7 @@ class UserUnitTest {
     @Test
     @DisplayName("Should create a super admin without a creator")
     void shouldCreateSuperAdmin_whenCreatorIsNotProvided() {
-        Identity identity = Identity.createActive("admin@example.com", new PasswordHash(PASSWORD_HASH));
+        Identity identity = Identity.createActive("admin@example.com", PasswordHash.of(PASSWORD_HASH));
 
         User user = User.create("Library Admin", Role.SA, identity, null);
 
@@ -157,7 +157,7 @@ class UserUnitTest {
     }
 
     private Identity createIdentity() {
-        PasswordHash passwordHash = new PasswordHash(PASSWORD_HASH);
+        PasswordHash passwordHash = PasswordHash.of(PASSWORD_HASH);
         return Identity.createActive("user@example.com", passwordHash);
     }
 }
