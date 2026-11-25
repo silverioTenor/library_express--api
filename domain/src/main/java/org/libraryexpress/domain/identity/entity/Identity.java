@@ -5,7 +5,9 @@ import java.util.*;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.core.valueobject.Email;
 import org.libraryexpress.domain.identity.enums.IdentityStatus;
+import org.libraryexpress.domain.identity.security.PasswordHasher;
 import org.libraryexpress.domain.identity.valueobject.PasswordHash;
+import org.libraryexpress.domain.identity.valueobject.PlainPassword;
 
 /** Credentials and access state. Profile and hierarchy data live in User. */
 public class Identity {
@@ -68,8 +70,17 @@ public class Identity {
             IdentityStatus status,
             int failedAttempts,
             Instant lockedUntil) {
-        PasswordHash hash = passwordHash == null ? null : new PasswordHash(passwordHash);
+        PasswordHash hash = restorePasswordHash(passwordHash);
         return new Identity(id, Email.of(email), hash, status, failedAttempts, lockedUntil);
+    }
+
+    public static PasswordHash createPasswordHash(PasswordHasher passwordHasher, String strPassword) {
+        PlainPassword plainPassword = PlainPassword.of(strPassword);
+        return passwordHasher.hash(plainPassword);
+    }
+
+    private static PasswordHash restorePasswordHash(String strPasswordHash) {
+        return strPasswordHash == null ? null : PasswordHash.of(strPasswordHash);
     }
 
     public UUID getId() {

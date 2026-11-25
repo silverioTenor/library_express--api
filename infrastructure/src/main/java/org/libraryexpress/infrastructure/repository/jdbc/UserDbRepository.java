@@ -109,7 +109,8 @@ public class UserDbRepository implements UserRepository {
                 )
                 """;
 
-        try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, role.name());
 
             try (ResultSet resultSet = statement.executeQuery()) {
