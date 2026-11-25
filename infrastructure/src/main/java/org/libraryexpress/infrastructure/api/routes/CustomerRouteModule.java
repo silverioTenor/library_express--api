@@ -4,14 +4,13 @@ import static org.libraryexpress.infrastructure.api.enums.HttpVerb.*;
 
 import org.libraryexpress.infrastructure.api.controller.CustomerController;
 import org.libraryexpress.infrastructure.api.routing.Router;
-import org.libraryexpress.infrastructure.config.AppContext;
 
 public class CustomerRouteModule implements HttpRouteModule {
 
     private final CustomerController controller;
 
-    public CustomerRouteModule(AppContext context) {
-        this.controller = context.getCustomerController();
+    public CustomerRouteModule(CustomerController controller) {
+        this.controller = controller;
     }
 
     @Override

@@ -4,14 +4,13 @@ import static org.libraryexpress.infrastructure.api.enums.HttpVerb.*;
 
 import org.libraryexpress.infrastructure.api.controller.LoanController;
 import org.libraryexpress.infrastructure.api.routing.Router;
-import org.libraryexpress.infrastructure.config.AppContext;
 
 public class LoanRouteModule implements HttpRouteModule {
 
     private final LoanController controller;
 
-    public LoanRouteModule(AppContext context) {
-        this.controller = context.getLoanController();
+    public LoanRouteModule(LoanController controller) {
+        this.controller = controller;
     }
 
     @Override

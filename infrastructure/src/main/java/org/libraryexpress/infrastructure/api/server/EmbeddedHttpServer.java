@@ -21,7 +21,7 @@ public final class EmbeddedHttpServer {
     public EmbeddedHttpServer(AppContext context) {
         try {
             Router router = new Router();
-            RouteOrchestrator orchestrator = new RouteOrchestrator(context);
+            RouteOrchestrator orchestrator = context.orchestrator();
             orchestrator.bindAll(router);
 
             server = HttpServer.create(new InetSocketAddress(SERVER_PORT), 0);

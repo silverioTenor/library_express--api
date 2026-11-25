@@ -5,16 +5,15 @@ import static org.libraryexpress.infrastructure.api.enums.HttpVerb.GET;
 import org.libraryexpress.infrastructure.api.routing.Router;
 import org.libraryexpress.infrastructure.api.routing.openApi.OpenApiContractHandler;
 import org.libraryexpress.infrastructure.api.routing.openApi.SwaggerUiHandler;
-import org.libraryexpress.infrastructure.config.AppContext;
 
 public final class DocsRouteModule implements HttpRouteModule {
 
     private final OpenApiContractHandler contractHandler;
     private final SwaggerUiHandler swaggerUiHandler;
 
-    public DocsRouteModule(AppContext context) {
-        contractHandler = context.getOpenApiContractHandler();
-        swaggerUiHandler = context.getSwaggerUiHandler();
+    public DocsRouteModule(OpenApiContractHandler contractHandler, SwaggerUiHandler swaggerUiHandler) {
+        this.contractHandler = contractHandler;
+        this.swaggerUiHandler = swaggerUiHandler;
     }
 
     @Override

@@ -24,6 +24,7 @@ import org.libraryexpress.domain.loan.validator.LoanPeriodValidator;
 import org.libraryexpress.infrastructure.api.controller.BookController;
 import org.libraryexpress.infrastructure.api.controller.CustomerController;
 import org.libraryexpress.infrastructure.api.controller.LoanController;
+import org.libraryexpress.infrastructure.api.routes.*;
 import org.libraryexpress.infrastructure.api.routing.openApi.OpenApiContractHandler;
 import org.libraryexpress.infrastructure.api.routing.openApi.SwaggerUiHandler;
 import org.libraryexpress.infrastructure.config.database.ConnectionProvider;
@@ -44,6 +45,7 @@ public class AppContext {
     private final UseCases useCases;
     private final Controllers controllers;
     private final Documentation documentation;
+    private final Routes routes;
 
     public AppContext(ConnectionProvider connectionProvider) {
         DataSource dataSource = connectionProvider.getDataSource();
@@ -53,76 +55,28 @@ public class AppContext {
         this.validators = new Validators(repositories);
         this.gateways = new Gateways();
         this.useCases = new UseCases(database.transactionManager, repositories, validators, gateways);
-        this.controllers = new Controllers(this);
+        this.controllers = new Controllers(useCases);
         this.documentation = new Documentation();
+        this.routes = new Routes(controllers, documentation);
     }
 
-    public CreateCustomer getCreateCustomer() {
-        return useCases.createCustomer;
+    public RouteOrchestrator orchestrator() {
+        return routes.orchestrator;
     }
 
-    public FindCustomer getFindCustomer() {
-        return useCases.findCustomer;
-    }
+    private static final class Routes {
 
-    public SearchCustomers getListCustomers() {
-        return useCases.searchCustomers;
-    }
+        private final RouteOrchestrator orchestrator;
 
-    public UpdateCustomerEmail getUpdateCustomerEmail() {
-        return useCases.updateCustomerEmail;
-    }
-
-    public RegisterBook getRegisterBook() {
-        return useCases.registerBook;
-    }
-
-    public FindBook getFindBook() {
-        return useCases.findBook;
-    }
-
-    public SearchBooks getListBooks() {
-        return useCases.searchBooks;
-    }
-
-    public CreateLoan getCreateLoan() {
-        return useCases.createLoan;
-    }
-
-    public SearchLoans getSearchLoans() {
-        return useCases.searchLoans;
-    }
-
-    public LoanReturn getLoanReturn() {
-        return useCases.loanReturn;
-    }
-
-    public CloseOverdueLoan getCloseOverdueLoan() {
-        return useCases.closeOverdueLoan;
-    }
-
-    public BookController getBookController() {
-        return controllers.bookController;
-    }
-
-    public CustomerController getCustomerController() {
-        return controllers.customerController;
-    }
-
-    public LoanController getLoanController() {
-        return controllers.loanController;
-    }
-
-    public OpenApiContractHandler getOpenApiContractHandler() {
-        return documentation.openApiContractHandler;
-    }
-
-    public SwaggerUiHandler getSwaggerUiHandler() {
-        return documentation.swaggerUiHandler;
-    }
-
-    public BookMetadataGateway getBookMetadataGateway() {
-        return gateways.bookMetadataGateway;
+        private Routes(Controllers controllers, Documentation documentation) {
+            BookRouteModule bookRouteModule = new BookRouteModule(controllers.bookController);
+            CustomerRouteModule customerRouteModule = new CustomerRouteModule(controllers.customerController);
+            LoanRouteModule loanRouteModule = new LoanRouteModule(controllers.loanController);
+            DocsRouteModule docsRouteModule =
+                    new DocsRouteModule(documentation.openApiContractHandler, documentation.swaggerUiHandler);
+            this.orchestrator =
+                    new RouteOrchestrator(bookRouteModule, customerRouteModule, loanRouteModule, docsRouteModule);
+        }
     }
 
     private static final class Database {
@@ -225,10 +179,12 @@ public class AppContext {
         private final CustomerController customerController;
         private final LoanController loanController;
 
-        private Controllers(AppContext appContext) {
-            this.bookController = new BookController(appContext);
-            this.customerController = new CustomerController(appContext);
-            this.loanController = new LoanController(appContext);
+        private Controllers(UseCases useCases) {
+            this.bookController = new BookController(useCases.registerBook, useCases.findBook, useCases.searchBooks);
+            this.customerController = new CustomerController(
+                    useCases.createCustomer, useCases.updateCustomerEmail, useCases.searchCustomers);
+            this.loanController = new LoanController(
+                    useCases.createLoan, useCases.searchLoans, useCases.loanReturn, useCases.closeOverdueLoan);
         }
     }
 
