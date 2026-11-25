@@ -61,6 +61,8 @@ public class GlobalExceptionHandler implements CustomHttpHandler {
             case RESOURCE_NOT_FOUND -> NOT_FOUND;
             case DATA_CONFLICT -> CONFLICT;
             case BUSINESS_VIOLATION -> UNPROCESSABLE_ENTITY;
+            case INVALID_CREDENTIAL -> UNAUTHORIZED;
+            case PERMISSION_DENIED -> FORBIDDEN;
         };
     }
 

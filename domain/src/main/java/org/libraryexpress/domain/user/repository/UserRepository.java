@@ -3,6 +3,7 @@ package org.libraryexpress.domain.user.repository;
 import java.util.Optional;
 import java.util.UUID;
 import org.libraryexpress.domain.user.entity.User;
+import org.libraryexpress.domain.user.enums.Role;
 
 public interface UserRepository {
 
@@ -15,4 +16,6 @@ public interface UserRepository {
     Optional<User> getById(UUID id);
 
     Optional<User> getByEmail(String email);
+
+    boolean existsByRole(Role role);
 }
