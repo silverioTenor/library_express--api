@@ -47,6 +47,10 @@ public final class ConfigRegistry {
         return resolve("APP_ENV", "development");
     }
 
+    public static String getAwsSecretName() {
+        return resolve("AWS_SECRET_NAME", "development");
+    }
+
     public static String getAwsSecretId() {
         return resolve("AWS_SECRET_ID", "development");
     }

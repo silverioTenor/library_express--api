@@ -3,6 +3,12 @@ package org.libraryexpress.infrastructure.gateway.aws;
 import static org.libraryexpress.infrastructure.exception.InfrastructureErrorType.BAD_GATEWAY;
 
 import java.util.Optional;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import org.libraryexpress.domain.core.logging.CustomLogger;
+import org.libraryexpress.domain.core.logging.CustomLoggerFactory;
+import org.libraryexpress.infrastructure.config.ConfigRegistry;
+import org.libraryexpress.infrastructure.config.JacksonConfig;
 import org.libraryexpress.infrastructure.exception.InfrastructureException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
@@ -11,17 +17,19 @@ import software.amazon.awssdk.services.secretsmanager.model.ResourceNotFoundExce
 
 public final class AwsSecretsManager implements SecretProvider {
 
+    private static final CustomLogger LOG = CustomLoggerFactory.getLogger(AwsSecretsManager.class);
+
     private SecretsManagerClient client;
 
     @Override
     public Optional<String> get(String id) {
         try (SecretsManagerClient smClient = client()) {
-            String value =
+            String jsonResponse =
                     smClient.getSecretValue(request -> request.secretId(id)).secretString();
-            return Optional.ofNullable(value);
+            return Optional.ofNullable(extractValue(jsonResponse));
         } catch (ResourceNotFoundException e) {
             return Optional.empty();
-        } catch (SdkClientException e) {
+        } catch (Exception e) {
             throw new InfrastructureException(BAD_GATEWAY, "Could not read the super admin secret" + e.getMessage());
         }
     }
@@ -33,5 +41,10 @@ public final class AwsSecretsManager implements SecretProvider {
                     .build();
         }
         return client;
+    }
+
+    private String extractValue(String secretJson) throws Exception {
+        JsonNode node = JacksonConfig.mapper().readTree(secretJson);
+        return node.get(ConfigRegistry.getAwsSecretName()).asText();
     }
 }
