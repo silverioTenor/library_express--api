@@ -66,12 +66,11 @@ class CreateSuperAdminTest {
     @Test
     @DisplayName("Should reject a super admin and abort persistence when the password is invalid")
     void shouldRejectSuperAdmin_whenPasswordIsTooShort() {
+        CreateSuperAdminDTO request = new CreateSuperAdminDTO("Library Admin", "admin@example.com", "short");
         CreateSuperAdmin useCase =
                 new CreateSuperAdmin(userRepository, passwordHasher, new PassthroughTransactionManager());
 
-        assertThrows(
-                InvalidArgumentException.class,
-                () -> new CreateSuperAdminDTO("Library Admin", "admin@example.com", "short"));
+        assertThrows(InvalidArgumentException.class, () -> useCase.execute(request));
 
         verify(passwordHasher, never()).hash(any());
         verify(userRepository, never()).create(any(User.class));

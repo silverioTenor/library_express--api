@@ -40,6 +40,8 @@ public abstract class E2EBaseConfig {
             System.setProperty("DB_PASSWORD", postgres.getPassword());
             System.setProperty("DB_PORT", postgres.getMappedPort(5432).toString());
             System.setProperty("APP_ENV", "test");
+            System.setProperty("AWS_SECRET_NAME", "test");
+            System.setProperty("AWS_SECRET_ID", "sad09w3k49rf04jfo3f80r2-30le43");
 
             AppBootstrapper.boot();
 
@@ -50,6 +52,8 @@ public abstract class E2EBaseConfig {
                 System.clearProperty("DB_USER");
                 System.clearProperty("DB_PASSWORD");
                 System.clearProperty("DB_PORT");
+                System.clearProperty("AWS_SECRET_NAME");
+                System.clearProperty("AWS_SECRET_ID");
             }));
         }
 
@@ -60,7 +64,7 @@ public abstract class E2EBaseConfig {
     @AfterAll
     static void cleanDatabaseState() {
         LOG.info("Cleaning database...");
-        String truncateSql = "TRUNCATE TABLE loan, book, customer RESTART IDENTITY CASCADE";
+        String truncateSql = "TRUNCATE TABLE loan, book, customer, admin_user, identity RESTART IDENTITY CASCADE";
 
         String jdbcUrl = postgres.getJdbcUrl();
         String dbUser = postgres.getUsername();

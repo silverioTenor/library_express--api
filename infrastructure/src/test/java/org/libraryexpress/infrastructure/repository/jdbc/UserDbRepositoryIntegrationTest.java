@@ -39,7 +39,6 @@ class UserDbRepositoryIntegrationTest extends PostgresTestContainerConfig {
     void setUp() {
         transactionManager = new TransactionManagerDb(dataSource);
         userRepository = new UserDbRepository(new TransactionAwareDataSource(dataSource));
-        executeSql("TRUNCATE TABLE loan, book, customer, admin_user, identity RESTART IDENTITY CASCADE");
     }
 
     @Test
