@@ -48,11 +48,11 @@ public final class ConfigRegistry {
     }
 
     public static String getAwsSecretName() {
-        return resolve("AWS_SECRET_NAME", "development");
+        return resolve("AWS_SECRET_NAME", null);
     }
 
     public static String getAwsSecretId() {
-        return resolve("AWS_SECRET_ID", "development");
+        return resolve("AWS_SECRET_ID", null);
     }
 
     public static String getGoogleBooksApiKey() {

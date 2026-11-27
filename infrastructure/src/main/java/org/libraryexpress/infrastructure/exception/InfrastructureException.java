@@ -8,6 +8,7 @@ public class InfrastructureException extends RuntimeException {
         super(message);
         this.errorType = errorType;
     }
+
     public InfrastructureErrorType getErrorType() {
         return errorType;
     }
