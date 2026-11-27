@@ -32,7 +32,7 @@ public class Argon2idPasswordHasher implements PasswordHasher {
                 settings.parallelism(),
                 Argon2Settings.HASH_LENGTH);
 
-        return new PasswordHash(
+        return PasswordHash.of(
                 PhcFormat.encode(settings.memoryKib(), settings.iterations(), settings.parallelism(), salt, hash));
     }
 

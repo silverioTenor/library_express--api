@@ -98,6 +98,30 @@ public class UserDbRepository implements UserRepository {
         return Optional.empty();
     }
 
+    @Override
+    public boolean existsByRole(Role role) {
+        String sql = """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM admin_user u
+                    JOIN role r ON r.id = u.role_id
+                    WHERE r.name = ?
+                )
+                """;
+
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, role.name());
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getBoolean(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error checking for role existence: " + e.getMessage(), e);
+        }
+    }
+
     private void insertIdentity(Connection connection, Identity identity) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(INSERT_IDENTITY)) {
             statement.setObject(1, identity.getId());

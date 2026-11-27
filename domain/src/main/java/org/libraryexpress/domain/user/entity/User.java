@@ -1,9 +1,7 @@
 package org.libraryexpress.domain.user.entity;
 
 import java.util.*;
-
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
-import org.libraryexpress.domain.core.util.RandomGenerator;
 import org.libraryexpress.domain.identity.entity.Identity;
 import org.libraryexpress.domain.user.enums.Role;
 
@@ -32,8 +30,7 @@ public class User {
     public static User create(String name, Role role, Identity identity, UUID createdBy) {
         boolean hasCreator = createdBy != null;
 
-        if (role == Role.SA && hasCreator)
-            throw new InvalidArgumentException("The super admin cannot have a creator");
+        if (role == Role.SA && hasCreator) throw new InvalidArgumentException("The super admin cannot have a creator");
         if (role != Role.SA && !hasCreator)
             throw new InvalidArgumentException("A user other than the super admin must have a creator");
 

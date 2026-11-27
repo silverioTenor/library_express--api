@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.libraryexpress.domain.book.exception.BookUnavailableException;
+import org.libraryexpress.domain.core.exception.InvalidCredentialsException;
+import org.libraryexpress.domain.core.exception.PermissionDeniedException;
 import org.libraryexpress.infrastructure.UnitTest;
 import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
@@ -21,6 +23,37 @@ import org.mockito.ArgumentCaptor;
 @UnitTest
 @DisplayName("Global Exception Handler - Unit Test")
 class GlobalExceptionHandlerTest {
+    @Test
+    @DisplayName("Should map invalid credentials to 401 Unauthorized")
+    void shouldMapTo401_whenInvalidCredentialsOccur() throws Exception {
+        CustomHttpHandler delegate = mock(CustomHttpHandler.class);
+        doThrow(new InvalidCredentialsException()).when(delegate).handle(any(), any());
+        GlobalExceptionHandler handler = new GlobalExceptionHandler(delegate);
+        HttpContextResponse response = mock(HttpContextResponse.class, RETURNS_SELF);
+
+        handler.handle(mock(HttpContextRequest.class), response);
+
+        verify(response).status(HttpStatusCode.UNAUTHORIZED);
+        ArgumentCaptor<ErrorResponse> captor = ArgumentCaptor.forClass(ErrorResponse.class);
+        verify(response).json(captor.capture());
+        assertEquals("Invalid credentials.", captor.getValue().message());
+    }
+
+    @Test
+    @DisplayName("Should map permission denial to 403 Forbidden")
+    void shouldMapTo403_whenPermissionIsDenied() throws Exception {
+        CustomHttpHandler delegate = mock(CustomHttpHandler.class);
+        doThrow(new PermissionDeniedException()).when(delegate).handle(any(), any());
+        GlobalExceptionHandler handler = new GlobalExceptionHandler(delegate);
+        HttpContextResponse response = mock(HttpContextResponse.class, RETURNS_SELF);
+
+        handler.handle(mock(HttpContextRequest.class), response);
+
+        verify(response).status(HttpStatusCode.FORBIDDEN);
+        ArgumentCaptor<ErrorResponse> captor = ArgumentCaptor.forClass(ErrorResponse.class);
+        verify(response).json(captor.capture());
+        assertEquals("Permission denied.", captor.getValue().message());
+    }
 
     @Test
     @DisplayName("Should map domain business rule exceptions straight into 422 Unprocessable Entity statuses")

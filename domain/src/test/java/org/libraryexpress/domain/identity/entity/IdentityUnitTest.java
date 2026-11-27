@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -15,6 +18,7 @@ import org.libraryexpress.domain.UnitTest;
 import org.libraryexpress.domain.core.exception.InvalidArgumentException;
 import org.libraryexpress.domain.core.valueobject.Email;
 import org.libraryexpress.domain.identity.enums.IdentityStatus;
+import org.libraryexpress.domain.identity.security.PasswordHasher;
 import org.libraryexpress.domain.identity.valueobject.PasswordHash;
 
 @UnitTest
@@ -39,12 +43,25 @@ class IdentityUnitTest {
     @Test
     @DisplayName("Should create an active identity with its password hash")
     void shouldCreateActiveIdentity_whenEmailAndPasswordHashAreValid() {
-        PasswordHash passwordHash = new PasswordHash(VALID_HASH);
+        PasswordHash passwordHash = PasswordHash.of(VALID_HASH);
 
         Identity identity = Identity.createActive("active@example.com", passwordHash);
 
         assertEquals(IdentityStatus.ACTIVE, identity.getStatus());
-        assertEquals(passwordHash, identity.getPasswordHash().orElseThrow());
+        assertEquals(VALID_HASH, identity.getPasswordHash().orElseThrow().value());
+    }
+
+    @Test
+    @DisplayName("Should normalize and hash a plain password when creating a password hash")
+    void shouldCreatePasswordHash_whenPlainPasswordIsNormalized() {
+        PasswordHasher passwordHasher = mock(PasswordHasher.class);
+        PasswordHash passwordHash = PasswordHash.of(VALID_HASH);
+        when(passwordHasher.hash(argThat(password -> password.value().equals("X".repeat(12)))))
+                .thenReturn(passwordHash);
+
+        PasswordHash result = Identity.createPasswordHash(passwordHasher, "Ｘ".repeat(12));
+
+        assertEquals(VALID_HASH, result.value());
     }
 
     @Test
@@ -58,7 +75,7 @@ class IdentityUnitTest {
 
         assertEquals(id, identity.getId());
         assertEquals(IdentityStatus.BLOCKED, identity.getStatus());
-        assertEquals(new PasswordHash(VALID_HASH), identity.getPasswordHash().orElseThrow());
+        assertEquals(VALID_HASH, identity.getPasswordHash().orElseThrow().value());
         assertEquals(3, identity.getFailedAttempts());
         assertEquals(lockedUntil, identity.getLockedUntil().orElseThrow());
     }

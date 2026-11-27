@@ -2,19 +2,19 @@ package org.libraryexpress.infrastructure.api.routes;
 
 import java.util.List;
 import org.libraryexpress.infrastructure.api.routing.Router;
-import org.libraryexpress.infrastructure.config.AppContext;
 
 /** Infrastructure composite pattern orchestrator collecting and firing search modular resource routes. */
 public final class RouteOrchestrator {
 
     private final List<HttpRouteModule> modules;
 
-    public RouteOrchestrator(AppContext context) {
-        this.modules = List.of(
-                new BookRouteModule(context),
-                new CustomerRouteModule(context),
-                new LoanRouteModule(context),
-                new DocsRouteModule(context));
+    public RouteOrchestrator(
+            BookRouteModule bookRouter,
+            CustomerRouteModule customerRouter,
+            LoanRouteModule loanRouter,
+            DocsRouteModule docsRouter,
+            RestrictRouteModule restrictRouter) {
+        this.modules = List.of(bookRouter, customerRouter, loanRouter, docsRouter, restrictRouter);
     }
 
     public void bindAll(Router router) {

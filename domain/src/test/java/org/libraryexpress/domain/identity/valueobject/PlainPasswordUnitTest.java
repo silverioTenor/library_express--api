@@ -17,7 +17,7 @@ class PlainPasswordUnitTest {
     void shouldAcceptPassword_whenLengthIsAtMinimum() {
         String passwordValue = "x".repeat(12);
 
-        PlainPassword password = new PlainPassword(passwordValue);
+        PlainPassword password = PlainPassword.of(passwordValue);
 
         assertEquals(passwordValue, password.value());
     }
@@ -27,7 +27,7 @@ class PlainPasswordUnitTest {
     void shouldNormalizePassword_whenCompatibilityCharactersArePresent() {
         String passwordValue = "Ｘ".repeat(12);
 
-        PlainPassword password = new PlainPassword(passwordValue);
+        PlainPassword password = PlainPassword.of(passwordValue);
 
         assertEquals("X".repeat(12), password.value());
     }
@@ -37,7 +37,7 @@ class PlainPasswordUnitTest {
     void shouldAcceptPassword_whenTwelveUnicodeCodePointsAreProvided() {
         String passwordValue = "😀".repeat(12);
 
-        PlainPassword password = new PlainPassword(passwordValue);
+        PlainPassword password = PlainPassword.of(passwordValue);
 
         assertEquals(passwordValue, password.value());
     }
@@ -45,8 +45,7 @@ class PlainPasswordUnitTest {
     @Test
     @DisplayName("Should reject a null password")
     void shouldThrowException_whenPasswordIsNull() {
-        InvalidArgumentException exception =
-                assertThrows(InvalidArgumentException.class, () -> new PlainPassword(null));
+        InvalidArgumentException exception = assertThrows(InvalidArgumentException.class, () -> PlainPassword.of(null));
 
         assertEquals("Password cannot be null", exception.getMessage());
     }
@@ -55,7 +54,7 @@ class PlainPasswordUnitTest {
     @DisplayName("Should reject a password shorter than the minimum length")
     void shouldThrowException_whenPasswordIsTooShort() {
         InvalidArgumentException exception =
-                assertThrows(InvalidArgumentException.class, () -> new PlainPassword("a".repeat(11)));
+                assertThrows(InvalidArgumentException.class, () -> PlainPassword.of("a".repeat(11)));
 
         assertEquals("Password must have at least 12 characters", exception.getMessage());
     }
@@ -64,7 +63,7 @@ class PlainPasswordUnitTest {
     @DisplayName("Should reject a password longer than the maximum length")
     void shouldThrowException_whenPasswordIsTooLong() {
         InvalidArgumentException exception =
-                assertThrows(InvalidArgumentException.class, () -> new PlainPassword("a".repeat(129)));
+                assertThrows(InvalidArgumentException.class, () -> PlainPassword.of("a".repeat(129)));
 
         assertEquals("Password must have at most 128 characters", exception.getMessage());
     }
@@ -73,7 +72,7 @@ class PlainPasswordUnitTest {
     @DisplayName("Should reject a common password regardless of letter case")
     void shouldThrowException_whenPasswordIsOnTheDenylist() {
         InvalidArgumentException exception =
-                assertThrows(InvalidArgumentException.class, () -> new PlainPassword("PASSWORD1234"));
+                assertThrows(InvalidArgumentException.class, () -> PlainPassword.of("PASSWORD1234"));
 
         assertEquals("Password is too common", exception.getMessage());
     }
@@ -81,7 +80,7 @@ class PlainPasswordUnitTest {
     @Test
     @DisplayName("Should hide the password value when converted to a string")
     void shouldHidePassword_whenConvertedToString() {
-        PlainPassword password = new PlainPassword("unique-passphrase");
+        PlainPassword password = PlainPassword.of("unique-passphrase");
 
         String representation = password.toString();
 

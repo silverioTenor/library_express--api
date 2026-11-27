@@ -9,26 +9,32 @@ import org.libraryexpress.application.book.dto.request.BookFilterDTO;
 import org.libraryexpress.application.book.dto.request.RegisterBookDTO;
 import org.libraryexpress.application.book.dto.response.BookDTO;
 import org.libraryexpress.application.book.dto.response.RegisterBookResponseDTO;
+import org.libraryexpress.application.book.usecase.FindBook;
+import org.libraryexpress.application.book.usecase.RegisterBook;
+import org.libraryexpress.application.book.usecase.SearchBooks;
 import org.libraryexpress.domain.core.dto.OutputPaginationDto;
 import org.libraryexpress.infrastructure.api.contract.Pagination;
 import org.libraryexpress.infrastructure.api.contract.openApi.BookApiMapping;
 import org.libraryexpress.infrastructure.api.routing.HttpContextRequest;
 import org.libraryexpress.infrastructure.api.routing.HttpContextResponse;
-import org.libraryexpress.infrastructure.config.AppContext;
 
 @Path("/books")
 public final class BookController implements BookApiMapping {
 
-    private final AppContext context;
+    private final RegisterBook registerBook;
+    private final FindBook findBook;
+    private final SearchBooks searchBooks;
 
-    public BookController(AppContext context) {
-        this.context = context;
+    public BookController(RegisterBook registerBook, FindBook findBook, SearchBooks searchBooks) {
+        this.registerBook = registerBook;
+        this.findBook = findBook;
+        this.searchBooks = searchBooks;
     }
 
     @POST
     public void register(HttpContextRequest request, HttpContextResponse response) throws Exception {
         RegisterBookDTO inputDto = request.parseBody(RegisterBookDTO.class);
-        RegisterBookResponseDTO responseDTO = context.getRegisterBook().execute(inputDto);
+        RegisterBookResponseDTO responseDTO = registerBook.execute(inputDto);
 
         response.status(CREATED).json(responseDTO);
     }
@@ -36,8 +42,7 @@ public final class BookController implements BookApiMapping {
     @GET
     @Path("/{isbn}")
     public void get(HttpContextRequest request, HttpContextResponse response) throws Exception {
-        BookDTO outputDto = context.getFindBook().execute(request.getRouteParam("isbn"));
-
+        BookDTO outputDto = findBook.execute(request.getRouteParam("isbn"));
         response.status(SUCCESS).json(outputDto);
     }
 
@@ -55,8 +60,7 @@ public final class BookController implements BookApiMapping {
         var filterBookDto = new BookFilterDTO(
                 id, ISBN, title, author, statuses, publishedYear, pageRequest.page(), pageRequest.size());
 
-        OutputPaginationDto<BookDTO> outputDto = context.getListBooks().execute(filterBookDto);
-
+        OutputPaginationDto<BookDTO> outputDto = searchBooks.execute(filterBookDto);
         response.status(SUCCESS).json(outputDto);
     }
 }

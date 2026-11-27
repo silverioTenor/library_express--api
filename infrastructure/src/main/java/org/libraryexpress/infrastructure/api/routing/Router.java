@@ -14,6 +14,7 @@ import org.libraryexpress.infrastructure.api.contract.ErrorResponse;
 import org.libraryexpress.infrastructure.api.enums.HttpStatusCode;
 import org.libraryexpress.infrastructure.api.enums.HttpVerb;
 import org.libraryexpress.infrastructure.api.exception.GlobalExceptionHandler;
+import org.libraryexpress.infrastructure.api.guard.Guard;
 import org.libraryexpress.infrastructure.api.server.SunHttpServer;
 import org.libraryexpress.infrastructure.util.JsonPrinter;
 
@@ -23,27 +24,11 @@ public final class Router implements HttpHandler {
 
     public Router() {}
 
-    public void register(HttpVerb method, String path, CustomHttpHandler handler) {
-        List<String> parameterNames = new ArrayList<>();
-        Matcher parameterMatcher = Pattern.compile("\\{([^}]+)\\}").matcher(path);
+    public void register(HttpVerb method, String path, CustomHttpHandler handler, Guard... guards) {
+        List<String> parameterNames = getParameterNames(path);
+        Pattern pattern = getRoutesMatchPatter(path);
 
-        while (parameterMatcher.find()) {
-            parameterNames.add(parameterMatcher.group(1));
-        }
-
-        String regexPattern = path.replaceAll("\\{[^}]+\\}", "([^/]+)");
-
-        if (!regexPattern.startsWith("^")) regexPattern = "^" + regexPattern;
-        if (!regexPattern.endsWith("$")) regexPattern += "$";
-
-        Pattern pattern = Pattern.compile(regexPattern);
-
-        CustomHttpHandler globalExceptionHandler = new GlobalExceptionHandler(handler);
-        LogTraceFilter traceFilter = new LogTraceFilter();
-
-        CustomHttpHandler fullHandler = (request, response) -> {
-            traceFilter.doFilter(request, response, globalExceptionHandler);
-        };
+        CustomHttpHandler fullHandler = processHandlers(handler, guards);
 
         routes.add(new RouteEntry(method.getVerb(), pattern, parameterNames, fullHandler));
     }
@@ -70,6 +55,43 @@ public final class Router implements HttpHandler {
             case RouteMatch.NotFound e ->
                 sendError(exchange, HttpStatusCode.NOT_FOUND, "Resource path or method execution context not found.");
         }
+    }
+
+    private CustomHttpHandler processHandlers(CustomHttpHandler handler, Guard... guards) {
+        List<Guard> chain = List.of(guards);
+
+        CustomHttpHandler guarded = (request, response) -> {
+            for (Guard guard : chain) {
+                guard.check(request);
+            }
+            handler.handle(request, response);
+        };
+
+        CustomHttpHandler globalExceptionHandler = new GlobalExceptionHandler(guarded);
+        LogTraceFilter traceFilter = new LogTraceFilter();
+
+        return (request, response) -> {
+            traceFilter.doFilter(request, response, globalExceptionHandler);
+        };
+    }
+
+    private List<String> getParameterNames(String path) {
+        List<String> parameterNames = new ArrayList<>();
+        Matcher parameterMatcher = Pattern.compile("\\{([^}]+)\\}").matcher(path);
+
+        while (parameterMatcher.find()) {
+            parameterNames.add(parameterMatcher.group(1));
+        }
+        return parameterNames;
+    }
+
+    private Pattern getRoutesMatchPatter(String path) {
+        String regexPattern = path.replaceAll("\\{[^}]+\\}", "([^/]+)");
+
+        if (!regexPattern.startsWith("^")) regexPattern = "^" + regexPattern;
+        if (!regexPattern.endsWith("$")) regexPattern += "$";
+
+        return Pattern.compile(regexPattern);
     }
 
     private RouteMatch findMatchedRoute(String method, String path) {

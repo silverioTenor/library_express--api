@@ -1,7 +1,6 @@
 package org.libraryexpress.domain.user.entity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -25,7 +24,7 @@ class UserUnitTest {
     @Test
     @DisplayName("Should create a super admin without a creator")
     void shouldCreateSuperAdmin_whenCreatorIsNotProvided() {
-        Identity identity = Identity.createActive("admin@example.com", new PasswordHash(PASSWORD_HASH));
+        Identity identity = Identity.createActive("admin@example.com", PasswordHash.of(PASSWORD_HASH));
 
         User user = User.create("Library Admin", Role.SA, identity, null);
 
@@ -53,8 +52,7 @@ class UserUnitTest {
         UUID userId = UUID.randomUUID();
 
         InvalidArgumentException exception = assertThrows(
-                InvalidArgumentException.class,
-                () -> User.create("Admin", Role.SA, createIdentity(), userId));
+                InvalidArgumentException.class, () -> User.create("Admin", Role.SA, createIdentity(), userId));
 
         assertEquals("The super admin cannot have a creator", exception.getMessage());
     }
@@ -74,8 +72,7 @@ class UserUnitTest {
         UUID userId = UUID.randomUUID();
 
         InvalidArgumentException exception = assertThrows(
-                InvalidArgumentException.class,
-                () -> User.restore(userId, null, Role.ADMIN, createIdentity(), userId));
+                InvalidArgumentException.class, () -> User.restore(userId, null, Role.ADMIN, createIdentity(), userId));
 
         assertTrue(exception.getMessage().contains("User name cannot be null or empty"));
     }
@@ -110,8 +107,7 @@ class UserUnitTest {
         UUID userId = UUID.randomUUID();
 
         InvalidArgumentException exception = assertThrows(
-                InvalidArgumentException.class,
-                () -> User.restore(userId, "Operator", Role.ADMIN, null, userId));
+                InvalidArgumentException.class, () -> User.restore(userId, "Operator", Role.ADMIN, null, userId));
 
         assertTrue(exception.getMessage().contains("User identity cannot be null"));
     }
@@ -161,7 +157,7 @@ class UserUnitTest {
     }
 
     private Identity createIdentity() {
-        PasswordHash passwordHash = new PasswordHash(PASSWORD_HASH);
+        PasswordHash passwordHash = PasswordHash.of(PASSWORD_HASH);
         return Identity.createActive("user@example.com", passwordHash);
     }
 }

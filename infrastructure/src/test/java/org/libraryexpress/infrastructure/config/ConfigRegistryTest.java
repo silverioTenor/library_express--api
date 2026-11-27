@@ -3,6 +3,7 @@ package org.libraryexpress.infrastructure.config;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Method;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.libraryexpress.infrastructure.UnitTest;
@@ -33,19 +34,47 @@ class ConfigRegistryTest {
     }
 
     @Test
-    @DisplayName("Should prioritize the APP_ENV system property over dotenv configuration")
-    void shouldPrioritizeSystemProperty_whenResolvingAppEnvironment() {
-        String originalAppEnv = System.getProperty("APP_ENV");
+    @DisplayName("Should resolve a system property when the configuration key is first requested")
+    void shouldResolveFromSystemProperty_whenConfigurationKeyIsNotCached() throws Exception {
+        String key =
+                "CONFIG_REGISTRY_PRIORITY_TEST_" + UUID.randomUUID().toString().replace("-", "");
         try {
-            System.setProperty("APP_ENV", "test");
+            System.setProperty(key, "system-property-value");
 
-            assertEquals("test", ConfigRegistry.getAppEnv());
+            assertEquals("system-property-value", invokeResolve(key, "default-value"));
         } finally {
-            if (originalAppEnv == null) {
-                System.clearProperty("APP_ENV");
-            } else {
-                System.setProperty("APP_ENV", originalAppEnv);
-            }
+            System.clearProperty(key);
+        }
+    }
+
+    @Test
+    @DisplayName("Should lazily resolve and cache a configuration value on its first lookup")
+    void shouldCacheResolvedValue_whenConfigurationKeyIsRequestedMoreThanOnce() throws Exception {
+        String key =
+                "CONFIG_REGISTRY_CACHE_TEST_" + UUID.randomUUID().toString().replace("-", "");
+        System.setProperty(key, "first-value");
+
+        try {
+            String firstValue = invokeResolve(key, "default-value");
+            System.setProperty(key, "second-value");
+
+            String cachedValue = invokeResolve(key, "default-value");
+
+            assertEquals("first-value", firstValue);
+            assertEquals("first-value", cachedValue);
+        } finally {
+            System.clearProperty(key);
+        }
+    }
+
+    private String invokeResolve(String key, String defaultValue) throws Exception {
+        Method resolveMethod = ConfigRegistry.class.getDeclaredMethod("resolve", String.class, String.class);
+        resolveMethod.setAccessible(true);
+
+        try {
+            return (String) resolveMethod.invoke(null, key, defaultValue);
+        } catch (Exception exception) {
+            throw (Exception) exception.getCause();
         }
     }
 }
